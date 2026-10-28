@@ -4,10 +4,17 @@
 
 import { SAMPLE } from './sample.js';
 
+// Written by the platform on every sync.
 export const DATA_FILES = {
   plan: '.colaberry/plan.json',
   progress: '.colaberry/progress.json',
   manifest: '.colaberry/manifest.json',
+};
+
+// Written by you; the platform never touches these.
+export const PROJECT_FILES = {
+  notes: 'knowledge/notes.json',
+  model: 'model/data-model.json',
 };
 
 async function loadJson(path) {
@@ -21,57 +28,60 @@ async function loadJson(path) {
 }
 
 export async function loadReal() {
-  const [plan, progress, manifest] = await Promise.all([
-    loadJson(DATA_FILES.plan),
-    loadJson(DATA_FILES.progress),
-    loadJson(DATA_FILES.manifest),
-  ]);
-  return {
-    plan: plan.ok ? plan.data : null,
-    progress: progress.ok ? progress.data : null,
-    manifest: manifest.ok ? manifest.data : null,
-    missing: Object.fromEntries(
-      [['plan', plan], ['progress', progress], ['manifest', manifest]]
-        .filter(([, r]) => !r.ok)
-        .map(([k, r]) => [k, r.reason])
-    ),
-  };
+  const files = { ...DATA_FILES, ...PROJECT_FILES };
+  const keys = Object.keys(files);
+  const results = await Promise.all(keys.map(k => loadJson(files[k])));
+  const out = { missing: {} };
+  keys.forEach((k, i) => {
+    out[k] = results[i].ok ? results[i].data : null;
+    if (!results[i].ok) out.missing[k] = results[i].reason;
+  });
+  return out;
 }
+
+const arr = x => (Array.isArray(x) ? x : []);
 
 // Builds the view every tab works from. `real` is what loadReal() returned;
 // the manifest stamp always comes from the real files, even in sample mode.
 export function buildView(mode, real) {
-  const src = mode === 'sample' ? SAMPLE : real;
+  const isSample = mode === 'sample';
+  const src = isSample ? SAMPLE : real;
   const plan = src.plan;
   const progress = src.progress;
+  const derived = plan?.derived ?? {};
   return {
     mode,
-    isSample: mode === 'sample',
+    isSample,
     plan,
     progress,
     manifest: real.manifest,
-    missing: mode === 'sample' ? {} : real.missing,
+    missing: isSample ? {} : real.missing,
     project: plan?.project ?? null,
     schedule: plan?.schedule ?? null,
-    releases: Array.isArray(plan?.releases) ? plan.releases : [],
+    releases: arr(plan?.releases),
     stories: joinStories(plan, progress),
     totals: progress?.totals ?? null,
+    requirements: arr(plan?.requirements),
+    agents: arr(plan?.agents),
+    measures: arr(derived.measures),
+    roles: arr(derived.roles),
+    guardrails: arr(derived.guardrails),
+    systems: arr(derived.systems),
+    counts: derived.counts ?? null,
+    // Nothing in this repo can observe a live connection. When your system
+    // exposes a health check, read it here; until then every system is unknown.
+    systemStatus: isSample ? SAMPLE.systemStatus : {},
+    notes: isSample ? SAMPLE.notes : real.notes,
+    model: real.model,
   };
 }
 
 // plan.stories[].id ↔ progress.stories[].id
 function joinStories(plan, progress) {
-  const planStories = Array.isArray(plan?.stories) ? plan.stories : [];
-  const byId = new Map(
-    (Array.isArray(progress?.stories) ? progress.stories : []).map(s => [s.id, s])
-  );
-  return planStories.map(s => {
+  const byId = new Map(arr(progress?.stories).map(s => [s.id, s]));
+  return arr(plan?.stories).map(s => {
     const p = byId.get(s.id);
-    return {
-      ...s,
-      progress: p ?? null,
-      state: p?.verification?.state ?? null,
-    };
+    return { ...s, progress: p ?? null, state: p?.verification?.state ?? null };
   });
 }
 

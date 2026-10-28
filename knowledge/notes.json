@@ -1,0 +1,6 @@
+{
+  "schema_version": 1,
+  "_how_to_use": "Yours to add to. Append to decisions (date, statement, rationale) or notes (date, text) and push; the Knowledge base tab shows them. Nothing else writes this file.",
+  "decisions": [],
+  "notes": []
+}
