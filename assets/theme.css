@@ -1,0 +1,63 @@
+/*
+  Brand colours live here and only here.
+  No brand colours have been chosen for this project yet, so this is a neutral
+  palette. To rebrand, change --brand (and --brand-ink if contrast needs it).
+*/
+:root {
+  --brand: #2f5d8a;
+  --brand-ink: #ffffff;
+
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --surface-2: #eef0f3;
+  --border: #d9dde3;
+  --text: #1c2430;
+  --text-muted: #5b6573;
+
+  --ok: #2e7d4f;
+  --warn: #9a6200;
+  --warn-bg: #fff4dc;
+  --bad: #b3261e;
+  --unknown: #8a929c;
+
+  --sample: #7a3fa0;
+  --sample-bg: #f4ebfa;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --brand: #7fb0e0;
+    --brand-ink: #0d1520;
+    --bg: #12161c;
+    --surface: #1a2029;
+    --surface-2: #232a35;
+    --border: #333c49;
+    --text: #e6e9ee;
+    --text-muted: #9aa4b2;
+    --ok: #6cc28f;
+    --warn: #f0b54a;
+    --warn-bg: #3a2d12;
+    --bad: #f08a83;
+    --unknown: #7d8693;
+    --sample: #c89be6;
+    --sample-bg: #2c2036;
+  }
+}
+
+:root[data-theme="dark"] {
+  --brand: #7fb0e0;
+  --brand-ink: #0d1520;
+  --bg: #12161c;
+  --surface: #1a2029;
+  --surface-2: #232a35;
+  --border: #333c49;
+  --text: #e6e9ee;
+  --text-muted: #9aa4b2;
+  --ok: #6cc28f;
+  --warn: #f0b54a;
+  --warn-bg: #3a2d12;
+  --bad: #f08a83;
+  --unknown: #7d8693;
+  --sample: #c89be6;
+  --sample-bg: #2c2036;
+}
