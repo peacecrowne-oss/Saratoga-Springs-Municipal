@@ -45,7 +45,8 @@ export function daysBetween(fromIso, toIso) {
 const STATE_LABEL = { not_started: 'Not started', in_progress: 'In progress', submitted: 'Submitted', verified: 'Verified' };
 
 export function stateBadge(state) {
-  if (!state) return '<span class="state"><span class="dot"></span>No progress recorded</span>';
+  // No verification block means "not measured", which is different from not_started.
+  if (!state) return '<span class="state"><span class="dot"></span>Not checked yet</span>';
   return `<span class="state ${esc(state)}"><span class="dot"></span>${esc(STATE_LABEL[state] ?? state)}</span>`;
 }
 
@@ -83,9 +84,9 @@ export function table(head, rows) {
   </table></div>`;
 }
 
-// Plan field names that vary between schema versions are read in one place.
-export const storyRelease = s => s?.release ?? s?.release_key ?? null;
-export const storyOwner = s => s?.owner ?? s?.owner_role ?? s?.agent ?? null;
+// Field names follow docs/DATA_CONTRACT.md.
+export const storyRelease = s => s?.release ?? null;
+export const storyOwner = s => s?.owner_agent || null;
 export const criterionText = c => (typeof c === 'string' ? c : c?.text ?? c?.statement ?? '');
 export const roleName = r => (typeof r === 'string' ? r : r?.name ?? r?.role ?? '');
 export const systemName = s => (typeof s === 'string' ? s : s?.name ?? '');

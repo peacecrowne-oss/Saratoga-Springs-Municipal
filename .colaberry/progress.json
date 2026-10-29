@@ -27,20 +27,42 @@
         },
         {
           "text": "Given the Command Center, when any tab renders, then .colaberry/plan.json and .colaberry/progress.json are both committed in this repo and every tab reads its content from them at runtime rather than from hard-coded values.",
-          "passed": false
+          "passed": true
         },
         {
           "text": "Given the Command Center, when any tab is shown, then .colaberry/manifest.json is committed in this repo and every tab shows how old that data is and warns when the age exceeds a week.",
-          "passed": false
+          "passed": true
         },
         {
           "text": "Trust — no tab shows a number, a connection or a result the project has not actually produced.",
           "passed": true
         }
       ],
-      "files_touched": [],
-      "tests_added": [],
-      "notes": null,
+      "files_touched": [
+        "index.html",
+        ".nojekyll",
+        "assets/app.js",
+        "assets/data.js",
+        "assets/ui.js",
+        "assets/sample.js",
+        "assets/theme.css",
+        "assets/styles.css",
+        "assets/tabs/overview.js",
+        "assets/tabs/outcomes.js",
+        "assets/tabs/users.js",
+        "assets/tabs/guardrails.js",
+        "assets/tabs/systems.js",
+        "assets/tabs/project.js",
+        "assets/tabs/agents.js",
+        "assets/tabs/knowledge.js",
+        "assets/tabs/data-model.js",
+        "knowledge/notes.json",
+        "model/data-model.json"
+      ],
+      "tests_added": [
+        "tests/command-center.test.mjs"
+      ],
+      "notes": "The synced plan.json has no requirements, guardrails, systems or measures, an empty project name, and placeholder dates (every release and due date on 2026-09-20). The page renders those as empty states rather than filling them in.",
       "updated_at": null,
       "verification": {
         "state": "submitted",

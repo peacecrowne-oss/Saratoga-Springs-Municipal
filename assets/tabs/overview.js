@@ -1,9 +1,10 @@
-import { releaseKey, releaseName, currentRelease } from '../data.js';
+import { releaseKey, releaseName, currentRelease, isDated } from '../data.js';
 import { esc, link, todayIso, fmtDate, daysBetween, stateBadge, sampleTag, card, grid, missingNote, emptyState, back, table, storyRelease } from '../ui.js';
 
 export function whereWeAre(v) {
   if (!v.releases.length) return { value: null, note: missingNote(v, 'plan') || 'Your plan has no releases yet.' };
   const cur = currentRelease(v.releases, todayIso());
+  if (!cur) return { value: null, note: 'No release in your plan has dates yet.' };
   const r = cur.release;
   const value = `${releaseKey(r)} · ${releaseName(r)}`;
   const note = cur.relation === 'in' ? `Running ${fmtDate(r.starts_on)} → ${fmtDate(r.ends_on)}`
@@ -27,7 +28,7 @@ function main(v) {
         href: link('overview', 'release', releaseKey(r)),
         label: `${releaseKey(r)}${r.is_demo_target ? ' · demo target' : ''}`,
         value: releaseName(r),
-        note: `${(r.story_ids ?? []).length} stories · ${fmtDate(r.starts_on)} → ${fmtDate(r.ends_on)}`,
+        note: `${(r.story_ids ?? []).length} stories · ${isDated(r) ? `${fmtDate(r.starts_on)} → ${fmtDate(r.ends_on)}` : 'no dates in your plan'}`,
       })))
     : emptyState('One card per release, with its dates and stories.', missingNote(v, 'plan') || 'Your plan needs releases.');
 
@@ -97,11 +98,11 @@ function detail(v, sub, arg) {
     if (!t) return ov + `<h1>${title}</h1>` + emptyState(isPoints ? 'Points awarded per verified story.' : 'Each story and its verification state, with the commit that verified it.', missingNote(v, 'progress') || 'The progress file has no totals yet.');
     const head = isPoints ? `${t.points_awarded ?? 0} points awarded` : `${t.stories_verified ?? 0} of ${t.stories_total ?? 0} stories verified`;
     return ov + `<h1>${title}${sampleTag(v)}</h1><p class="lede">${esc(head)}, from <code>progress.totals</code>.</p>
-      ${v.stories.length ? table(['Story', 'State', 'Verified commit', 'Points'], v.stories.map(s => [
+      ${v.stories.length ? table(['Story', 'State', 'Commit', 'Points'], v.stories.map(s => [
           `<strong>${esc(s.id)}</strong> ${esc(s.title)}`,
           stateBadge(s.state),
-          s.progress?.verification?.commit ? `<code>${esc(String(s.progress.verification.commit).slice(0, 10))}</code>` : '—',
-          esc(s.progress?.verification?.points ?? '—'),
+          s.progress?.verification?.commit_sha ? `<code>${esc(String(s.progress.verification.commit_sha).slice(0, 10))}</code>` : '—',
+          esc(s.progress?.verification?.points_awarded ?? '—'),
         ]))
         : emptyState('The per-story breakdown.', missingNote(v, 'plan') || 'Your plan has no stories.')}`;
   }

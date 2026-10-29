@@ -56,7 +56,11 @@ export function buildView(mode, real) {
     progress,
     manifest: real.manifest,
     missing: isSample ? {} : real.missing,
-    project: plan?.project ?? null,
+    project: plan ? {
+      ...plan.project,
+      name: plan.project_name || plan.project?.name || null,
+      descriptor: plan.descriptor || plan.project?.descriptor || null,
+    } : null,
     schedule: plan?.schedule ?? null,
     releases: arr(plan?.releases),
     stories: joinStories(plan, progress),
@@ -81,16 +85,21 @@ function joinStories(plan, progress) {
   const byId = new Map(arr(progress?.stories).map(s => [s.id, s]));
   return arr(plan?.stories).map(s => {
     const p = byId.get(s.id);
-    return { ...s, progress: p ?? null, state: p?.verification?.state ?? null };
+    // Titles arrive as "STORY-001 · Title"; the id is shown separately.
+    const title = String(s.title ?? '').replace(new RegExp(`^${s.id}\\s*·\\s*`), '');
+    return { ...s, title, progress: p ?? null, state: p?.verification?.state ?? null };
   });
 }
 
 export const releaseKey = r => r?.key ?? r?.id ?? null;
 export const releaseName = r => r?.name ?? r?.title ?? releaseKey(r) ?? 'Unnamed release';
 
+export const isDated = r => Boolean(r?.starts_on && r?.ends_on);
+
 // Which release the calendar says we are in today, from plan.releases dates.
+// Releases without dates cannot be placed on the calendar and are skipped.
 export function currentRelease(releases, today) {
-  const sorted = [...releases].sort((a, b) => String(a.starts_on).localeCompare(String(b.starts_on)));
+  const sorted = releases.filter(isDated).sort((a, b) => String(a.starts_on).localeCompare(String(b.starts_on)));
   const active = sorted.find(r => r.starts_on <= today && today <= r.ends_on);
   if (active) return { release: active, relation: 'in' };
   const next = sorted.find(r => r.starts_on > today);

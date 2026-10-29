@@ -1,0 +1,62 @@
+{
+  "schemaVersion": "1",
+  "projectId": "57d39200-48c4-474f-9aaf-46e236476363",
+  "storyId": "STORY-000",
+  "projectTruthBaseRevision": 0,
+  "observedAt": "2026-10-29T17:45:00Z",
+  "sourceCommitSha": "b3368f60cefbaa43d5e230516ba74cb954cca010",
+  "factProposals": [
+    {
+      "dimension": "delivery_profile",
+      "value": "The Command Center is a static page at the repo root, published on GitHub Pages from main, that reads the .colaberry files at runtime.",
+      "evidence": "index.html"
+    }
+  ],
+  "decisions": [
+    {
+      "statement": "Every tab reads plan, progress and manifest through one data module; tabs never fetch files themselves.",
+      "rationale": "so the page can be pointed at the real system later without rewriting tabs",
+      "evidence": "assets/data.js"
+    },
+    {
+      "statement": "System connection indicators stay grey and 'not checked from here' until the running system reports a health check.",
+      "rationale": "nothing in the repo can observe a live connection",
+      "evidence": "assets/tabs/systems.js"
+    },
+    {
+      "statement": "The data model is kept as a reviewable proposal file and no tables are created yet.",
+      "rationale": "the model needs the student's review before anything is built on it",
+      "evidence": "model/data-model.json"
+    },
+    {
+      "statement": "A .nojekyll file is committed so GitHub Pages publishes the .colaberry/ folder.",
+      "rationale": "Jekyll drops folders whose names start with a dot, which would hide the data files from the published page",
+      "evidence": ".nojekyll"
+    }
+  ],
+  "limitations": [
+    {
+      "statement": "The knowledge base chat answers by matching keywords and ids against the page's data; it does not use a language model.",
+      "evidence": "assets/tabs/knowledge.js"
+    },
+    {
+      "statement": "The synced plan.json has no requirements, guardrails, systems or measures, an empty project name, and every release and due date set to 2026-09-20, which contradicts the plan in the STORY-000 brief (REQ-001 to REQ-017, releases r0–r4 from 2026-10-27 to 2026-11-12).",
+      "evidence": ".colaberry/plan.json"
+    },
+    {
+      "statement": "plan.json lists six extra releases keyed by UUID, with no dates and no stories, alongside r0–r4.",
+      "evidence": ".colaberry/plan.json"
+    }
+  ],
+  "demonstrationEvidence": [
+    {
+      "kind": "test",
+      "ref": "tests/command-center.test.mjs"
+    },
+    {
+      "kind": "url",
+      "ref": "https://peacecrowne-oss.github.io/Saratoga-Springs-Municipal/"
+    }
+  ],
+  "measurementEvents": []
+}

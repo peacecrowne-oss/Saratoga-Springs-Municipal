@@ -7,16 +7,16 @@ const iso = offset => new Date(Date.now() + offset * day).toISOString().slice(0,
 const stamp = offsetMins => new Date(Date.now() - offsetMins * 60000).toISOString();
 
 const stories = [
-  { id: 'SAMPLE-1', title: 'Sample: import asset register', release: 's0', owner: 'sample clerk', due_on: iso(-6), due_baseline_on: iso(-6) },
-  { id: 'SAMPLE-2', title: 'Sample: audit log for edits', release: 's0', owner: 'sample auditor', due_on: iso(-4), due_baseline_on: iso(-5) },
-  { id: 'SAMPLE-3', title: 'Sample: map view of assets', release: 's1', owner: 'sample clerk', due_on: iso(-1), due_baseline_on: iso(-2) },
-  { id: 'SAMPLE-4', title: 'Sample: permit application form', release: 's1', owner: 'sample resident', due_on: iso(1), due_baseline_on: iso(1) },
-  { id: 'SAMPLE-5', title: 'Sample: reviewer queue', release: 's2', owner: 'sample inspector', due_on: iso(5), due_baseline_on: iso(4) },
-  { id: 'SAMPLE-6', title: 'Sample: status emails', release: 's2', owner: 'sample resident', due_on: iso(7), due_baseline_on: iso(7) },
+  { id: 'SAMPLE-1', title: 'Sample: import asset register', release: 's0', owner_agent: 'sample clerk', due_on: iso(-6), due_baseline_on: iso(-6) },
+  { id: 'SAMPLE-2', title: 'Sample: audit log for edits', release: 's0', owner_agent: 'sample auditor', due_on: iso(-4), due_baseline_on: iso(-5) },
+  { id: 'SAMPLE-3', title: 'Sample: map view of assets', release: 's1', owner_agent: 'sample clerk', due_on: iso(-1), due_baseline_on: iso(-2) },
+  { id: 'SAMPLE-4', title: 'Sample: permit application form', release: 's1', owner_agent: 'sample resident', due_on: iso(1), due_baseline_on: iso(1) },
+  { id: 'SAMPLE-5', title: 'Sample: reviewer queue', release: 's2', owner_agent: 'sample inspector', due_on: iso(5), due_baseline_on: iso(4) },
+  { id: 'SAMPLE-6', title: 'Sample: status emails', release: 's2', owner_agent: 'sample resident', due_on: iso(7), due_baseline_on: iso(7) },
 ].map(s => ({
   ...s,
-  narrative: `As a ${s.owner}, I want ${s.title.replace('Sample: ', '')}, so that the sample looks real.`,
-  acceptance_criteria: [
+  narrative: `As a ${s.owner_agent}, I want ${s.title.replace('Sample: ', '')}, so that the sample looks real.`,
+  acceptance: [
     `Given the sample, when ${s.title.replace('Sample: ', '')} is used, then it works.`,
     'Given the sample, when it fails, then the user is told.',
   ],
@@ -78,11 +78,11 @@ export const SAMPLE = {
     totals: { stories_verified: 2, stories_total: 6, criteria_passed: 5, criteria_total: 12, points_awarded: 8 },
     stories: stories.map((s, i) => ({
       id: s.id,
-      criteria: s.acceptance_criteria.map((text, j) => ({ text, passed: i < 2 || (i === 2 && j === 0) })),
+      criteria: s.acceptance.map((text, j) => ({ text, passed: i < 2 || (i === 2 && j === 0) })),
       verification: {
         state: states[i],
-        commit: states[i] === 'verified' ? `sample${i}abc` : null,
-        points: states[i] === 'verified' ? 4 : 0,
+        commit_sha: states[i] === 'verified' ? `sample${i}abc` : null,
+        points_awarded: states[i] === 'verified' ? 4 : 0,
       },
     })),
   },

@@ -1,4 +1,4 @@
-import { releaseKey, releaseName } from '../data.js';
+import { releaseKey, releaseName, isDated } from '../data.js';
 import { esc, link, todayIso, fmtDate, daysBetween, stateBadge, sampleTag, card, grid, missingNote, emptyState, back, table, storyRelease, storyOwner, criterionText } from '../ui.js';
 
 const slipTag = s => {
@@ -6,20 +6,28 @@ const slipTag = s => {
   return slip > 0 ? ` <span class="tag warn">slipped ${slip}d</span>` : slip < 0 ? ` <span class="tag">${-slip}d early</span>` : '';
 };
 
+function undatedList(v) {
+  const undated = v.releases.filter(r => !isDated(r));
+  if (!undated.length) return '';
+  return `<p class="lede">Not on the chart: ${undated.length} release${undated.length === 1 ? '' : 's'} with no dates in your plan.</p>
+    <ul>${undated.map(r => `<li><a href="${link('project', 'release', releaseKey(r))}">${esc(releaseName(r))}</a> · ${(r.story_ids ?? []).length} stories</li>`).join('')}</ul>`;
+}
+
 function gantt(v) {
   const s = v.schedule ?? {};
-  const starts = v.releases.map(r => r.starts_on).filter(Boolean).sort();
-  const ends = [...v.releases.map(r => r.ends_on), s.build_end, s.demo_day].filter(Boolean).sort();
+  const dated = v.releases.filter(isDated);
+  const starts = dated.map(r => r.starts_on).sort();
+  const ends = [...dated.map(r => r.ends_on), s.build_end, s.demo_day].filter(Boolean).sort();
   const from = s.build_start ?? starts[0];
   const to = ends[ends.length - 1];
   const span = daysBetween(from, to) + 1;
-  if (!from || !to || !(span > 0)) return '';
+  if (!dated.length || !from || !to || !(span > 0)) return emptyState('A bar per release across the build window.', 'No release in your plan has dates yet.') + undatedList(v);
   const pct = d => Math.max(0, Math.min(100, (daysBetween(from, d) / span) * 100));
   const today = todayIso();
   const marker = (d, cls, label) => d && d >= from && d <= to ? `<span class="gantt-marker ${cls}" style="left:${pct(d)}%" title="${esc(label)}"></span>` : '';
   return `<div class="gantt">
     <div class="gantt-scale"><span>${fmtDate(from)}</span><span>${fmtDate(to)}</span></div>
-    ${v.releases.map(r => `<a class="gantt-row" href="${link('project', 'release', releaseKey(r))}">
+    ${dated.map(r => `<a class="gantt-row" href="${link('project', 'release', releaseKey(r))}">
         <span class="gantt-label">${esc(releaseKey(r))} · ${esc(releaseName(r))}</span>
         <span class="gantt-track">
           <span class="gantt-bar${r.is_demo_target ? ' demo' : ''}${v.isSample ? ' sample' : ''}" style="left:${pct(r.starts_on)}%;width:${Math.max(1.5, pct(r.ends_on) - pct(r.starts_on) + 100 / span)}%"></span>
@@ -28,7 +36,7 @@ function gantt(v) {
         </span>
       </a>`).join('')}
     <div class="gantt-legend"><span><i class="today"></i>Today</span><span><i class="demo"></i>Demo day</span><span><i class="bar demo"></i>Demo release</span></div>
-  </div>`;
+  </div>${undatedList(v)}`;
 }
 
 export function render(v, parts) {
@@ -89,7 +97,7 @@ function story(v, id) {
   const s = v.stories.find(x => x.id === id);
   if (!s) return b + `<h1>${esc(id)}</h1>` + emptyState('This story: narrative, dates, owner, criteria and verification.', missingNote(v, 'plan') || 'No story with this id is in your plan.');
   const ver = s.progress?.verification ?? {};
-  const planned = Array.isArray(s.acceptance_criteria) ? s.acceptance_criteria.map(criterionText) : [];
+  const planned = Array.isArray(s.acceptance) ? s.acceptance.map(criterionText) : [];
   const ticks = new Map((s.progress?.criteria ?? []).map(c => [c.text, c.passed]));
   return b + `<h1>${esc(s.id)} · ${esc(s.title)}${sampleTag(v)}</h1>
     ${s.narrative ? `<p class="lede">${esc(s.narrative)}</p>` : ''}
@@ -99,8 +107,8 @@ function story(v, id) {
       <dt>Due</dt><dd>${fmtDate(s.due_on)}${slipTag(s)}</dd>
       <dt>First due</dt><dd>${fmtDate(s.due_baseline_on)}</dd>
       <dt>State</dt><dd>${stateBadge(s.state)}</dd>
-      <dt>Verified commit</dt><dd>${ver.commit ? `<code>${esc(String(ver.commit).slice(0, 10))}</code>` : '—'}</dd>
-      <dt>Points</dt><dd>${esc(ver.points ?? '—')}</dd>
+      <dt>Commit</dt><dd>${ver.commit_sha ? `<a href="${esc(ver.commit_url ?? '#')}"><code>${esc(String(ver.commit_sha).slice(0, 10))}</code></a>` : '—'}</dd>
+      <dt>Points</dt><dd>${esc(ver.points_awarded ?? '—')}</dd>
     </dl>
     <h2>Acceptance criteria</h2>
     ${planned.length ? `<ul>${planned.map(t => `<li>${ticks.get(t) === true ? '✅' : '⬜'} ${esc(t)}</li>`).join('')}</ul>`
