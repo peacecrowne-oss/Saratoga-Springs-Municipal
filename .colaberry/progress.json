@@ -1,9 +1,21 @@
 {
   "schema_version": 2,
-  "_how_to_use": "Start with every criterion false — that is the correct starting state, not an unfinished one. false means \"not claimed\": either not done, or done but not yet checked. Set one to true only after you have read the code and confirmed it is genuinely true today. Nothing is lost by leaving a line false; a story sitting at 3 of 5 reports honestly and the portal shows you which two are left. Do not retype the criterion text — flip the boolean beside it.",
+  "project": "",
+  "totals": {
+    "stories_total": 14,
+    "stories_verified": 0,
+    "stories_submitted": 1,
+    "stories_in_progress": 0,
+    "stories_not_started": 13,
+    "criteria_total": 44,
+    "criteria_passed": 3,
+    "points_awarded": 0
+  },
   "stories": [
     {
       "id": "STORY-000",
+      "release": "r0",
+      "acceptance_total": 5,
       "criteria": [
         {
           "text": "Given the Command Center, when it is opened, then every tab is reachable and every card drills down one level.",
@@ -25,7 +37,519 @@
           "text": "Trust — no tab shows a number, a connection or a result the project has not actually produced.",
           "passed": true
         }
-      ]
+      ],
+      "files_touched": [],
+      "tests_added": [],
+      "notes": null,
+      "updated_at": null,
+      "verification": {
+        "state": "submitted",
+        "criteria_passed": 3,
+        "criteria_total": 5,
+        "verified_at": null,
+        "commit_sha": "b3368f60cefbaa43d5e230516ba74cb954cca010",
+        "commit_url": "https://github.com/peacecrowne-oss/Saratoga-Springs-Municipal/commit/b3368f60cefbaa43d5e230516ba74cb954cca010",
+        "commit_at": "2026-10-28T21:18:24Z",
+        "points_awarded": null,
+        "outstanding": [
+          "Given the Command Center, when any tab renders, then .colaberry/plan.json and .colaberry/progress.json are both committed in this repo and every tab reads its content from them at runtime rather than from hard-coded values.",
+          "Given the Command Center, when any tab is shown, then .colaberry/manifest.json is committed in this repo and every tab shows how old that data is and warns when the age exceeds a week."
+        ]
+      }
+    },
+    {
+      "id": "STORY-001",
+      "release": "r0",
+      "acceptance_total": 3,
+      "criteria": [
+        {
+          "text": "Given the system is connected to Tyler Technologies, when I view the budget tracking dashboard, then I should see real-time budget data.",
+          "passed": false
+        },
+        {
+          "text": "Given the system is disconnected from Tyler Technologies, when I attempt to view the budget tracking dashboard, then I should receive an error message indicating the integration issue.",
+          "passed": false
+        },
+        {
+          "text": "Trust: All budget tracking actions must be logged in the audit trail.",
+          "passed": false
+        }
+      ],
+      "files_touched": [],
+      "tests_added": [],
+      "notes": null,
+      "updated_at": null,
+      "verification": {
+        "state": "not_started",
+        "criteria_passed": 0,
+        "criteria_total": 3,
+        "verified_at": null,
+        "commit_sha": null,
+        "commit_url": null,
+        "commit_at": null,
+        "points_awarded": null,
+        "outstanding": [
+          "Given the system is connected to Tyler Technologies, when I view the budget tracking dashboard, then I should see real-time budget data.",
+          "Given the system is disconnected from Tyler Technologies, when I attempt to view the budget tracking dashboard, then I should receive an error message indicating the integration issue.",
+          "Trust: All budget tracking actions must be logged in the audit trail."
+        ]
+      }
+    },
+    {
+      "id": "STORY-002",
+      "release": "r0",
+      "acceptance_total": 3,
+      "criteria": [
+        {
+          "text": "Given a user performs an action, when the action is completed, then an audit log entry is created.",
+          "passed": false
+        },
+        {
+          "text": "Given an unauthorized action, when attempted, then it is logged with a warning.",
+          "passed": false
+        },
+        {
+          "text": "Trust: Audit logs are immutable and timestamped.",
+          "passed": false
+        }
+      ],
+      "files_touched": [],
+      "tests_added": [],
+      "notes": null,
+      "updated_at": null,
+      "verification": {
+        "state": "not_started",
+        "criteria_passed": 0,
+        "criteria_total": 3,
+        "verified_at": null,
+        "commit_sha": null,
+        "commit_url": null,
+        "commit_at": null,
+        "points_awarded": null,
+        "outstanding": [
+          "Given a user performs an action, when the action is completed, then an audit log entry is created.",
+          "Given an unauthorized action, when attempted, then it is logged with a warning.",
+          "Trust: Audit logs are immutable and timestamped."
+        ]
+      }
+    },
+    {
+      "id": "STORY-003",
+      "release": "r1",
+      "acceptance_total": 3,
+      "criteria": [
+        {
+          "text": "Given the asset management module, when a new asset is added, then it appears in the inventory list.",
+          "passed": false
+        },
+        {
+          "text": "Given an asset is retired, when updated, then its status changes to inactive.",
+          "passed": false
+        },
+        {
+          "text": "Trust: All asset changes are logged with user details.",
+          "passed": false
+        }
+      ],
+      "files_touched": [],
+      "tests_added": [],
+      "notes": null,
+      "updated_at": null,
+      "verification": {
+        "state": "not_started",
+        "criteria_passed": 0,
+        "criteria_total": 3,
+        "verified_at": null,
+        "commit_sha": null,
+        "commit_url": null,
+        "commit_at": null,
+        "points_awarded": null,
+        "outstanding": [
+          "Given the asset management module, when a new asset is added, then it appears in the inventory list.",
+          "Given an asset is retired, when updated, then its status changes to inactive.",
+          "Trust: All asset changes are logged with user details."
+        ]
+      }
+    },
+    {
+      "id": "STORY-004",
+      "release": "r1",
+      "acceptance_total": 3,
+      "criteria": [
+        {
+          "text": "Given the GIS integration, when assets are loaded, then they appear on the map with accurate locations.",
+          "passed": false
+        },
+        {
+          "text": "Given a map error, when detected, then a notification is sent to the admin.",
+          "passed": false
+        },
+        {
+          "text": "Trust: Map interactions are logged for audit purposes.",
+          "passed": false
+        }
+      ],
+      "files_touched": [],
+      "tests_added": [],
+      "notes": null,
+      "updated_at": null,
+      "verification": {
+        "state": "not_started",
+        "criteria_passed": 0,
+        "criteria_total": 3,
+        "verified_at": null,
+        "commit_sha": null,
+        "commit_url": null,
+        "commit_at": null,
+        "points_awarded": null,
+        "outstanding": [
+          "Given the GIS integration, when assets are loaded, then they appear on the map with accurate locations.",
+          "Given a map error, when detected, then a notification is sent to the admin.",
+          "Trust: Map interactions are logged for audit purposes."
+        ]
+      }
+    },
+    {
+      "id": "STORY-005",
+      "release": "r2",
+      "acceptance_total": 3,
+      "criteria": [
+        {
+          "text": "Given the permitting module, when a permit application is submitted, then it is received by the system.",
+          "passed": false
+        },
+        {
+          "text": "Given incomplete application data, when submitted, then an error message is displayed.",
+          "passed": false
+        },
+        {
+          "text": "Trust: All submissions are logged with timestamps.",
+          "passed": false
+        }
+      ],
+      "files_touched": [],
+      "tests_added": [],
+      "notes": null,
+      "updated_at": null,
+      "verification": {
+        "state": "not_started",
+        "criteria_passed": 0,
+        "criteria_total": 3,
+        "verified_at": null,
+        "commit_sha": null,
+        "commit_url": null,
+        "commit_at": null,
+        "points_awarded": null,
+        "outstanding": [
+          "Given the permitting module, when a permit application is submitted, then it is received by the system.",
+          "Given incomplete application data, when submitted, then an error message is displayed.",
+          "Trust: All submissions are logged with timestamps."
+        ]
+      }
+    },
+    {
+      "id": "STORY-006",
+      "release": "r2",
+      "acceptance_total": 3,
+      "criteria": [
+        {
+          "text": "Given a submitted application, when it enters the workflow, then it is routed to the appropriate reviewer.",
+          "passed": false
+        },
+        {
+          "text": "Given a workflow error, when detected, then an alert is sent to the admin.",
+          "passed": false
+        },
+        {
+          "text": "Trust: Workflow transitions are logged for audit purposes.",
+          "passed": false
+        }
+      ],
+      "files_touched": [],
+      "tests_added": [],
+      "notes": null,
+      "updated_at": null,
+      "verification": {
+        "state": "not_started",
+        "criteria_passed": 0,
+        "criteria_total": 3,
+        "verified_at": null,
+        "commit_sha": null,
+        "commit_url": null,
+        "commit_at": null,
+        "points_awarded": null,
+        "outstanding": [
+          "Given a submitted application, when it enters the workflow, then it is routed to the appropriate reviewer.",
+          "Given a workflow error, when detected, then an alert is sent to the admin.",
+          "Trust: Workflow transitions are logged for audit purposes."
+        ]
+      }
+    },
+    {
+      "id": "STORY-007",
+      "release": "r2",
+      "acceptance_total": 3,
+      "criteria": [
+        {
+          "text": "Given an application status change, when it occurs, then a notification is sent to the applicant.",
+          "passed": false
+        },
+        {
+          "text": "Given an invalid contact detail, when a notification is attempted, then an error is logged.",
+          "passed": false
+        },
+        {
+          "text": "Trust: Notification logs are maintained for audit purposes.",
+          "passed": false
+        }
+      ],
+      "files_touched": [],
+      "tests_added": [],
+      "notes": null,
+      "updated_at": null,
+      "verification": {
+        "state": "not_started",
+        "criteria_passed": 0,
+        "criteria_total": 3,
+        "verified_at": null,
+        "commit_sha": null,
+        "commit_url": null,
+        "commit_at": null,
+        "points_awarded": null,
+        "outstanding": [
+          "Given an application status change, when it occurs, then a notification is sent to the applicant.",
+          "Given an invalid contact detail, when a notification is attempted, then an error is logged.",
+          "Trust: Notification logs are maintained for audit purposes."
+        ]
+      }
+    },
+    {
+      "id": "STORY-008",
+      "release": "r3",
+      "acceptance_total": 3,
+      "criteria": [
+        {
+          "text": "Given the dashboard module, when a widget is added, then it displays real-time data.",
+          "passed": false
+        },
+        {
+          "text": "Given a dashboard error, when detected, then a notification is sent to the admin.",
+          "passed": false
+        },
+        {
+          "text": "Trust: Dashboard configurations are logged for audit purposes.",
+          "passed": false
+        }
+      ],
+      "files_touched": [],
+      "tests_added": [],
+      "notes": null,
+      "updated_at": null,
+      "verification": {
+        "state": "not_started",
+        "criteria_passed": 0,
+        "criteria_total": 3,
+        "verified_at": null,
+        "commit_sha": null,
+        "commit_url": null,
+        "commit_at": null,
+        "points_awarded": null,
+        "outstanding": [
+          "Given the dashboard module, when a widget is added, then it displays real-time data.",
+          "Given a dashboard error, when detected, then a notification is sent to the admin.",
+          "Trust: Dashboard configurations are logged for audit purposes."
+        ]
+      }
+    },
+    {
+      "id": "STORY-009",
+      "release": "r3",
+      "acceptance_total": 3,
+      "criteria": [
+        {
+          "text": "Given the user management module, when a role is assigned, then access is granted according to permissions.",
+          "passed": false
+        },
+        {
+          "text": "Given an unauthorized role change, when attempted, then it is blocked and logged.",
+          "passed": false
+        },
+        {
+          "text": "Trust: All role changes are logged for audit purposes.",
+          "passed": false
+        }
+      ],
+      "files_touched": [],
+      "tests_added": [],
+      "notes": null,
+      "updated_at": null,
+      "verification": {
+        "state": "not_started",
+        "criteria_passed": 0,
+        "criteria_total": 3,
+        "verified_at": null,
+        "commit_sha": null,
+        "commit_url": null,
+        "commit_at": null,
+        "points_awarded": null,
+        "outstanding": [
+          "Given the user management module, when a role is assigned, then access is granted according to permissions.",
+          "Given an unauthorized role change, when attempted, then it is blocked and logged.",
+          "Trust: All role changes are logged for audit purposes."
+        ]
+      }
+    },
+    {
+      "id": "STORY-010",
+      "release": "r4",
+      "acceptance_total": 3,
+      "criteria": [
+        {
+          "text": "Given the system is connected to Oracle Primavera, when I generate an asset performance report, then I should see accurate performance metrics.",
+          "passed": false
+        },
+        {
+          "text": "Given the system is disconnected from Oracle Primavera, when I attempt to generate an asset performance report, then I should receive an error message indicating the integration issue.",
+          "passed": false
+        },
+        {
+          "text": "Trust: All asset tracking and reporting actions must be logged in the audit trail.",
+          "passed": false
+        }
+      ],
+      "files_touched": [],
+      "tests_added": [],
+      "notes": null,
+      "updated_at": null,
+      "verification": {
+        "state": "not_started",
+        "criteria_passed": 0,
+        "criteria_total": 3,
+        "verified_at": null,
+        "commit_sha": null,
+        "commit_url": null,
+        "commit_at": null,
+        "points_awarded": null,
+        "outstanding": [
+          "Given the system is connected to Oracle Primavera, when I generate an asset performance report, then I should see accurate performance metrics.",
+          "Given the system is disconnected from Oracle Primavera, when I attempt to generate an asset performance report, then I should receive an error message indicating the integration issue.",
+          "Trust: All asset tracking and reporting actions must be logged in the audit trail."
+        ]
+      }
+    },
+    {
+      "id": "STORY-011",
+      "release": "r4",
+      "acceptance_total": 3,
+      "criteria": [
+        {
+          "text": "Given the user interface, when a page is loaded, then it is intuitive and responsive.",
+          "passed": false
+        },
+        {
+          "text": "Given a UI error, when detected, then a notification is sent to the admin.",
+          "passed": false
+        },
+        {
+          "text": "Trust: UI changes are logged for audit purposes.",
+          "passed": false
+        }
+      ],
+      "files_touched": [],
+      "tests_added": [],
+      "notes": null,
+      "updated_at": null,
+      "verification": {
+        "state": "not_started",
+        "criteria_passed": 0,
+        "criteria_total": 3,
+        "verified_at": null,
+        "commit_sha": null,
+        "commit_url": null,
+        "commit_at": null,
+        "points_awarded": null,
+        "outstanding": [
+          "Given the user interface, when a page is loaded, then it is intuitive and responsive.",
+          "Given a UI error, when detected, then a notification is sent to the admin.",
+          "Trust: UI changes are logged for audit purposes."
+        ]
+      }
+    },
+    {
+      "id": "STORY-012",
+      "release": "r3",
+      "acceptance_total": 3,
+      "criteria": [
+        {
+          "text": "Given the system has pre-defined reports, when I select a report, then I should see the report data displayed accurately.",
+          "passed": false
+        },
+        {
+          "text": "Given the system allows ad-hoc report creation, when I create a new report, then I should see the custom report data displayed accurately.",
+          "passed": false
+        },
+        {
+          "text": "Trust: All report generation actions must be logged in the audit trail.",
+          "passed": false
+        }
+      ],
+      "files_touched": [],
+      "tests_added": [],
+      "notes": null,
+      "updated_at": null,
+      "verification": {
+        "state": "not_started",
+        "criteria_passed": 0,
+        "criteria_total": 3,
+        "verified_at": null,
+        "commit_sha": null,
+        "commit_url": null,
+        "commit_at": null,
+        "points_awarded": null,
+        "outstanding": [
+          "Given the system has pre-defined reports, when I select a report, then I should see the report data displayed accurately.",
+          "Given the system allows ad-hoc report creation, when I create a new report, then I should see the custom report data displayed accurately.",
+          "Trust: All report generation actions must be logged in the audit trail."
+        ]
+      }
+    },
+    {
+      "id": "STORY-013",
+      "release": "r4",
+      "acceptance_total": 3,
+      "criteria": [
+        {
+          "text": "Given the system is connected to the document management system, when I upload a permit document, then it should be stored successfully.",
+          "passed": false
+        },
+        {
+          "text": "Given the system is connected to the document management system, when I retrieve a permit document, then it should be retrieved successfully.",
+          "passed": false
+        },
+        {
+          "text": "Trust: All document storage and retrieval actions must be logged in the audit trail.",
+          "passed": false
+        }
+      ],
+      "files_touched": [],
+      "tests_added": [],
+      "notes": null,
+      "updated_at": null,
+      "verification": {
+        "state": "not_started",
+        "criteria_passed": 0,
+        "criteria_total": 3,
+        "verified_at": null,
+        "commit_sha": null,
+        "commit_url": null,
+        "commit_at": null,
+        "points_awarded": null,
+        "outstanding": [
+          "Given the system is connected to the document management system, when I upload a permit document, then it should be stored successfully.",
+          "Given the system is connected to the document management system, when I retrieve a permit document, then it should be retrieved successfully.",
+          "Trust: All document storage and retrieval actions must be logged in the audit trail."
+        ]
+      }
     }
   ]
 }
