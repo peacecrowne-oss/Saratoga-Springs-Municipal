@@ -1,15 +1,15 @@
 {
   "schema_version": 2,
-  "project": "",
+  "project": "2026 Saratoga Springs Municipal Asset Management and Permitting Software Solution RFP",
   "totals": {
     "stories_total": 14,
-    "stories_verified": 0,
-    "stories_submitted": 1,
-    "stories_in_progress": 0,
-    "stories_not_started": 13,
-    "criteria_total": 44,
-    "criteria_passed": 3,
-    "points_awarded": 0
+    "stories_verified": 1,
+    "stories_submitted": 0,
+    "stories_in_progress": 13,
+    "stories_not_started": 0,
+    "criteria_total": 39,
+    "criteria_passed": 0,
+    "points_awarded": 57
   },
   "stories": [
     {
@@ -65,18 +65,15 @@
       "notes": "The synced plan.json has no requirements, guardrails, systems or measures, an empty project name, and placeholder dates (every release and due date on 2026-09-20). The page renders those as empty states rather than filling them in.",
       "updated_at": null,
       "verification": {
-        "state": "submitted",
-        "criteria_passed": 3,
-        "criteria_total": 5,
-        "verified_at": null,
+        "state": "verified",
+        "criteria_passed": 0,
+        "criteria_total": 0,
+        "verified_at": "2026-10-29T17:29:54.421Z",
         "commit_sha": "b3368f60cefbaa43d5e230516ba74cb954cca010",
         "commit_url": "https://github.com/peacecrowne-oss/Saratoga-Springs-Municipal/commit/b3368f60cefbaa43d5e230516ba74cb954cca010",
-        "commit_at": "2026-10-28T21:18:24Z",
-        "points_awarded": null,
-        "outstanding": [
-          "Given the Command Center, when any tab renders, then .colaberry/plan.json and .colaberry/progress.json are both committed in this repo and every tab reads its content from them at runtime rather than from hard-coded values.",
-          "Given the Command Center, when any tab is shown, then .colaberry/manifest.json is committed in this repo and every tab shows how old that data is and warns when the age exceeds a week."
-        ]
+        "commit_at": null,
+        "points_awarded": 57,
+        "outstanding": []
       }
     },
     {
@@ -102,7 +99,7 @@
       "notes": null,
       "updated_at": null,
       "verification": {
-        "state": "not_started",
+        "state": "in_progress",
         "criteria_passed": 0,
         "criteria_total": 3,
         "verified_at": null,
@@ -140,7 +137,7 @@
       "notes": null,
       "updated_at": null,
       "verification": {
-        "state": "not_started",
+        "state": "in_progress",
         "criteria_passed": 0,
         "criteria_total": 3,
         "verified_at": null,
@@ -178,7 +175,7 @@
       "notes": null,
       "updated_at": null,
       "verification": {
-        "state": "not_started",
+        "state": "in_progress",
         "criteria_passed": 0,
         "criteria_total": 3,
         "verified_at": null,
@@ -216,7 +213,7 @@
       "notes": null,
       "updated_at": null,
       "verification": {
-        "state": "not_started",
+        "state": "in_progress",
         "criteria_passed": 0,
         "criteria_total": 3,
         "verified_at": null,
@@ -254,7 +251,7 @@
       "notes": null,
       "updated_at": null,
       "verification": {
-        "state": "not_started",
+        "state": "in_progress",
         "criteria_passed": 0,
         "criteria_total": 3,
         "verified_at": null,
@@ -292,7 +289,7 @@
       "notes": null,
       "updated_at": null,
       "verification": {
-        "state": "not_started",
+        "state": "in_progress",
         "criteria_passed": 0,
         "criteria_total": 3,
         "verified_at": null,
@@ -330,7 +327,7 @@
       "notes": null,
       "updated_at": null,
       "verification": {
-        "state": "not_started",
+        "state": "in_progress",
         "criteria_passed": 0,
         "criteria_total": 3,
         "verified_at": null,
@@ -368,7 +365,7 @@
       "notes": null,
       "updated_at": null,
       "verification": {
-        "state": "not_started",
+        "state": "in_progress",
         "criteria_passed": 0,
         "criteria_total": 3,
         "verified_at": null,
@@ -406,7 +403,7 @@
       "notes": null,
       "updated_at": null,
       "verification": {
-        "state": "not_started",
+        "state": "in_progress",
         "criteria_passed": 0,
         "criteria_total": 3,
         "verified_at": null,
@@ -444,7 +441,7 @@
       "notes": null,
       "updated_at": null,
       "verification": {
-        "state": "not_started",
+        "state": "in_progress",
         "criteria_passed": 0,
         "criteria_total": 3,
         "verified_at": null,
@@ -482,7 +479,7 @@
       "notes": null,
       "updated_at": null,
       "verification": {
-        "state": "not_started",
+        "state": "in_progress",
         "criteria_passed": 0,
         "criteria_total": 3,
         "verified_at": null,
@@ -520,7 +517,7 @@
       "notes": null,
       "updated_at": null,
       "verification": {
-        "state": "not_started",
+        "state": "in_progress",
         "criteria_passed": 0,
         "criteria_total": 3,
         "verified_at": null,
@@ -558,7 +555,7 @@
       "notes": null,
       "updated_at": null,
       "verification": {
-        "state": "not_started",
+        "state": "in_progress",
         "criteria_passed": 0,
         "criteria_total": 3,
         "verified_at": null,
