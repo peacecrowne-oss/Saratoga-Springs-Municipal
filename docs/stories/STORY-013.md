@@ -1,156 +1,24 @@
-# STORY-013 — STORY-013 · Integrate Document Management System for Permit Documents
+# STORY-013 — Migrate Cityworks Data with GIS Relationships Preserved
 
-As a permit officer, I want to integrate with a document management system, so that I can store and retrieve permit-related documents efficiently.
+As the City, I want a decade of Cityworks data migrated into the new system with GIS feature relationships, attachments, fees, people, and workflows preserved, so that historical records stay usable and no open work is lost during cutover.
 
-**Release:** r4 · Release 4 · Full System Integration and User Experience (weeks 7–7)
-**Owner:** permit_officer
-**Blocked by:** STORY-012
+**Release:** r1 · Asset Management and GIS Integration (weeks 5–8)
+**Owner:** IT Administrator
+**Blocked by:** nothing — you can start this now
 
 ## The requirement this satisfies
 
-_No requirement linked._
+- **REQ-012** (Functional, must) — The system must migrate 10+ years of Cityworks data (permits, licenses, service requests, inspections, and work orders), preserving GIS feature relationships, attached documents (up to ~200,000 files), fees, people, and workflows. Migrated data may be read-only for historical look-up and analysis, with a plan to close out open Cityworks cases/work orders by department during cutover.
 
 ## How to build it
 
-## Read this first
-Your workspace repo is still being set up, so the full requirements are not on disk yet.
-Everything you need for THIS task is inlined below — work from it directly.
-Once the portal finishes provisioning, the full documents will be in your repo.
-
-## What we're building
-Saratoga Springs Municipal Asset Management and Permitting Software Solution — A comprehensive system to manage municipal assets and permits, integrating with existing systems and enhancing operational efficiency.
-You are in Release r4 · Full System Integration and User Experience (weeks 17–20).
-This release lands when: Showcase full system functionality with all integrations and an intuitive user interface.
-
-## Your task
-STORY-013 — Integrate Document Management System for Permit Documents
-As a permit officer, I want to integrate with a document management system, so that I can store and retrieve permit-related documents efficiently.
-Owning agent(s): permit_officer
-
-## The requirement this satisfies
-REQ-008 (FUNC, must) — "The system must integrate with document management systems for storing and retrieving permit-related documents."
-
-## Guardrails that apply to the WHOLE project
-These hold regardless of which story you are on. If this task would break one,
-stop and say so rather than working around it.
-
-- The system must provide role-based access control to restrict functionalities based on user roles.
-- The system must maintain audit trails to track user actions and changes.
-
-## How we build here
-Ensure document management system integration endpoints are correctly configured for document storage and retrieval.
-
-Walking skeleton first, then harden. Small, testable, reversible steps. Every external
-call gets an explicit timeout and capped retries. Every side effect is idempotent —
-running it twice must not double-charge, double-email, or double-create.
-
-## Where this sits in the build
-This story waits on these — they are already specified, reuse them, do not rebuild them:
-- STORY-011 · Enhance User Interface for Intuitive Experience
-
-This is the last story in the plan.
-
-## Failure paths you must handle
-- Integration failure with document management system
-- Document upload failure
-- Audit trail logging failure
-
-## Acceptance — your stop condition
-- Given the system is connected to the document management system, when I upload a permit document, then it should be stored successfully.
-- Given the system is connected to the document management system, when I retrieve a permit document, then it should be retrieved successfully.
-- Trust: All document storage and retrieval actions must be logged in the audit trail.
-
-When every line above passes, the task is done — stop the build loop and show me the demo.
-
-## Stop and ask me if
-- A guardrail above would have to bend to finish this.
-- The requirement turns out to be wrong, or impossible as written. Say so — do not
-  silently build something adjacent that passes the tests.
-- You need a credential, an account, or access to an external system that you do not have.
-- The acceptance criteria cannot be tested as written.
-- You are about to change a file outside this story to make it pass.
-
-## Definition of done
-- Tests cover the happy path and at least one failure path above.
-- No secrets in code, commits, or logs.
-- The commit message names the story: `STORY-013: <what you did>`. The platform reads that to track your progress.
-- A junior developer can read the change and understand why it is correct.
-- When you are finished, tell me your confidence as a percentage that this story is
-  complete and correct, and what would raise it.
-
-## When you finish: record what this story taught the project
-Before you start, read `.colaberry/plan.json` and `docs/stories/STORY-000.md` (the section
-"What the platform understands about this project"). That is the current truth. Note anything
-this story adds to it: a system it turns out to talk to, a decision you had to make, a limit you
-discovered, a role or approval point that appeared.
-
-When the acceptance criteria pass, write `.colaberry/enrichment/STORY-013.json` with exactly this shape:
-
-```
-{
-  "schemaVersion": "1",
-  "projectId": "57d39200-48c4-474f-9aaf-46e236476363",
-  "storyId": "STORY-013",
-  "projectTruthBaseRevision": 0,
-  "observedAt": "<ISO timestamp>",
-  "sourceCommitSha": "<sha of your last commit, or null>",
-  "factProposals": [
-    {
-      "dimension": "integrations",
-      "value": "Reads open tickets from the Zendesk API.",
-      "evidence": "src/zendesk/client.ts"
-    }
-  ],
-  "decisions": [
-    {
-      "statement": "Poll every 5 minutes rather than subscribe to webhooks.",
-      "rationale": "no webhook access in the sandbox",
-      "evidence": "src/poll.ts"
-    }
-  ],
-  "limitations": [
-    {
-      "statement": "Attachments over 10MB are skipped.",
-      "evidence": "src/zendesk/client.ts#L40"
-    }
-  ],
-  "demonstrationEvidence": [
-    {
-      "kind": "test",
-      "ref": "zendesk.client.test.ts"
-    }
-  ],
-  "measurementEvents": []
-}
-```
-
-Rules for that file:
-- Only what this story's work actually shows. Each entry names the file, commit or test that
-  proves it. No evidence, no entry.
-- `dimension` is one of: problem, desired_outcome, actors, current_workflow, inputs, outputs,
-  data, systems, integrations, pain_points, exceptions, approval_points, security_context,
-  ai_opportunities, human_only_decisions, assumptions, unknowns, constraints,
-  success_definition, delivery_profile.
-- Never claim a business result. What the business wanted, what hurt before, what "success"
-  means: those are the student's statements, not the build's, and the platform refuses them
-  from this file.
-- If you found something that contradicts the truth, still write it: the platform files it as
-  a question for the student rather than replacing what they confirmed.
-- `projectTruthBaseRevision` is `truth_revision` from `.colaberry/manifest.json`, or 0 if absent.
-- Commit it with the story. The platform reads it on push; pushing it twice changes nothing.
-
-## How I want you to work
-Work as a paced co-pilot. Move one step at a time: propose the next change, wait for me
-to confirm, then make it. Never batch several edits together. After each step, tell me
-what you did and what the next step is.
-
-## Your workspace repo
-Not provisioned yet. Finish repo setup in the portal to get a repo, your requirements on disk, and progress tracking. That repo is public, so keep secrets out of it.
-
-Begin.
+Build a repeatable, idempotent migration pipeline off the Cityworks SQL schema; preserve GIS feature relationships and attachments; emit a reconciliation report; include a by-department cutover plan to close out open Cityworks cases/work orders.
 
 ## Failure paths you must handle
 
+- Source export incomplete or schema drift between Cityworks versions
+- Attachment volume exceeds transfer/storage limits
+- Legacy records with ambiguous or missing GIS relationships
 
 ## Acceptance — your stop condition
 
@@ -159,8 +27,9 @@ the same criteria out of `.colaberry/progress.json`, which Claude Code keeps in
 step (see the managed block in CLAUDE.md). Ticking something you have not
 actually met only misleads you.
 
-- [ ] Given the system is connected to the document management system, when I upload a permit document, then it should be stored successfully.
-- [ ] Given the system is connected to the document management system, when I retrieve a permit document, then it should be retrieved successfully.
-- [ ] Trust: All document storage and retrieval actions must be logged in the audit trail.
+- [ ] Given a Cityworks SQL export, when the migration runs, then permits, licenses, service requests, inspections, and work orders import with their GIS feature relationships intact.
+- [ ] Given attached documents up to ~200,000 files, when the migration completes, then each attachment is linked to its record and retrievable.
+- [ ] Given migrated data is designated read-only, when a user opens a historical case, then it is viewable for look-up and analysis and clearly marked read-only.
+- [ ] Trust the migration only when a reconciliation report shows source and target record counts match and zero orphaned GIS relationships remain.
 
 When every box above is ticked, stop and show the demo.

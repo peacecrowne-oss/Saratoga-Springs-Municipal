@@ -121,7 +121,7 @@ None of these are connected on day one. The indicator must show that honestly ra
 Source: `plan.releases[]` for the bars — each carries `starts_on`, `ends_on`, `story_ids` and `is_demo_target`. `plan.schedule` has `build_start`, `build_end`, `demo_day` and `demo_release_key`. Per story, `plan.stories[].due_on` is the current date and `due_baseline_on` is the date it was FIRST given: show both, because the gap between them is slippage and a chart that quietly moves the target hides it. Status per story comes from the progress file, `stories[].verification.state`, which is one of `not_started`, `in_progress`, `submitted`, `verified`.
 A Gantt view of your releases, and under it every task with its due date. Tasks are clickable and open their own detail. Your releases:
 - **r0** Initial Setup and Core Integration — 2 stories
-- **r1** Asset Management and GIS Integration — 2 stories
+- **r1** Asset Management and GIS Integration — 3 stories
 - **r2** Permitting and Licensing Module — 2 stories
 - **r3** Security and Authentication Enhancements — 1 story
 - **r4** System Integrations and Final Deployment — 2 stories
@@ -130,7 +130,7 @@ A Gantt view of your releases, and under it every task with its due date. Tasks 
 Source: `plan.agents[]` — one card each, with `name`, `purpose`, `trigger_type`, `trigger`, `inputs`, `outputs`, `autonomy_level`, `approval_gates`, `escalation_rules`, `skills` and `owns` (the story ids it owns, which you join back to the plan and the progress file). `plan.derived.counts.agents_by_autonomy` gives you the roster breakdown without counting them yourself.
 What is NOT there: whether any agent has ever run. There is no run history, no last-run time and no success rate in these files, because none of that exists until you build the agent and it starts running. Show the design, and show "no runs recorded" — never a zero success rate, which reads as an agent that ran and failed.
 Your plan does not carry a scoped agent roster yet, so build this tab from who owns each story:
-- **IT Administrator** — owns STORY-001
+- **IT Administrator** — owns STORY-001, STORY-013
 - **GIS Analyst** — owns STORY-002, STORY-005
 - **Asset Manager** — owns STORY-004
 - **Code Enforcement Officer** — owns STORY-006
@@ -177,6 +177,7 @@ Your full set, so the Command Center can show all of it:
 - **REQ-007** (FUNC, must) — The system must support permitting processes including Code Enforcement, Planning, Building, Business Licensing, ACE Court, reimbursement agreements, and public-improvement/engineering/utility permits.
 - **REQ-010** (SAFE, must) — The system must integrate with the City’s Windows Active Directory for single sign-on and two-factor authentication, and document PII handling in the security architecture.
 - **REQ-011** (FUNC, must) — The system must integrate with Caselle, Granicus/311, ComplianceGO, Bluebeam Revu, Utilisync, and XpressBillPay using native connectors, REST APIs, or flat file exchanges.
+- **REQ-012** (FUNC, must) — The system must migrate 10+ years of Cityworks data (permits, licenses, service requests, inspections, and work orders), preserving GIS feature relationships, attached documents (up to ~200,000 files), fees, people, and workflows. Migrated data may be read-only for historical look-up and analysis, with a plan to close out open Cityworks cases/work orders by department during cutover.
 
 ## Your stories, in build order
 **r0 · Initial Setup and Core Integration**
@@ -185,6 +186,7 @@ Your full set, so the Command Center can show all of it:
 **r1 · Asset Management and GIS Integration**
 - STORY-004 — Implement Asset Lifecycle Management
 - STORY-005 — Synchronize Asset Data with GIS
+- STORY-013 — Migrate Cityworks Data with GIS Relationships Preserved
 **r2 · Permitting and Licensing Module**
 - STORY-006 — Develop Permitting Process for Code Enforcement
 - STORY-007 — Public Portal for Permit Applications

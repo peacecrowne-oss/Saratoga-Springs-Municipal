@@ -1,6 +1,6 @@
 # Municipal Asset Management and Permitting Software Solution — Stories
 
-9 stories across 5 releases, walking-skeleton first:
+10 stories across 5 releases, walking-skeleton first:
 the earliest release proves the thinnest end-to-end path including the trust
 spine, and later releases stack features on top of something already working.
 
@@ -28,6 +28,7 @@ system rather than a part of it.
 
 - **[STORY-004](stories/STORY-004.md)** — Implement Asset Lifecycle Management _(waits on STORY-001)_
 - **[STORY-005](stories/STORY-005.md)** — Synchronize Asset Data with GIS _(waits on STORY-002)_
+- **[STORY-013](stories/STORY-013.md)** — Migrate Cityworks Data with GIS Relationships Preserved
 
 ## r2 · Permitting and Licensing Module — weeks 9–12
 

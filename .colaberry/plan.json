@@ -85,6 +85,16 @@
         "STORY-010",
         "STORY-011"
       ]
+    },
+    {
+      "id": "REQ-012",
+      "kind": "FUNC",
+      "cluster": "Data Migration",
+      "priority": "must",
+      "statement": "The system must migrate 10+ years of Cityworks data (permits, licenses, service requests, inspections, and work orders), preserving GIS feature relationships, attached documents (up to ~200,000 files), fees, people, and workflows. Migrated data may be read-only for historical look-up and analysis, with a plan to close out open Cityworks cases/work orders by department during cutover.",
+      "fulfilled_by": [
+        "STORY-013"
+      ]
     }
   ],
   "releases": [
@@ -99,9 +109,9 @@
         "STORY-001",
         "STORY-002"
       ],
-      "starts_on": "2026-11-02",
-      "ends_on": "2026-11-03",
-      "is_demo_target": false
+      "starts_on": "2026-09-20",
+      "ends_on": "2026-09-20",
+      "is_demo_target": true
     },
     {
       "key": "r1",
@@ -112,10 +122,11 @@
       "week_start": 5,
       "story_ids": [
         "STORY-004",
-        "STORY-005"
+        "STORY-005",
+        "STORY-013"
       ],
-      "starts_on": "2026-11-04",
-      "ends_on": "2026-11-05",
+      "starts_on": "2026-09-20",
+      "ends_on": "2026-09-20",
       "is_demo_target": false
     },
     {
@@ -129,8 +140,8 @@
         "STORY-006",
         "STORY-007"
       ],
-      "starts_on": "2026-11-06",
-      "ends_on": "2026-11-07",
+      "starts_on": "2026-09-20",
+      "ends_on": "2026-09-20",
       "is_demo_target": false
     },
     {
@@ -143,8 +154,8 @@
       "story_ids": [
         "STORY-012"
       ],
-      "starts_on": "2026-11-09",
-      "ends_on": "2026-11-09",
+      "starts_on": "2026-09-20",
+      "ends_on": "2026-09-20",
       "is_demo_target": false
     },
     {
@@ -158,8 +169,8 @@
         "STORY-010",
         "STORY-011"
       ],
-      "starts_on": "2026-11-10",
-      "ends_on": "2026-11-11",
+      "starts_on": "2026-09-20",
+      "ends_on": "2026-09-20",
       "is_demo_target": false
     }
   ],
@@ -191,7 +202,7 @@
         "Audit log entry is not created"
       ],
       "task_guidance": "Deploy the system on-premises ensuring core functionalities are operational. Verify integration with Windows Active Directory for authentication.",
-      "due_on": "2026-11-02",
+      "due_on": "2026-09-20",
       "due_baseline_on": "2026-10-27"
     },
     {
@@ -220,7 +231,7 @@
         "Network latency issues."
       ],
       "task_guidance": "Use ESRI REST endpoints to connect and synchronize data with ArcGIS.",
-      "due_on": "2026-11-03",
+      "due_on": "2026-09-20",
       "due_baseline_on": "2026-10-28"
     },
     {
@@ -251,7 +262,7 @@
         "Condition monitoring discrepancies."
       ],
       "task_guidance": "Develop asset management features including inventory, maintenance scheduling, and condition monitoring.",
-      "due_on": "2026-11-04",
+      "due_on": "2026-09-20",
       "due_baseline_on": "2026-11-01"
     },
     {
@@ -282,7 +293,7 @@
         "Network connectivity issues."
       ],
       "task_guidance": "Implement data synchronization processes between asset management and GIS systems.",
-      "due_on": "2026-11-05",
+      "due_on": "2026-09-20",
       "due_baseline_on": "2026-11-02"
     },
     {
@@ -313,7 +324,7 @@
         "Regulatory compliance issues."
       ],
       "task_guidance": "Create workflows for code enforcement permit applications, approvals, and rejections.",
-      "due_on": "2026-11-06",
+      "due_on": "2026-09-20",
       "due_baseline_on": "2026-11-03"
     },
     {
@@ -344,7 +355,7 @@
         "Notification delivery failures."
       ],
       "task_guidance": "Develop a public-facing portal for residents to submit applications and schedule inspections.",
-      "due_on": "2026-11-07",
+      "due_on": "2026-09-20",
       "due_baseline_on": "2026-11-04"
     },
     {
@@ -375,7 +386,7 @@
         "Unauthorized access attempt"
       ],
       "task_guidance": "Ensure the integration with Caselle uses the provided API endpoints and adheres to the data format specifications outlined by Caselle.",
-      "due_on": "2026-11-10",
+      "due_on": "2026-09-20",
       "due_baseline_on": "2026-11-09"
     },
     {
@@ -407,7 +418,7 @@
         "Test report is incomplete"
       ],
       "task_guidance": "Conduct end-to-end testing of the system, including all integrations and functionalities. Ensure user acceptance testing is completed and documented.",
-      "due_on": "2026-11-11",
+      "due_on": "2026-09-20",
       "due_baseline_on": "2026-11-10"
     },
     {
@@ -438,8 +449,32 @@
         "Expired session token"
       ],
       "task_guidance": "Implement multi-factor authentication and ensure all login attempts are logged with necessary details for security audits.",
-      "due_on": "2026-11-09",
+      "due_on": "2026-09-20",
       "due_baseline_on": "2026-11-08"
+    },
+    {
+      "id": "STORY-013",
+      "title": "Migrate Cityworks Data with GIS Relationships Preserved",
+      "release": "r1",
+      "fulfills": [
+        "REQ-012"
+      ],
+      "narrative": "As the City, I want a decade of Cityworks data migrated into the new system with GIS feature relationships, attachments, fees, people, and workflows preserved, so that historical records stay usable and no open work is lost during cutover.",
+      "acceptance": [
+        "Given a Cityworks SQL export, when the migration runs, then permits, licenses, service requests, inspections, and work orders import with their GIS feature relationships intact.",
+        "Given attached documents up to ~200,000 files, when the migration completes, then each attachment is linked to its record and retrievable.",
+        "Given migrated data is designated read-only, when a user opens a historical case, then it is viewable for look-up and analysis and clearly marked read-only.",
+        "Trust the migration only when a reconciliation report shows source and target record counts match and zero orphaned GIS relationships remain."
+      ],
+      "owner_agent": "IT Administrator",
+      "failure_paths": [
+        "Source export incomplete or schema drift between Cityworks versions",
+        "Attachment volume exceeds transfer/storage limits",
+        "Legacy records with ambiguous or missing GIS relationships"
+      ],
+      "task_guidance": "Build a repeatable, idempotent migration pipeline off the Cityworks SQL schema; preserve GIS feature relationships and attachments; emit a reconciliation report; include a by-department cutover plan to close out open Cityworks cases/work orders.",
+      "due_on": "2026-09-20",
+      "due_baseline_on": "2026-09-20"
     }
   ],
   "agents": [],
@@ -447,46 +482,51 @@
     "name": "Municipal Asset Management and Permitting Software Solution",
     "descriptor": "A comprehensive system for managing municipal assets and permitting processes, integrating with existing city systems and ensuring secure, user-friendly interactions for both staff and public users.",
     "repo_url": "https://github.com/peacecrowne-oss/Saratoga-Springs-Municipal",
-    "plan_version": 3,
-    "plan_sha256": "5e72b2dc157a5fbc92dd784ab02a23cc6b9125e400e05c53081838b8da767b97"
+    "plan_version": 4,
+    "plan_sha256": "6d393f2bc5252423d1ae81959514c520249ba9c5e759045c6c3eed8f7156b8b3"
   },
   "schedule": {
-    "build_start": "2026-11-02",
-    "build_end": "2026-11-11",
-    "demo_day": "2026-11-11",
+    "build_start": "2026-09-20",
+    "build_end": "2026-09-20",
+    "demo_day": "2026-09-27",
     "build_weeks": 1,
-    "demo_release_key": null,
-    "roadmap_release_keys": [],
+    "demo_release_key": "r0",
+    "roadmap_release_keys": [
+      "r1",
+      "r2",
+      "r3",
+      "r4"
+    ],
     "prep": [
+      {
+        "key": "PREP-1",
+        "title": "Record Your Project Introduction",
+        "due_on": "2026-09-21"
+      },
       {
         "key": "PREP-2",
         "title": "Record Your Working-System Demo",
-        "due_on": "2026-11-11"
+        "due_on": "2026-09-22"
       },
       {
         "key": "PREP-3",
         "title": "Record Your AI Visual Presentation",
-        "due_on": "2026-11-11"
+        "due_on": "2026-09-24"
       },
       {
         "key": "PREP-4",
         "title": "Record Your Stakeholder Update",
-        "due_on": "2026-11-11"
+        "due_on": "2026-09-25"
       },
       {
         "key": "PREP-5",
         "title": "Record Your Final Showcase",
-        "due_on": "2026-11-11"
+        "due_on": "2026-09-26"
       },
       {
         "key": "PREP-6",
         "title": "Present at Demo Day",
-        "due_on": "2026-11-11"
-      },
-      {
-        "key": "PREP-1",
-        "title": "Record Your Project Introduction",
-        "due_on": "2026-11-11"
+        "due_on": "2026-09-27"
       }
     ]
   },
@@ -512,16 +552,16 @@
       "system administrator"
     ],
     "counts": {
-      "requirements_total": 6,
+      "requirements_total": 7,
       "requirements_by_kind": {
         "CONSTRAINT": 1,
-        "FUNC": 4,
+        "FUNC": 5,
         "SAFE": 1
       },
-      "stories_total": 9,
+      "stories_total": 10,
       "releases_total": 5,
       "agents_total": 0,
-      "failure_paths_total": 31,
+      "failure_paths_total": 34,
       "agents_by_autonomy": {}
     }
   }

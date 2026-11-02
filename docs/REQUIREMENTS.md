@@ -20,6 +20,14 @@ The system must replace the current Cityworks system for asset management, suppo
 
 Fulfilled by: STORY-004
 
+## Data Migration
+
+### REQ-012 — Functional · must
+
+The system must migrate 10+ years of Cityworks data (permits, licenses, service requests, inspections, and work orders), preserving GIS feature relationships, attached documents (up to ~200,000 files), fees, people, and workflows. Migrated data may be read-only for historical look-up and analysis, with a plan to close out open Cityworks cases/work orders by department during cutover.
+
+Fulfilled by: STORY-013
+
 ## Deployment
 
 ### REQ-002 — Constraint
