@@ -1,160 +1,29 @@
-# STORY-011 — STORY-011 · Enhance User Interface for Intuitive Experience
+# STORY-011 — Conduct Final System Testing and User Acceptance
 
-As a municipal staff member, I want an intuitive user interface, so that I can navigate the system efficiently.
+As a project manager, I want to conduct final system testing and user acceptance, so that the system is verified for full deployment.
 
-**Release:** r4 · Release 4 · Full System Integration and User Experience (weeks 7–7)
-**Owner:** Municipal Staff
-**Blocked by:** STORY-012
+**Release:** r4 · System Integrations and Final Deployment (weeks 17–20)
+**Owner:** Project Manager
+**Blocked by:** STORY-010
 
 ## The requirement this satisfies
 
-_No requirement linked._
+- **REQ-002** (Constraint, must) — The system must be deployed on-premises, with an option for near-real-time database replication to City-managed servers if on-premises is unavailable.
+- **REQ-011** (Functional, must) — The system must integrate with Caselle, Granicus/311, ComplianceGO, Bluebeam Revu, Utilisync, and XpressBillPay using native connectors, REST APIs, or flat file exchanges.
 
 ## How to build it
 
-## Read this first
-Your workspace repo is still being set up, so the full requirements are not on disk yet.
-Everything you need for THIS task is inlined below — work from it directly.
-Once the portal finishes provisioning, the full documents will be in your repo.
-
-## What we're building
-Saratoga Springs Municipal Asset Management and Permitting Software Solution — A comprehensive system to manage municipal assets and permits, integrating with existing systems and enhancing operational efficiency.
-You are in Release r4 · Full System Integration and User Experience (weeks 17–20).
-This release lands when: Showcase full system functionality with all integrations and an intuitive user interface.
-
-## Your task
-STORY-011 — Enhance User Interface for Intuitive Experience
-As a municipal staff member, I want an intuitive user interface, so that I can navigate the system efficiently.
-Owning agent(s): Municipal Staff
-
-## The requirement this satisfies
-REQ-013 (NFR, must) — "The system must feature an intuitive user interface designed for ease of use."
-
-## Guardrails that apply to the WHOLE project
-These hold regardless of which story you are on. If this task would break one,
-stop and say so rather than working around it.
-
-- The system must provide role-based access control to restrict functionalities based on user roles.
-- The system must maintain audit trails to track user actions and changes.
-
-## How we build here
-Refine UI components for better usability and ensure responsive design across devices.
-
-Walking skeleton first, then harden. Small, testable, reversible steps. Every external
-call gets an explicit timeout and capped retries. Every side effect is idempotent —
-running it twice must not double-charge, double-email, or double-create.
-
-## Where this sits in the build
-This story waits on these — they are already specified, reuse them, do not rebuild them:
-- STORY-010 · Integrate Oracle Primavera for Asset Tracking and Reporting
-
-Waiting on this one — leave room for it, but do NOT build it now:
-- STORY-010 · Integrate Oracle Primavera for Asset Tracking and Reporting
-- STORY-013 · Integrate Document Management System for Permit Documents
-
-## Failure paths you must handle
-- UI rendering errors
-- Navigation issues
-- Performance lags
-- Inconsistent design
-- Accessibility problems
-
-## Acceptance — your stop condition
-- Given the user interface, when a page is loaded, then it is intuitive and responsive.
-- Given a UI error, when detected, then a notification is sent to the admin.
-- Trust: UI changes are logged for audit purposes.
-
-When every line above passes, the task is done — stop the build loop and show me the demo.
-
-## Stop and ask me if
-- A guardrail above would have to bend to finish this.
-- The requirement turns out to be wrong, or impossible as written. Say so — do not
-  silently build something adjacent that passes the tests.
-- You need a credential, an account, or access to an external system that you do not have.
-- The acceptance criteria cannot be tested as written.
-- You are about to change a file outside this story to make it pass.
-
-## Definition of done
-- Tests cover the happy path and at least one failure path above.
-- No secrets in code, commits, or logs.
-- The commit message names the story: `STORY-011: <what you did>`. The platform reads that to track your progress.
-- A junior developer can read the change and understand why it is correct.
-- When you are finished, tell me your confidence as a percentage that this story is
-  complete and correct, and what would raise it.
-
-## When you finish: record what this story taught the project
-Before you start, read `.colaberry/plan.json` and `docs/stories/STORY-000.md` (the section
-"What the platform understands about this project"). That is the current truth. Note anything
-this story adds to it: a system it turns out to talk to, a decision you had to make, a limit you
-discovered, a role or approval point that appeared.
-
-When the acceptance criteria pass, write `.colaberry/enrichment/STORY-011.json` with exactly this shape:
-
-```
-{
-  "schemaVersion": "1",
-  "projectId": "57d39200-48c4-474f-9aaf-46e236476363",
-  "storyId": "STORY-011",
-  "projectTruthBaseRevision": 0,
-  "observedAt": "<ISO timestamp>",
-  "sourceCommitSha": "<sha of your last commit, or null>",
-  "factProposals": [
-    {
-      "dimension": "integrations",
-      "value": "Reads open tickets from the Zendesk API.",
-      "evidence": "src/zendesk/client.ts"
-    }
-  ],
-  "decisions": [
-    {
-      "statement": "Poll every 5 minutes rather than subscribe to webhooks.",
-      "rationale": "no webhook access in the sandbox",
-      "evidence": "src/poll.ts"
-    }
-  ],
-  "limitations": [
-    {
-      "statement": "Attachments over 10MB are skipped.",
-      "evidence": "src/zendesk/client.ts#L40"
-    }
-  ],
-  "demonstrationEvidence": [
-    {
-      "kind": "test",
-      "ref": "zendesk.client.test.ts"
-    }
-  ],
-  "measurementEvents": []
-}
-```
-
-Rules for that file:
-- Only what this story's work actually shows. Each entry names the file, commit or test that
-  proves it. No evidence, no entry.
-- `dimension` is one of: problem, desired_outcome, actors, current_workflow, inputs, outputs,
-  data, systems, integrations, pain_points, exceptions, approval_points, security_context,
-  ai_opportunities, human_only_decisions, assumptions, unknowns, constraints,
-  success_definition, delivery_profile.
-- Never claim a business result. What the business wanted, what hurt before, what "success"
-  means: those are the student's statements, not the build's, and the platform refuses them
-  from this file.
-- If you found something that contradicts the truth, still write it: the platform files it as
-  a question for the student rather than replacing what they confirmed.
-- `projectTruthBaseRevision` is `truth_revision` from `.colaberry/manifest.json`, or 0 if absent.
-- Commit it with the story. The platform reads it on push; pushing it twice changes nothing.
-
-## How I want you to work
-Work as a paced co-pilot. Move one step at a time: propose the next change, wait for me
-to confirm, then make it. Never batch several edits together. After each step, tell me
-what you did and what the next step is.
-
-## Your workspace repo
-Not provisioned yet. Finish repo setup in the portal to get a repo, your requirements on disk, and progress tracking. That repo is public, so keep secrets out of it.
-
-Begin.
+Conduct end-to-end testing of the system, including all integrations and functionalities. Ensure user acceptance testing is completed and documented.
 
 ## Failure paths you must handle
 
+- Critical issues found during testing
+- User acceptance testing fails
+- Test report is incomplete
+
+## Where this fits
+
+**Workspace:** Testing Dashboard · review
 
 ## Acceptance — your stop condition
 
@@ -163,8 +32,8 @@ the same criteria out of `.colaberry/progress.json`, which Claude Code keeps in
 step (see the managed block in CLAUDE.md). Ticking something you have not
 actually met only misleads you.
 
-- [ ] Given the user interface, when a page is loaded, then it is intuitive and responsive.
-- [ ] Given a UI error, when detected, then a notification is sent to the admin.
-- [ ] Trust: UI changes are logged for audit purposes.
+- [ ] Given the system is fully developed, when final testing is conducted, then all functionalities should perform as expected.
+- [ ] Given the system is tested, when a user performs acceptance testing, then no critical issues should be found.
+- [ ] Trust: Given the testing phase, when it concludes, then a comprehensive test report is generated.
 
 When every box above is ticked, stop and show the demo.

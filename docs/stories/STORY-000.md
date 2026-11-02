@@ -1,16 +1,40 @@
-# STORY-000 — STORY-000 · Build your Command Center
+# STORY-000 — Build your Command Center
 
 As a builder, I want one page that shows what I am building and how far along it is, so that I can see my own project and demo from it.
 
-**Release:** r0 · Release 0 · Initial Integration and Trust Spine (weeks 1–1)
-**Owner:** 
-**Blocked by:** nothing — you can start this now
+**Release:** ahead of the plan — this is day one, before your own stories
+**Owner:** you, with Claude Code
+**Blocked by:** nothing — this is the first thing you build
 
 ## The requirement this satisfies
 
-_No requirement linked._
+None of yours, and that is deliberate. The Command Center is the window onto your
+system rather than a part of it, so it fulfils no requirement in
+`docs/REQUIREMENTS.md` and has no row in `docs/TRACEABILITY.md`. Everything it
+displays is read out of your own plan.
 
-## How to build it
+## If you are Claude Code opening this file cold
+
+Everything you need is here. The full build brief is below, and your
+acceptance criteria are **already seeded** in `.colaberry/progress.json` under
+`STORY-000` with `"passed": false` — the platform has push access to
+this repo and writes that file on every sync.
+
+**Do not retype the criteria.** Find the story by its `id`, flip `passed` to `true`
+on each line that is genuinely true, and leave the rest `false`. Retyping is how the
+text drifts — a rewritten dash or a changed full stop makes a claim the platform
+cannot match, and the story stays unverified with your work already done. Step 3
+below has the exact procedure.
+
+**If this repo already has some of the Command Center in it, do not start over.**
+Step 2a below takes stock before anything is written and Step 2b repairs in place;
+work that is already right is kept, not replaced. And if this story's entry in `.colaberry/progress.json` carries
+fewer lines than the acceptance list at the foot of this file, this build predates a
+criterion that has since been added — there are 5 now.
+Copy the missing line in with `"passed": false` and earn it; do not tick it to make
+the two lists the same length.
+
+---
 
 ## Read this first
 This is the first thing you build, before any part of the system itself. It is a Command Center: one page that shows what you are building, what it is meant to move, and how far along you are. You will keep it open for the rest of the programme, and it is what you demo from.
@@ -47,7 +71,7 @@ Work from what you just found rather than from a blank page. Everything after th
 - **Running this a second time on a finished build must change nothing.** If every tab is already there and every criterion already holds, say exactly that and stop — no reformatting, no "while I was in there", no empty commit.
 
 ## What you are building it for
-**Saratoga Springs Municipal Asset Management and Permitting Software Solution** — A comprehensive system to manage municipal assets and permits, integrating with existing systems and enhancing operational efficiency.
+**Municipal Asset Management and Permitting Software Solution** — A comprehensive system for managing municipal assets and permitting processes, integrating with existing city systems and ensuring secure, user-friendly interactions for both staff and public users.
 
 ## Where the data comes from
 Read it from your own repo. There is no API to call and no key to hold: this page is static, and a static page cannot keep a secret, so the data ships beside it as files the platform commits. Fetch them at runtime, do not paste their contents into your components — they are rewritten every time you sync, and a copy you typed out will silently go stale.
@@ -78,54 +102,42 @@ Source: `plan.derived.measures` — each entry has `id` and `statement`.
 Your plan carries no numeric target yet. Build the tab with an empty state that says so, and leave room for one card per measure.
 
 ### 3. Users and use case
-Who this is for and what they are trying to get done. Take the roles from your own stories — they are written "As a <role>, I want …". Roles in your plan: financial manager, security officer, asset manager, city planner, citizen, permit reviewer.
+Who this is for and what they are trying to get done. Take the roles from your own stories — they are written "As a <role>, I want …". Roles in your plan: IT administrator, GIS analyst, asset manager, code enforcement officer, resident, billing manager.
 Source: `plan.derived.roles`, already extracted. `plan.stories[].narrative` has the full sentence each role came from, for the drill-down.
 
 ### 4. Guardrails — what must never happen
 Source: `plan.derived.guardrails` — `id` and `statement` each. To show whether anything enforces one, follow `plan.requirements[].fulfilled_by` to the story ids, then read those stories' `verification.state` in the progress file. A guardrail whose stories are not verified is a promise you have made and not yet kept, and the page should say so in those words.
 These are the promises your system makes. Show each one, and whether anything in the build currently enforces it:
-- **REQ-009** — The system must provide role-based access control to restrict functionalities based on user roles.
-- **REQ-010** — The system must maintain audit trails to track user actions and changes.
+- **REQ-010** — The system must integrate with the City’s Windows Active Directory for single sign-on and two-factor authentication, and document PII handling in the security architecture.
 
 ### 5. Systems — what this connects to
 Source: `plan.derived.systems` — a list of names. That is ALL your files know about them. Whether any one of them is actually connected right now is a fact about your running system, and nothing in this repo can tell you it. Render every indicator grey and labelled "not checked from here" until your own system reports otherwise. An indicator that goes green because a name appeared in a JSON file is a lie with a colour on it.
 One row per system, each with a live indicator (connected / not connected / error) and the time it was last checked:
-- Tyler Technologies
-- Oracle Primavera
-- Esri ArcGIS
-- GIS
-- Microsoft Dynamics
+- City
 
 None of these are connected on day one. The indicator must show that honestly rather than defaulting to green.
 
 ### 6. Project management
 Source: `plan.releases[]` for the bars — each carries `starts_on`, `ends_on`, `story_ids` and `is_demo_target`. `plan.schedule` has `build_start`, `build_end`, `demo_day` and `demo_release_key`. Per story, `plan.stories[].due_on` is the current date and `due_baseline_on` is the date it was FIRST given: show both, because the gap between them is slippage and a chart that quietly moves the target hides it. Status per story comes from the progress file, `stories[].verification.state`, which is one of `not_started`, `in_progress`, `submitted`, `verified`.
 A Gantt view of your releases, and under it every task with its due date. Tasks are clickable and open their own detail. Your releases:
-- **r0** Initial Integration and Trust Spine — 2 stories · 2026-10-27 → 2026-10-28
-- **r1** Asset Management and GIS Integration — 2 stories · 2026-10-30 → 2026-11-01
-- **r2** Permitting Workflow and Notifications — 3 stories · 2026-11-02 → 2026-11-04
-- **r3** Advanced Reporting and User Management — 3 stories · 2026-11-06 → 2026-11-08
-- **r4** Full System Integration and User Experience — 3 stories · 2026-11-09 → 2026-11-12
-
-Demo day is 2026-11-12. Build ends 2026-11-12, and the week between them is demo prep.
+- **r0** Initial Setup and Core Integration — 2 stories
+- **r1** Asset Management and GIS Integration — 2 stories
+- **r2** Permitting and Licensing Module — 2 stories
+- **r3** Security and Authentication Enhancements — 1 story
+- **r4** System Integrations and Final Deployment — 2 stories
 
 ### 7. AI agents
 Source: `plan.agents[]` — one card each, with `name`, `purpose`, `trigger_type`, `trigger`, `inputs`, `outputs`, `autonomy_level`, `approval_gates`, `escalation_rules`, `skills` and `owns` (the story ids it owns, which you join back to the plan and the progress file). `plan.derived.counts.agents_by_autonomy` gives you the roster breakdown without counting them yourself.
 What is NOT there: whether any agent has ever run. There is no run history, no last-run time and no success rate in these files, because none of that exists until you build the agent and it starts running. Show the design, and show "no runs recorded" — never a zero success rate, which reads as an agent that ran and failed.
 Your plan does not carry a scoped agent roster yet, so build this tab from who owns each story:
-- **financial_manager** — owns STORY-001
-- **Security Officer** — owns STORY-002
-- **Asset Manager** — owns STORY-003
-- **City Planner** — owns STORY-004
-- **Citizen** — owns STORY-005
-- **Permit Reviewer** — owns STORY-006
-- **Permit Applicant** — owns STORY-007
-- **Municipal Manager** — owns STORY-008
-- **System Administrator** — owns STORY-009
-- **asset_manager** — owns STORY-010
-- **Municipal Staff** — owns STORY-011
-- **data_analyst** — owns STORY-012
-- **permit_officer** — owns STORY-013
+- **IT Administrator** — owns STORY-001
+- **GIS Analyst** — owns STORY-002, STORY-005
+- **Asset Manager** — owns STORY-004
+- **Code Enforcement Officer** — owns STORY-006
+- **Resident** — owns STORY-007
+- **Billing Manager** — owns STORY-010
+- **Project Manager** — owns STORY-011
+- **System Administrator** — owns STORY-012
 
 These are owners, not scoped agents — say so on the tab rather than presenting a job title as an AI agent.
 
@@ -159,43 +171,28 @@ Use the brand colours you chose for this project. If you have not chosen any yet
 
 ## The requirements this has to reflect
 Your full set, so the Command Center can show all of it:
-- **REQ-001** (FUNC, must) — The system must provide asset inventory management including categorization, status tracking, and lifecycle management.
-- **REQ-002** (FUNC, must) — The system must generate reports on asset performance and maintenance needs.
-- **REQ-003** (FUNC, must) — The system must integrate with geographic information systems (GIS) to visualize asset locations and conditions.
-- **REQ-004** (FUNC, must) — The system must allow online application submission for various types of permits.
-- **REQ-005** (FUNC, must) — The system must manage workflows to route permit applications through necessary review processes.
-- **REQ-006** (FUNC, must) — The system must send notifications and alerts to applicants and reviewers regarding application status.
-- **REQ-007** (FUNC, must) — The system must integrate with financial systems for budget tracking and cost management.
-- **REQ-008** (FUNC, must) — The system must integrate with document management systems for storing and retrieving permit-related documents.
-- **REQ-009** (SAFE, must) — The system must provide role-based access control to restrict functionalities based on user roles.
-- **REQ-010** (SAFE, must) — The system must maintain audit trails to track user actions and changes.
-- **REQ-011** (FUNC, must) — The system must provide customizable dashboards for real-time data visualization.
-- **REQ-012** (FUNC, must) — The system must offer pre-defined and ad-hoc reporting tools to analyze asset and permitting data.
-- **REQ-013** (NFR, must) — The system must feature an intuitive user interface designed for ease of use.
-- **REQ-014** (CONSTRAINT, must) — The system must integrate with Tyler Technologies for municipal asset management and permitting solutions.
-- **REQ-015** (CONSTRAINT, must) — The system must integrate with Oracle Primavera for project management and asset tracking.
-- **REQ-016** (CONSTRAINT, must) — The system must integrate with Esri ArcGIS for GIS functionalities.
-- **REQ-017** (CONSTRAINT, must) — The system must integrate with Microsoft Dynamics for financial management and reporting needs.
+- **REQ-001** (FUNC, must) — The system must replace the current Cityworks system for asset management, supporting approximately 80 asset-management users.
+- **REQ-002** (CONSTRAINT, must) — The system must be deployed on-premises, with an option for near-real-time database replication to City-managed servers if on-premises is unavailable.
+- **REQ-004** (FUNC, must) — The system must fully integrate with ESRI ArcGIS Enterprise 11.3, utilizing ESRI REST endpoint service layers for data exchange and maintaining GIS field values.
+- **REQ-007** (FUNC, must) — The system must support permitting processes including Code Enforcement, Planning, Building, Business Licensing, ACE Court, reimbursement agreements, and public-improvement/engineering/utility permits.
+- **REQ-010** (SAFE, must) — The system must integrate with the City’s Windows Active Directory for single sign-on and two-factor authentication, and document PII handling in the security architecture.
+- **REQ-011** (FUNC, must) — The system must integrate with Caselle, Granicus/311, ComplianceGO, Bluebeam Revu, Utilisync, and XpressBillPay using native connectors, REST APIs, or flat file exchanges.
 
 ## Your stories, in build order
-**r0 · Initial Integration and Trust Spine**
-- STORY-001 — Integrate Tyler Technologies for Budget Tracking (due 2026-10-27)
-- STORY-002 — Establish Audit Trail for User Actions (due 2026-10-28)
+**r0 · Initial Setup and Core Integration**
+- STORY-001 — Deploy Initial System with Core Functionalities
+- STORY-002 — Integrate with ESRI ArcGIS Enterprise
 **r1 · Asset Management and GIS Integration**
-- STORY-003 — Implement Asset Inventory Management (due 2026-10-30)
-- STORY-004 — Integrate GIS for Asset Visualization (due 2026-11-01)
-**r2 · Permitting Workflow and Notifications**
-- STORY-005 — Develop Online Permit Application Submission (due 2026-11-02)
-- STORY-006 — Implement Permit Application Workflow Management (due 2026-11-03)
-- STORY-007 — Send Notifications for Permit Application Status (due 2026-11-04)
-**r3 · Advanced Reporting and User Management**
-- STORY-008 — Create Customizable Dashboards for Data Visualization (due 2026-11-06)
-- STORY-009 — Implement Role-Based Access Control (due 2026-11-07)
-- STORY-012 — Develop Reporting Tools for Asset and Permitting Data (due 2026-11-08)
-**r4 · Full System Integration and User Experience**
-- STORY-010 — Integrate Oracle Primavera for Asset Tracking and Reporting (due 2026-11-09)
-- STORY-011 — Enhance User Interface for Intuitive Experience (due 2026-11-10)
-- STORY-013 — Integrate Document Management System for Permit Documents (due 2026-11-12)
+- STORY-004 — Implement Asset Lifecycle Management
+- STORY-005 — Synchronize Asset Data with GIS
+**r2 · Permitting and Licensing Module**
+- STORY-006 — Develop Permitting Process for Code Enforcement
+- STORY-007 — Public Portal for Permit Applications
+**r3 · Security and Authentication Enhancements**
+- STORY-012 — Enhance Security Protocols for User Authentication
+**r4 · System Integrations and Final Deployment**
+- STORY-010 — Integrate with Caselle for Billing
+- STORY-011 — Conduct Final System Testing and User Acceptance
 
 ## Done means — these exact lines
 These are the acceptance criteria the platform checks. They go into `.colaberry/progress.json` **word for word** — they are matched by text, so a reworded line does not count.
@@ -233,7 +230,7 @@ When the acceptance criteria pass, write `.colaberry/enrichment/STORY-000.json` 
 ```
 {
   "schemaVersion": "1",
-  "projectId": "57d39200-48c4-474f-9aaf-46e236476363",
+  "projectId": "<project_id from .colaberry/manifest.json>",
   "storyId": "STORY-000",
   "projectTruthBaseRevision": 0,
   "observedAt": "<ISO timestamp>",
@@ -352,15 +349,14 @@ Use your default branch if it is not `main`.
 - What it asks for is `index.html` at the site root — `https://<your-github-name>.github.io/<your-repo>/`. That is the reason the entry point goes at the root of the repo rather than in a subfolder, and it is the whole of the reason. If yours is one directory down the platform still finds it, but the address in your header is the longer one.
 
 
-## Failure paths you must handle
-
-
 ## Acceptance — your stop condition
 
-Tick each box as it genuinely passes. This file is yours — the platform reads
-the same criteria out of `.colaberry/progress.json`, which Claude Code keeps in
-step (see the managed block in CLAUDE.md). Ticking something you have not
-actually met only misleads you.
+These are the exact lines the platform checks, character for character. Tick a box
+here as it genuinely passes, and set the matching `passed` flag in
+`.colaberry/progress.json` — the JSON is what the platform reads, this list is for you.
+If a `text` value in that file does not match its line here, the platform ignores it
+and the story cannot verify; make the JSON match this list rather than the other way
+round.
 
 - [ ] Given the Command Center, when it is opened, then every tab is reachable and every card drills down one level.
 - [ ] Given sample mode, when any tab is shown, then the sample data is visibly labelled as sample.
@@ -368,4 +364,5 @@ actually met only misleads you.
 - [ ] Given the Command Center, when any tab is shown, then .colaberry/manifest.json is committed in this repo and every tab shows how old that data is and warns when the age exceeds a week.
 - [ ] Trust — no tab shows a number, a connection or a result the project has not actually produced.
 
-When every box above is ticked, stop and show the demo.
+When every box above is ticked **and** a commit names the story, the platform
+confirms it on its own — within about ten seconds if you did Step 1.

@@ -1,20 +1,20 @@
 {
   "schema_version": 2,
-  "project": "2026 Saratoga Springs Municipal Asset Management and Permitting Software Solution RFP",
+  "project": "Municipal Asset Management and Permitting Software Solution",
   "totals": {
-    "stories_total": 14,
+    "stories_total": 10,
     "stories_verified": 1,
     "stories_submitted": 0,
-    "stories_in_progress": 13,
+    "stories_in_progress": 9,
     "stories_not_started": 0,
-    "criteria_total": 44,
+    "criteria_total": 32,
     "criteria_passed": 5,
     "points_awarded": 57
   },
   "stories": [
     {
       "id": "STORY-000",
-      "release": "r0",
+      "release": null,
       "acceptance_total": 5,
       "criteria": [
         {
@@ -82,15 +82,15 @@
       "acceptance_total": 3,
       "criteria": [
         {
-          "text": "Given the system is connected to Tyler Technologies, when I view the budget tracking dashboard, then I should see real-time budget data.",
+          "text": "Given the system is ready for deployment, when the deployment process is initiated, then the system should be operational with core functionalities.",
           "passed": false
         },
         {
-          "text": "Given the system is disconnected from Tyler Technologies, when I attempt to view the budget tracking dashboard, then I should receive an error message indicating the integration issue.",
+          "text": "Given the system is deployed, when a core functionality is accessed, then it should perform as expected.",
           "passed": false
         },
         {
-          "text": "Trust: All budget tracking actions must be logged in the audit trail.",
+          "text": "Trust: Given the deployment process, when it completes, then an audit log entry is created with deployment details.",
           "passed": false
         }
       ],
@@ -120,15 +120,15 @@
       "acceptance_total": 3,
       "criteria": [
         {
-          "text": "Given a user performs an action, when the action is completed, then an audit log entry is created.",
+          "text": "Given the system is connected to ESRI ArcGIS, when asset data is updated, then GIS layers should reflect these updates.",
           "passed": false
         },
         {
-          "text": "Given an unauthorized action, when attempted, then it is logged with a warning.",
+          "text": "Given a GIS field value is changed, when I check the system, then it should show the updated value.",
           "passed": false
         },
         {
-          "text": "Trust: Audit logs are immutable and timestamped.",
+          "text": "Trust: Ensure all GIS transactions are logged for audit.",
           "passed": false
         }
       ],
@@ -153,58 +153,20 @@
       }
     },
     {
-      "id": "STORY-003",
-      "release": "r1",
-      "acceptance_total": 3,
-      "criteria": [
-        {
-          "text": "Given the asset management module, when a new asset is added, then it appears in the inventory list.",
-          "passed": false
-        },
-        {
-          "text": "Given an asset is retired, when updated, then its status changes to inactive.",
-          "passed": false
-        },
-        {
-          "text": "Trust: All asset changes are logged with user details.",
-          "passed": false
-        }
-      ],
-      "files_touched": [],
-      "tests_added": [],
-      "notes": null,
-      "updated_at": null,
-      "verification": {
-        "state": "in_progress",
-        "criteria_passed": 0,
-        "criteria_total": 3,
-        "verified_at": null,
-        "commit_sha": null,
-        "commit_url": null,
-        "commit_at": null,
-        "points_awarded": null,
-        "outstanding": [
-          "Given the asset management module, when a new asset is added, then it appears in the inventory list.",
-          "Given an asset is retired, when updated, then its status changes to inactive.",
-          "Trust: All asset changes are logged with user details."
-        ]
-      }
-    },
-    {
       "id": "STORY-004",
       "release": "r1",
       "acceptance_total": 3,
       "criteria": [
         {
-          "text": "Given the GIS integration, when assets are loaded, then they appear on the map with accurate locations.",
+          "text": "Given an asset is added to the system, when I view its details, then I should see its lifecycle status.",
           "passed": false
         },
         {
-          "text": "Given a map error, when detected, then a notification is sent to the admin.",
+          "text": "Given an asset's condition changes, when I update its status, then the system should reflect the new condition.",
           "passed": false
         },
         {
-          "text": "Trust: Map interactions are logged for audit purposes.",
+          "text": "Trust: Ensure all asset updates are logged for audit.",
           "passed": false
         }
       ],
@@ -230,19 +192,19 @@
     },
     {
       "id": "STORY-005",
-      "release": "r2",
+      "release": "r1",
       "acceptance_total": 3,
       "criteria": [
         {
-          "text": "Given the permitting module, when a permit application is submitted, then it is received by the system.",
+          "text": "Given asset data is updated, when I check GIS, then the spatial information should be accurate.",
           "passed": false
         },
         {
-          "text": "Given incomplete application data, when submitted, then an error message is displayed.",
+          "text": "Given a synchronization error occurs, when I review logs, then I should see error details.",
           "passed": false
         },
         {
-          "text": "Trust: All submissions are logged with timestamps.",
+          "text": "Trust: Ensure synchronization logs are maintained for audit.",
           "passed": false
         }
       ],
@@ -272,15 +234,15 @@
       "acceptance_total": 3,
       "criteria": [
         {
-          "text": "Given a submitted application, when it enters the workflow, then it is routed to the appropriate reviewer.",
+          "text": "Given a code enforcement permit application is submitted, when I review it, then I should be able to approve or reject it.",
           "passed": false
         },
         {
-          "text": "Given a workflow error, when detected, then an alert is sent to the admin.",
+          "text": "Given a permit is approved, when I check the system, then it should reflect the approved status.",
           "passed": false
         },
         {
-          "text": "Trust: Workflow transitions are logged for audit purposes.",
+          "text": "Trust: Ensure all permit actions are logged for audit.",
           "passed": false
         }
       ],
@@ -310,15 +272,15 @@
       "acceptance_total": 3,
       "criteria": [
         {
-          "text": "Given an application status change, when it occurs, then a notification is sent to the applicant.",
+          "text": "Given I access the public portal, when I submit a permit application, then I should receive a confirmation notification.",
           "passed": false
         },
         {
-          "text": "Given an invalid contact detail, when a notification is attempted, then an error is logged.",
+          "text": "Given I schedule an inspection, when I check the portal, then I should see the scheduled date.",
           "passed": false
         },
         {
-          "text": "Trust: Notification logs are maintained for audit purposes.",
+          "text": "Trust: Ensure all public interactions are logged for audit.",
           "passed": false
         }
       ],
@@ -343,96 +305,20 @@
       }
     },
     {
-      "id": "STORY-008",
-      "release": "r3",
-      "acceptance_total": 3,
-      "criteria": [
-        {
-          "text": "Given the dashboard module, when a widget is added, then it displays real-time data.",
-          "passed": false
-        },
-        {
-          "text": "Given a dashboard error, when detected, then a notification is sent to the admin.",
-          "passed": false
-        },
-        {
-          "text": "Trust: Dashboard configurations are logged for audit purposes.",
-          "passed": false
-        }
-      ],
-      "files_touched": [],
-      "tests_added": [],
-      "notes": null,
-      "updated_at": null,
-      "verification": {
-        "state": "in_progress",
-        "criteria_passed": 0,
-        "criteria_total": 3,
-        "verified_at": null,
-        "commit_sha": null,
-        "commit_url": null,
-        "commit_at": null,
-        "points_awarded": null,
-        "outstanding": [
-          "Given the dashboard module, when a widget is added, then it displays real-time data.",
-          "Given a dashboard error, when detected, then a notification is sent to the admin.",
-          "Trust: Dashboard configurations are logged for audit purposes."
-        ]
-      }
-    },
-    {
-      "id": "STORY-009",
-      "release": "r3",
-      "acceptance_total": 3,
-      "criteria": [
-        {
-          "text": "Given the user management module, when a role is assigned, then access is granted according to permissions.",
-          "passed": false
-        },
-        {
-          "text": "Given an unauthorized role change, when attempted, then it is blocked and logged.",
-          "passed": false
-        },
-        {
-          "text": "Trust: All role changes are logged for audit purposes.",
-          "passed": false
-        }
-      ],
-      "files_touched": [],
-      "tests_added": [],
-      "notes": null,
-      "updated_at": null,
-      "verification": {
-        "state": "in_progress",
-        "criteria_passed": 0,
-        "criteria_total": 3,
-        "verified_at": null,
-        "commit_sha": null,
-        "commit_url": null,
-        "commit_at": null,
-        "points_awarded": null,
-        "outstanding": [
-          "Given the user management module, when a role is assigned, then access is granted according to permissions.",
-          "Given an unauthorized role change, when attempted, then it is blocked and logged.",
-          "Trust: All role changes are logged for audit purposes."
-        ]
-      }
-    },
-    {
       "id": "STORY-010",
       "release": "r4",
       "acceptance_total": 3,
       "criteria": [
         {
-          "text": "Given the system is connected to Oracle Primavera, when I generate an asset performance report, then I should see accurate performance metrics.",
+          "text": "Given the system is connected to Caselle, when a billing request is made, then the billing information should be accurately retrieved from Caselle.",
           "passed": false
         },
         {
-          "text": "Given the system is disconnected from Oracle Primavera, when I attempt to generate an asset performance report, then I should receive an error message indicating the integration issue.",
+          "text": "Given the system is not connected to Caselle, when a billing request is made, then an error message should be displayed indicating the connection issue.",
           "passed": false
         },
         {
-          "text": "Trust: All asset tracking and reporting actions must be logged in the audit trail.",
+          "text": "Trust: All billing transactions must be logged with a timestamp and user ID for audit purposes.",
           "passed": false
         }
       ],
@@ -462,15 +348,15 @@
       "acceptance_total": 3,
       "criteria": [
         {
-          "text": "Given the user interface, when a page is loaded, then it is intuitive and responsive.",
+          "text": "Given the system is fully developed, when final testing is conducted, then all functionalities should perform as expected.",
           "passed": false
         },
         {
-          "text": "Given a UI error, when detected, then a notification is sent to the admin.",
+          "text": "Given the system is tested, when a user performs acceptance testing, then no critical issues should be found.",
           "passed": false
         },
         {
-          "text": "Trust: UI changes are logged for audit purposes.",
+          "text": "Trust: Given the testing phase, when it concludes, then a comprehensive test report is generated.",
           "passed": false
         }
       ],
@@ -500,15 +386,15 @@
       "acceptance_total": 3,
       "criteria": [
         {
-          "text": "Given the system has pre-defined reports, when I select a report, then I should see the report data displayed accurately.",
+          "text": "Given a user attempts to log in, when the credentials are correct, then access should be granted with enhanced security protocols.",
           "passed": false
         },
         {
-          "text": "Given the system allows ad-hoc report creation, when I create a new report, then I should see the custom report data displayed accurately.",
+          "text": "Given a user attempts to log in, when the credentials are incorrect, then access should be denied and an alert should be logged.",
           "passed": false
         },
         {
-          "text": "Trust: All report generation actions must be logged in the audit trail.",
+          "text": "Trust: All login attempts must be recorded with IP address and timestamp for security auditing.",
           "passed": false
         }
       ],
@@ -529,44 +415,6 @@
           "Given the system has pre-defined reports, when I select a report, then I should see the report data displayed accurately.",
           "Given the system allows ad-hoc report creation, when I create a new report, then I should see the custom report data displayed accurately.",
           "Trust: All report generation actions must be logged in the audit trail."
-        ]
-      }
-    },
-    {
-      "id": "STORY-013",
-      "release": "r4",
-      "acceptance_total": 3,
-      "criteria": [
-        {
-          "text": "Given the system is connected to the document management system, when I upload a permit document, then it should be stored successfully.",
-          "passed": false
-        },
-        {
-          "text": "Given the system is connected to the document management system, when I retrieve a permit document, then it should be retrieved successfully.",
-          "passed": false
-        },
-        {
-          "text": "Trust: All document storage and retrieval actions must be logged in the audit trail.",
-          "passed": false
-        }
-      ],
-      "files_touched": [],
-      "tests_added": [],
-      "notes": null,
-      "updated_at": null,
-      "verification": {
-        "state": "in_progress",
-        "criteria_passed": 0,
-        "criteria_total": 3,
-        "verified_at": null,
-        "commit_sha": null,
-        "commit_url": null,
-        "commit_at": null,
-        "points_awarded": null,
-        "outstanding": [
-          "Given the system is connected to the document management system, when I upload a permit document, then it should be stored successfully.",
-          "Given the system is connected to the document management system, when I retrieve a permit document, then it should be retrieved successfully.",
-          "Trust: All document storage and retrieval actions must be logged in the audit trail."
         ]
       }
     }
