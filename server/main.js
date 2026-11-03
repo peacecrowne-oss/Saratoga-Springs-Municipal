@@ -1,26 +1,43 @@
-// Starts the system:  npm start   (then open http://127.0.0.1:3000/budget)
+// Deploys and runs the system on this machine:  npm run deploy  (or npm start)
+// then open http://127.0.0.1:3000/system
 //
 // Settings come from the environment, or from a local .env file that is never
 // committed:
+//   HOST              default 127.0.0.1
 //   PORT              default 3000
 //   DB_PATH           default data/app.db
+//   DEPLOY_ACTOR      who is deploying, for the audit trail (default: OS user@host)
+//   DEPLOY_COMMIT     the commit being deployed (default: git rev-parse HEAD)
 //   TYLER_BASE_URL    where Tyler's budget API is, e.g. http://127.0.0.1:4100
 //                     for the SIMULATED stand-in (npm run standin)
 //   TYLER_API_KEY     only if the Tyler endpoint needs one
+//
+// Exits non-zero, naming the failed step, if the deployment does not come up.
 
-import http from 'node:http';
-import { openDb } from './db.js';
-import { createAuditLog } from './audit.js';
-import { createTylerClient } from './integrations/tyler/client.js';
-import { createApp } from './app.js';
+import { deploy, DeployError } from './deploy.js';
 
-const port = Number(process.env.PORT ?? 3000);
-const audit = createAuditLog(openDb());
-const tyler = createTylerClient({ baseUrl: process.env.TYLER_BASE_URL, apiKey: process.env.TYLER_API_KEY });
+try {
+  const { url, event, stop } = await deploy();
+  const d = event.after;
+  console.log(`Deployed ${d.version} (${d.commit ?? 'commit unknown'}) on ${d.host} in ${d.durationMs} ms.`);
+  console.log(`Checks: ${d.checks.map(c => `${c.name} ok`).join(', ')}.`);
+  console.log(`Audit entry ${event.id} (system.deploy) written at ${event.occurredAt}.`);
+  console.log(`System dashboard: ${url}/system`);
+  if (!d.tylerConfigured) console.log('Tyler integration: not configured (set TYLER_BASE_URL). The budget page will say so.');
 
-http.createServer(createApp({ audit, tyler })).listen(port, '127.0.0.1', () => {
-  console.log(`Budget dashboard: http://127.0.0.1:${port}/budget`);
-  console.log(process.env.TYLER_BASE_URL
-    ? `Tyler integration: ${process.env.TYLER_BASE_URL}`
-    : 'Tyler integration: not configured (set TYLER_BASE_URL). The dashboard will say so.');
-});
+  const shutdown = async signal => {
+    console.log(`${signal}: stopping.`);
+    await stop();
+    process.exit(0);
+  };
+  process.once('SIGINT', shutdown);
+  process.once('SIGTERM', shutdown);
+} catch (err) {
+  if (!(err instanceof DeployError)) throw err;
+  console.error(`DEPLOYMENT FAILED (${err.kind}): ${err.message}`);
+  if (err.details.checks) console.error(`Checks: ${err.details.checks.map(c => `${c.name} ${c.ok ? 'ok' : 'FAILED'}`).join(', ')}.`);
+  console.error(err.details.auditRecorded
+    ? 'The failure was written to the audit trail as system.deploy_failed.'
+    : `The failure could NOT be written to the audit trail${err.details.auditError ? `: ${err.details.auditError}` : '.'}`);
+  process.exitCode = 1;
+}

@@ -1,10 +1,12 @@
 {
   "name": "saratoga-springs-municipal",
+  "version": "0.1.0",
   "private": true,
   "type": "module",
   "engines": { "node": ">=24" },
   "scripts": {
     "test": "node --disable-warning=ExperimentalWarning --test",
+    "deploy": "node --disable-warning=ExperimentalWarning --env-file-if-exists=.env server/main.js",
     "start": "node --disable-warning=ExperimentalWarning --env-file-if-exists=.env server/main.js",
     "standin": "node tools/tyler-standin/server.js"
   }

@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import http from 'node:http';
 import { openDb } from './db.js';
 import { createAuditLog } from './audit.js';
+import { createAssetStore } from './assets.js';
 import { TylerIntegrationError } from './integrations/tyler/client.js';
 import { createApp } from './app.js';
 
@@ -17,7 +18,8 @@ const manager = { 'x-user-id': 'fm-1', 'x-user-role': 'financial_manager' };
 
 async function withApp({ tyler = connected, db = openDb(':memory:') } = {}, fn) {
   const audit = createAuditLog(db);
-  const server = http.createServer(createApp({ audit, tyler, currentFiscalYear: () => 2026 }));
+  const assets = createAssetStore(db, audit);
+  const server = http.createServer(createApp({ db, audit, assets, tyler, currentFiscalYear: () => 2026 }));
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   const base = `http://127.0.0.1:${server.address().port}`;
   const get = async (path, headers = {}) => {

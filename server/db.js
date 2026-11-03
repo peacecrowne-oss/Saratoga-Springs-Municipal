@@ -28,6 +28,19 @@ const SCHEMA = `
   CREATE TRIGGER IF NOT EXISTS audit_event_no_delete
   BEFORE DELETE ON audit_event
   BEGIN SELECT RAISE(ABORT, 'audit_event is append-only'); END;
+
+  -- The first core record (STORY-001). STORY-004 adds the lifecycle on top.
+  -- asset_tag is the City's own label, so a repeated create cannot duplicate it.
+  CREATE TABLE IF NOT EXISTS asset (
+    id         TEXT PRIMARY KEY,
+    asset_tag  TEXT NOT NULL UNIQUE,
+    name       TEXT NOT NULL,
+    asset_type TEXT NOT NULL,
+    status     TEXT NOT NULL,
+    location   TEXT,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+  );
 `;
 
 // Pass ':memory:' for a throwaway database (tests use this).

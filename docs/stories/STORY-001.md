@@ -32,8 +32,8 @@ the same criteria out of `.colaberry/progress.json`, which Claude Code keeps in
 step (see the managed block in CLAUDE.md). Ticking something you have not
 actually met only misleads you.
 
-- [ ] Given the system is ready for deployment, when the deployment process is initiated, then the system should be operational with core functionalities.
-- [ ] Given the system is deployed, when a core functionality is accessed, then it should perform as expected.
-- [ ] Trust: Given the deployment process, when it completes, then an audit log entry is created with deployment details.
+- [x] Given the system is ready for deployment, when the deployment process is initiated, then the system should be operational with core functionalities.
+- [x] Given the system is deployed, when a core functionality is accessed, then it should perform as expected.
+- [x] Trust: Given the deployment process, when it completes, then an audit log entry is created with deployment details.
 
 When every box above is ticked, stop and show the demo.
