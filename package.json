@@ -8,6 +8,8 @@
     "test": "node --disable-warning=ExperimentalWarning --test",
     "deploy": "node --disable-warning=ExperimentalWarning --env-file-if-exists=.env server/main.js",
     "start": "node --disable-warning=ExperimentalWarning --env-file-if-exists=.env server/main.js",
-    "standin": "node tools/tyler-standin/server.js"
+    "standin": "node tools/tyler-standin/server.js",
+    "gis-sync": "node --disable-warning=ExperimentalWarning --env-file-if-exists=.env server/gis-sync-main.js",
+    "arcgis-standin": "node tools/arcgis-standin/server.js"
   }
 }

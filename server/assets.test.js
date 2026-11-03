@@ -18,7 +18,7 @@ test('creating an asset stores it and audits who created it', () => {
   const { created, asset } = assets.create({ actor: 'am-1', input: hydrant });
   assert.equal(created, true);
   assert.equal(asset.status, 'active');
-  assert.deepEqual(assets.get(asset.id), asset);
+  assert.deepEqual(assets.get(asset.id), { ...asset, gis: null });
 
   const [event] = audit.list({ entityType: 'asset' });
   assert.equal(event.action, 'asset.create');
@@ -57,6 +57,32 @@ test('if the audit write fails, the asset is not stored', () => {
   const assets = createAssetStore(db, failing);
   assert.throws(() => assets.create({ actor: 'am-1', input: hydrant }), AuditWriteError);
   assert.equal(assets.list().length, 0);
+});
+
+test('updating an asset changes only what was sent, audits before and after, and a repeat is a no-op', () => {
+  const { audit, assets } = setup();
+  const { asset } = assets.create({ actor: 'am-1', input: hydrant });
+  const first = assets.update({ actor: 'am-2', id: asset.id, input: { status: 'maintenance' } });
+  assert.equal(first.updated, true);
+  assert.equal(first.asset.status, 'maintenance');
+  assert.equal(first.asset.name, hydrant.name);
+  assert.ok(first.asset.updatedAt > asset.updatedAt);
+
+  const [event] = audit.list({ entityType: 'asset' });
+  assert.equal(event.action, 'asset.update');
+  assert.equal(event.before.status, 'active');
+  assert.equal(event.after.status, 'maintenance');
+
+  assert.equal(assets.update({ actor: 'am-2', id: asset.id, input: { status: 'maintenance' } }).updated, false);
+  assert.equal(audit.list({ entityType: 'asset' }).length, 2);
+});
+
+test('an update cannot change the asset tag or set a bad status, and an unknown asset is null', () => {
+  const { assets } = setup();
+  const { asset } = assets.create({ actor: 'am-1', input: hydrant });
+  assert.throws(() => assets.update({ actor: 'am-1', id: asset.id, input: { asset_tag: 'HYD-9' } }), AssetValidationError);
+  assert.throws(() => assets.update({ actor: 'am-1', id: asset.id, input: { status: 'lost' } }), AssetValidationError);
+  assert.equal(assets.update({ actor: 'am-1', id: 'nope', input: { status: 'active' } }), null);
 });
 
 test('health is ok on a fresh database and unhealthy when the audit trail loses its protection', () => {

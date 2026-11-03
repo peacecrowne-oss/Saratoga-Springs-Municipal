@@ -41,12 +41,54 @@ const SCHEMA = `
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL
   );
+
+  -- An asset's feature in the ArcGIS layer (STORY-002). Our system owns the
+  -- fields in pushed_values; GIS owns attributes and geometry.
+  CREATE TABLE IF NOT EXISTS asset_gis (
+    asset_id      TEXT PRIMARY KEY REFERENCES asset(id),
+    object_id     INTEGER,
+    layer         TEXT,
+    attributes    TEXT,
+    geometry      TEXT,
+    gis_edited_at INTEGER,
+    gis_edited_by TEXT,
+    pushed_values TEXT,
+    pushed_at     TEXT,
+    synced_at     TEXT,
+    status        TEXT NOT NULL,
+    mismatch      TEXT,
+    last_error    TEXT
+  );
+
+  CREATE TABLE IF NOT EXISTS sync_state (
+    key   TEXT PRIMARY KEY,
+    value TEXT
+  );
 `;
+
+// Runs fn inside one transaction: all of its writes land, or none do.
+// A failed rollback is attached to the original error, never dropped.
+export function transaction(db, fn) {
+  db.exec('BEGIN IMMEDIATE');
+  try {
+    const result = fn();
+    db.exec('COMMIT');
+    return result;
+  } catch (err) {
+    try {
+      db.exec('ROLLBACK');
+    } catch (rollbackErr) {
+      err.rollbackFailure = rollbackErr;
+    }
+    throw err;
+  }
+}
 
 // Pass ':memory:' for a throwaway database (tests use this).
 export function openDb(file = process.env.DB_PATH ?? DEFAULT_DB_PATH) {
   if (file !== ':memory:') fs.mkdirSync(path.dirname(file), { recursive: true });
-  const db = new DatabaseSync(file);
+  // The server and the GIS sync job share the file: wait up to 5 s for a lock, never forever.
+  const db = new DatabaseSync(file, { timeout: 5000 });
   db.exec(SCHEMA);
   return db;
 }

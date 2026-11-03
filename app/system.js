@@ -56,15 +56,24 @@ async function refreshDeployments() {
   }
 }
 
+function gisCell(gis) {
+  if (!gis) return '<span class="muted">Not synced yet</span>';
+  const fields = Object.entries(gis.fields ?? {}).filter(([, v]) => v !== null).map(([k, v]) => `${k}: ${v}`);
+  const point = gis.geometry ? `(${gis.geometry.x}, ${gis.geometry.y})` : 'no location';
+  const note = gis.status === 'mismatch' ? ' · <strong>mismatch, our value will be pushed</strong>'
+    : gis.status === 'error' ? ` · <strong>push failed</strong>: ${esc(gis.lastError?.description)}` : '';
+  return `${esc(gis.layer)} #${esc(gis.objectId)} · ${esc(gis.status)}${note}<br><span class="muted">${esc(point)}${fields.length ? ` · ${esc(fields.join(', '))}` : ''}</span>`;
+}
+
 async function refreshAssets() {
   if (!who) return;
   try {
     const { status, body } = await call('/api/assets');
     if (status !== 200) { $('assets').textContent = body.error?.message ?? `HTTP ${status}`; return; }
     $('assets').innerHTML = body.assets.length
-      ? table(['Tag', 'Name', 'Type', 'Status', 'Location', 'Created'], body.assets.map(a => `<tr>
+      ? table(['Tag', 'Name', 'Type', 'Status', 'Location', 'GIS (as last synced)', 'Created'], body.assets.map(a => `<tr>
           <td>${esc(a.assetTag)}</td><td>${esc(a.name)}</td><td>${esc(a.assetType)}</td>
-          <td>${esc(a.status)}</td><td>${esc(a.location)}</td><td>${esc(when(a.createdAt))}</td></tr>`))
+          <td>${esc(a.status)}</td><td>${esc(a.location)}</td><td>${gisCell(a.gis)}</td><td>${esc(when(a.createdAt))}</td></tr>`))
       : 'No assets recorded yet.';
   } catch (err) {
     $('assets').textContent = `Could not load assets: ${err.message}`;

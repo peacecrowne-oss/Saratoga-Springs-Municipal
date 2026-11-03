@@ -132,20 +132,36 @@
       "criteria": [
         {
           "text": "Given the system is connected to ESRI ArcGIS, when asset data is updated, then GIS layers should reflect these updates.",
-          "passed": false
+          "passed": true
         },
         {
           "text": "Given a GIS field value is changed, when I check the system, then it should show the updated value.",
-          "passed": false
+          "passed": true
         },
         {
           "text": "Trust: Ensure all GIS transactions are logged for audit.",
-          "passed": false
+          "passed": true
         }
       ],
-      "files_touched": [],
-      "tests_added": [],
-      "notes": null,
+      "files_touched": [
+        "server/gis-sync.js",
+        "server/gis-sync-main.js",
+        "server/integrations/arcgis/client.js",
+        "tools/arcgis-standin/server.js",
+        "server/assets.js",
+        "server/app.js",
+        "server/db.js",
+        "app/system.html",
+        "app/system.js",
+        "package.json",
+        "docs/stories/STORY-002.md"
+      ],
+      "tests_added": [
+        "server/gis-sync.test.js",
+        "server/integrations/arcgis/client.test.js",
+        "server/assets.test.js"
+      ],
+      "notes": "Verified against a SIMULATED ArcGIS stand-in (tools/arcgis-standin, layer named 'SIMULATED · City Assets') that speaks the ESRI REST shapes the client uses: generateToken, layer metadata with editor tracking, query with paging, applyEdits, errors as HTTP 200 with codes 498/499. Not yet run against the City's real ArcGIS Enterprise 11.3: point ARCGIS_LAYER_URL / ARCGIS_TOKEN_URL / ARCGIS_USERNAME / ARCGIS_PASSWORD at it and run npm run gis-sync. Field ownership agreed with the user: the system owns ASSET_TAG, NAME, ASSET_TYPE, STATUS, LOCATION_DESC (pushed); GIS owns geometry and all other attributes (pulled, shown on the asset). A GIS edit to a system-owned field is audited as gis.mismatch and overwritten by the system value. Every GIS transaction is audited: gis.push, gis.push_failed, gis.pull, gis.mismatch, gis.sync_run, gis.sync_failed. Failure paths: auth (bad sign-in, rejected token, one refresh on expiry), latency (timeouts, capped retries; applyEdits never retried, adds look up the tag first so nothing duplicates), data mismatch (owned-field edits, unknown features, missing layer fields).",
       "updated_at": null,
       "verification": {
         "state": "in_progress",

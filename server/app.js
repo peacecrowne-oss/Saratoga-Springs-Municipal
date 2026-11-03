@@ -6,7 +6,8 @@
 //   GET  /api/health        is the system up: database and audit trail checks
 //   GET  /api/assets        asset records, for an asset manager or IT administrator
 //   POST /api/assets        create an asset record (audited; a repeat is a no-op)
-//   GET  /api/assets/:id    one asset record
+//   GET  /api/assets/:id    one asset record, with its GIS view (STORY-002)
+//   PATCH /api/assets/:id   change name, asset_type, status or location (audited)
 //   GET  /api/budget        budget lines from Tyler, for a financial manager
 //   GET  /api/audit         recent audit events in the caller's scope (?entity_type=)
 
@@ -27,11 +28,13 @@ const PAGES = {
 
 export const BUDGET_ROLES = ['financial_manager'];
 export const ASSET_ROLES = ['asset_manager', 'it_administrator'];
+export const ASSET_READ_ROLES = [...ASSET_ROLES, 'gis_analyst'];
 // Which audit events each role may read. The first is the default.
 export const AUDIT_SCOPES = {
   financial_manager: ['budget'],
   asset_manager: ['asset'],
-  it_administrator: ['system', 'asset', 'budget'],
+  gis_analyst: ['gis_sync', 'asset', 'gis_feature'],
+  it_administrator: ['system', 'asset', 'gis_sync', 'gis_feature', 'budget'],
 };
 
 const MAX_BODY_BYTES = 64 * 1024;
@@ -73,11 +76,25 @@ export function createApp({ db, audit, assets, tyler, version = null, currentFis
     return send(res, health.status === 'ok' ? 200 : 503, { ...health, version });
   }
 
-  function allowAssets(req, res) {
+  function allowAssets(req, res, roles = ASSET_ROLES) {
     const who = identify(req);
     if (!who) { fail(res, 401, 'unauthenticated', 'Sign in to work with assets.'); return null; }
-    if (!ASSET_ROLES.includes(who.role)) { fail(res, 403, 'forbidden', `The ${who.role} role is not allowed to work with assets.`); return null; }
+    if (!roles.includes(who.role)) { fail(res, 403, 'forbidden', `The ${who.role} role is not allowed to ${roles === ASSET_ROLES ? 'change' : 'view'} assets.`); return null; }
     return who;
+  }
+
+  async function patchAsset(req, res, id) {
+    const who = allowAssets(req, res);
+    if (!who) return;
+    const input = await readJson(req);
+    try {
+      const result = assets.update({ actor: who.user, id, input });
+      if (!result) return fail(res, 404, 'not_found', `No asset with id ${id}.`);
+      return send(res, 200, result);
+    } catch (err) {
+      if (err instanceof AssetValidationError) return fail(res, 400, 'invalid', err.message, { problems: err.problems });
+      throw err;
+    }
   }
 
   async function postAsset(req, res) {
@@ -95,12 +112,12 @@ export function createApp({ db, audit, assets, tyler, version = null, currentFis
   }
 
   function getAssets(req, res) {
-    if (!allowAssets(req, res)) return;
+    if (!allowAssets(req, res, ASSET_READ_ROLES)) return;
     return send(res, 200, { assets: assets.list() });
   }
 
   function getAsset(req, res, id) {
-    if (!allowAssets(req, res)) return;
+    if (!allowAssets(req, res, ASSET_READ_ROLES)) return;
     const asset = assets.get(id);
     return asset ? send(res, 200, { asset }) : fail(res, 404, 'not_found', `No asset with id ${id}.`);
   }
@@ -153,6 +170,7 @@ export function createApp({ db, audit, assets, tyler, version = null, currentFis
   async function route(req, res, url) {
     const { pathname } = url;
     if (req.method === 'POST' && pathname === '/api/assets') return await postAsset(req, res);
+    if (req.method === 'PATCH' && pathname.startsWith('/api/assets/')) return await patchAsset(req, res, decodeURIComponent(pathname.slice('/api/assets/'.length)));
     if (req.method !== 'GET') return fail(res, 405, 'method_not_allowed', `${req.method} is not supported here.`);
     if (pathname === '/') { res.writeHead(302, { location: '/system' }); return res.end(); }
     if (pathname === '/api/health') return getHealth(res);

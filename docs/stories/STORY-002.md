@@ -31,8 +31,10 @@ the same criteria out of `.colaberry/progress.json`, which Claude Code keeps in
 step (see the managed block in CLAUDE.md). Ticking something you have not
 actually met only misleads you.
 
-- [ ] Given the system is connected to ESRI ArcGIS, when asset data is updated, then GIS layers should reflect these updates.
-- [ ] Given a GIS field value is changed, when I check the system, then it should show the updated value.
-- [ ] Trust: Ensure all GIS transactions are logged for audit.
+- [x] Given the system is connected to ESRI ArcGIS, when asset data is updated, then GIS layers should reflect these updates.
+- [x] Given a GIS field value is changed, when I check the system, then it should show the updated value.
+- [x] Trust: Ensure all GIS transactions are logged for audit.
+
+_Verified against the SIMULATED ArcGIS stand-in (`npm run arcgis-standin`), not yet against the City's ArcGIS Enterprise 11.3._
 
 When every box above is ticked, stop and show the demo.

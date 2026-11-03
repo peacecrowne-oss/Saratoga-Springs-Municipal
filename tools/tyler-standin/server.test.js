@@ -9,7 +9,8 @@ async function withStandin(mode, fn) {
   const standin = createStandin({ mode, now: () => Date.UTC(2026, 6, 2) });
   await new Promise(resolve => standin.server.listen(0, '127.0.0.1', resolve));
   const baseUrl = `http://127.0.0.1:${standin.server.address().port}`;
-  const client = createTylerClient({ baseUrl, timeoutMs: 200, retries: 0 });
+  // Short only where a timeout is the point; elsewhere a busy test run must not fail it.
+  const client = createTylerClient({ baseUrl, timeoutMs: mode === 'slow' ? 200 : 5000, retries: 0 });
   try {
     return await fn(client, standin, baseUrl);
   } finally {
