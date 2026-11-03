@@ -3,13 +3,13 @@
   "project": "Municipal Asset Management and Permitting Software Solution",
   "totals": {
     "stories_total": 11,
-    "stories_verified": 2,
+    "stories_verified": 3,
     "stories_submitted": 0,
-    "stories_in_progress": 9,
+    "stories_in_progress": 8,
     "stories_not_started": 0,
     "criteria_total": 36,
-    "criteria_passed": 8,
-    "points_awarded": 130
+    "criteria_passed": 11,
+    "points_awarded": 203
   },
   "stories": [
     {
@@ -164,19 +164,15 @@
       "notes": "Verified against a SIMULATED ArcGIS stand-in (tools/arcgis-standin, layer named 'SIMULATED · City Assets') that speaks the ESRI REST shapes the client uses: generateToken, layer metadata with editor tracking, query with paging, applyEdits, errors as HTTP 200 with codes 498/499. Not yet run against the City's real ArcGIS Enterprise 11.3: point ARCGIS_LAYER_URL / ARCGIS_TOKEN_URL / ARCGIS_USERNAME / ARCGIS_PASSWORD at it and run npm run gis-sync. Field ownership agreed with the user: the system owns ASSET_TAG, NAME, ASSET_TYPE, STATUS, LOCATION_DESC (pushed); GIS owns geometry and all other attributes (pulled, shown on the asset). A GIS edit to a system-owned field is audited as gis.mismatch and overwritten by the system value. Every GIS transaction is audited: gis.push, gis.push_failed, gis.pull, gis.mismatch, gis.sync_run, gis.sync_failed. Failure paths: auth (bad sign-in, rejected token, one refresh on expiry), latency (timeouts, capped retries; applyEdits never retried, adds look up the tag first so nothing duplicates), data mismatch (owned-field edits, unknown features, missing layer fields).",
       "updated_at": null,
       "verification": {
-        "state": "in_progress",
-        "criteria_passed": 0,
+        "state": "verified",
+        "criteria_passed": 3,
         "criteria_total": 3,
-        "verified_at": null,
-        "commit_sha": null,
-        "commit_url": null,
-        "commit_at": null,
-        "points_awarded": null,
-        "outstanding": [
-          "Given the system is connected to ESRI ArcGIS, when asset data is updated, then GIS layers should reflect these updates.",
-          "Given a GIS field value is changed, when I check the system, then it should show the updated value.",
-          "Trust: Ensure all GIS transactions are logged for audit."
-        ]
+        "verified_at": "2026-11-03T02:28:47.188Z",
+        "commit_sha": "7e0e2b545e7bef5fa02f21fb61b43e846ba256b4",
+        "commit_url": "https://github.com/peacecrowne-oss/Saratoga-Springs-Municipal/commit/7e0e2b545e7bef5fa02f21fb61b43e846ba256b4",
+        "commit_at": "2026-11-03T02:28:39Z",
+        "points_awarded": 73,
+        "outstanding": []
       }
     },
     {
