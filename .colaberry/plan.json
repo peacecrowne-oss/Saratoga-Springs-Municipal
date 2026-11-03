@@ -109,9 +109,9 @@
         "STORY-001",
         "STORY-002"
       ],
-      "starts_on": "2026-09-20",
-      "ends_on": "2026-09-20",
-      "is_demo_target": true
+      "starts_on": "2026-10-27",
+      "ends_on": "2026-10-28",
+      "is_demo_target": false
     },
     {
       "key": "r1",
@@ -125,8 +125,8 @@
         "STORY-005",
         "STORY-013"
       ],
-      "starts_on": "2026-09-20",
-      "ends_on": "2026-09-20",
+      "starts_on": "2026-11-01",
+      "ends_on": "2026-11-02",
       "is_demo_target": false
     },
     {
@@ -140,8 +140,8 @@
         "STORY-006",
         "STORY-007"
       ],
-      "starts_on": "2026-09-20",
-      "ends_on": "2026-09-20",
+      "starts_on": "2026-11-03",
+      "ends_on": "2026-11-04",
       "is_demo_target": false
     },
     {
@@ -154,8 +154,8 @@
       "story_ids": [
         "STORY-012"
       ],
-      "starts_on": "2026-09-20",
-      "ends_on": "2026-09-20",
+      "starts_on": "2026-11-08",
+      "ends_on": "2026-11-08",
       "is_demo_target": false
     },
     {
@@ -169,8 +169,8 @@
         "STORY-010",
         "STORY-011"
       ],
-      "starts_on": "2026-09-20",
-      "ends_on": "2026-09-20",
+      "starts_on": "2026-11-09",
+      "ends_on": "2026-11-10",
       "is_demo_target": false
     }
   ],
@@ -202,7 +202,7 @@
         "Audit log entry is not created"
       ],
       "task_guidance": "Deploy the system on-premises ensuring core functionalities are operational. Verify integration with Windows Active Directory for authentication.",
-      "due_on": "2026-09-20",
+      "due_on": "2026-10-27",
       "due_baseline_on": "2026-10-27"
     },
     {
@@ -231,7 +231,7 @@
         "Network latency issues."
       ],
       "task_guidance": "Use ESRI REST endpoints to connect and synchronize data with ArcGIS.",
-      "due_on": "2026-09-20",
+      "due_on": "2026-10-28",
       "due_baseline_on": "2026-10-28"
     },
     {
@@ -262,7 +262,7 @@
         "Condition monitoring discrepancies."
       ],
       "task_guidance": "Develop asset management features including inventory, maintenance scheduling, and condition monitoring.",
-      "due_on": "2026-09-20",
+      "due_on": "2026-11-01",
       "due_baseline_on": "2026-11-01"
     },
     {
@@ -293,7 +293,7 @@
         "Network connectivity issues."
       ],
       "task_guidance": "Implement data synchronization processes between asset management and GIS systems.",
-      "due_on": "2026-09-20",
+      "due_on": "2026-11-02",
       "due_baseline_on": "2026-11-02"
     },
     {
@@ -324,7 +324,7 @@
         "Regulatory compliance issues."
       ],
       "task_guidance": "Create workflows for code enforcement permit applications, approvals, and rejections.",
-      "due_on": "2026-09-20",
+      "due_on": "2026-11-03",
       "due_baseline_on": "2026-11-03"
     },
     {
@@ -355,7 +355,7 @@
         "Notification delivery failures."
       ],
       "task_guidance": "Develop a public-facing portal for residents to submit applications and schedule inspections.",
-      "due_on": "2026-09-20",
+      "due_on": "2026-11-04",
       "due_baseline_on": "2026-11-04"
     },
     {
@@ -386,7 +386,7 @@
         "Unauthorized access attempt"
       ],
       "task_guidance": "Ensure the integration with Caselle uses the provided API endpoints and adheres to the data format specifications outlined by Caselle.",
-      "due_on": "2026-09-20",
+      "due_on": "2026-11-09",
       "due_baseline_on": "2026-11-09"
     },
     {
@@ -418,7 +418,7 @@
         "Test report is incomplete"
       ],
       "task_guidance": "Conduct end-to-end testing of the system, including all integrations and functionalities. Ensure user acceptance testing is completed and documented.",
-      "due_on": "2026-09-20",
+      "due_on": "2026-11-10",
       "due_baseline_on": "2026-11-10"
     },
     {
@@ -449,7 +449,7 @@
         "Expired session token"
       ],
       "task_guidance": "Implement multi-factor authentication and ensure all login attempts are logged with necessary details for security audits.",
-      "due_on": "2026-09-20",
+      "due_on": "2026-11-08",
       "due_baseline_on": "2026-11-08"
     },
     {
@@ -473,8 +473,8 @@
         "Legacy records with ambiguous or missing GIS relationships"
       ],
       "task_guidance": "Build a repeatable, idempotent migration pipeline off the Cityworks SQL schema; preserve GIS feature relationships and attachments; emit a reconciliation report; include a by-department cutover plan to close out open Cityworks cases/work orders.",
-      "due_on": "2026-09-20",
-      "due_baseline_on": "2026-09-20"
+      "due_on": "2026-11-02",
+      "due_baseline_on": "2026-11-02"
     }
   ],
   "agents": [],
@@ -487,16 +487,11 @@
   },
   "schedule": {
     "build_start": "2026-09-20",
-    "build_end": "2026-09-20",
+    "build_end": "2026-11-10",
     "demo_day": "2026-09-27",
-    "build_weeks": 1,
-    "demo_release_key": "r0",
-    "roadmap_release_keys": [
-      "r1",
-      "r2",
-      "r3",
-      "r4"
-    ],
+    "build_weeks": 7,
+    "demo_release_key": null,
+    "roadmap_release_keys": [],
     "prep": [
       {
         "key": "PREP-1",

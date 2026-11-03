@@ -5,8 +5,8 @@
     "stories_total": 11,
     "stories_verified": 1,
     "stories_submitted": 0,
-    "stories_in_progress": 9,
-    "stories_not_started": 1,
+    "stories_in_progress": 10,
+    "stories_not_started": 0,
     "criteria_total": 36,
     "criteria_passed": 5,
     "points_awarded": 57
@@ -444,7 +444,22 @@
       "tests_added": [],
       "notes": null,
       "updated_at": null,
-      "verification": null
+      "verification": {
+        "state": "in_progress",
+        "criteria_passed": 0,
+        "criteria_total": 4,
+        "verified_at": null,
+        "commit_sha": null,
+        "commit_url": null,
+        "commit_at": null,
+        "points_awarded": null,
+        "outstanding": [
+          "Given a Cityworks SQL export, when the migration runs, then permits, licenses, service requests, inspections, and work orders import with their GIS feature relationships intact.",
+          "Given attached documents up to ~200,000 files, when the migration completes, then each attachment is linked to its record and retrievable.",
+          "Given migrated data is designated read-only, when a user opens a historical case, then it is viewable for look-up and analysis and clearly marked read-only.",
+          "Trust the migration only when a reconciliation report shows source and target record counts match and zero orphaned GIS relationships remain."
+        ]
+      }
     }
   ]
 }
