@@ -3,13 +3,13 @@
   "project": "Municipal Asset Management and Permitting Software Solution",
   "totals": {
     "stories_total": 11,
-    "stories_verified": 1,
+    "stories_verified": 2,
     "stories_submitted": 0,
-    "stories_in_progress": 10,
+    "stories_in_progress": 9,
     "stories_not_started": 0,
     "criteria_total": 36,
-    "criteria_passed": 5,
-    "points_awarded": 57
+    "criteria_passed": 8,
+    "points_awarded": 130
   },
   "stories": [
     {
@@ -114,19 +114,15 @@
       "notes": "Deploy with `npm run deploy` (on-premises, this machine). It opens the database, listens, checks /api/health and the asset records over HTTP with timeouts and capped retries, then writes a system.deploy audit event (version, commit, host, database, checks, duration); the deployment does not count until that event is written. Failures (port taken, health unreachable, database will not open, audit write fails) stop the server and are audited as system.deploy_failed where the database allows. Core functionalities agreed with the user: health check plus asset records (create/read, audited, idempotent by asset tag). Not done here: Active Directory sign-in and 2FA (REQ-010) — sign-in is still a development stand-in until STORY-012; near-real-time replication (REQ-002 option) is not built.",
       "updated_at": null,
       "verification": {
-        "state": "in_progress",
-        "criteria_passed": 0,
+        "state": "verified",
+        "criteria_passed": 3,
         "criteria_total": 3,
-        "verified_at": null,
-        "commit_sha": null,
-        "commit_url": null,
-        "commit_at": null,
-        "points_awarded": null,
-        "outstanding": [
-          "Given the system is ready for deployment, when the deployment process is initiated, then the system should be operational with core functionalities.",
-          "Given the system is deployed, when a core functionality is accessed, then it should perform as expected.",
-          "Trust: Given the deployment process, when it completes, then an audit log entry is created with deployment details."
-        ]
+        "verified_at": "2026-11-03T02:05:13.118Z",
+        "commit_sha": "d6e80c0c3962f61c436b1ade86679f944ae20864",
+        "commit_url": "https://github.com/peacecrowne-oss/Saratoga-Springs-Municipal/commit/d6e80c0c3962f61c436b1ade86679f944ae20864",
+        "commit_at": "2026-11-03T02:05:07Z",
+        "points_awarded": 73,
+        "outstanding": []
       }
     },
     {
