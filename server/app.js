@@ -4,17 +4,24 @@
 //   GET  /system            the system dashboard page (health, deployments, assets)
 //   GET  /budget            the budget tracking dashboard page
 //   GET  /api/health        is the system up: database and audit trail checks
-//   GET  /api/assets        asset records, for an asset manager or IT administrator
+//   GET  /assets            the Asset Management Dashboard page (STORY-004)
+//   GET  /api/assets        the inventory: ?status= &asset_type= &condition= &q= &limit= &offset=
 //   POST /api/assets        create an asset record (audited; a repeat is a no-op)
-//   GET  /api/assets/:id    one asset record, with its GIS view (STORY-002)
+//   GET  /api/assets/:id    one asset: lifecycle, condition, maintenance, GIS view
 //   PATCH /api/assets/:id   change name, asset_type, status or location (audited)
-//   GET  /api/budget        budget lines from Tyler, for a financial manager
+//   GET  /api/assets/:id/history        that asset's audit trail
+//   POST /api/assets/:id/conditions     record a condition reading, optionally moving the status
+//   POST /api/assets/:id/maintenance    schedule a maintenance task
+//   PATCH /api/assets/:id/maintenance/:taskId   complete or cancel a task
+//   GET  /api/maintenance   everything still to do, soonest first
+//   GET  /api/budget       budget lines from Tyler, for a financial manager
 //   GET  /api/audit         recent audit events in the caller's scope (?entity_type=)
 
 import fs from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { AuditWriteError } from './audit.js';
-import { AssetConflictError, AssetValidationError } from './assets.js';
+import { AssetConflictError, AssetStaleError, AssetTransitionError, AssetValidationError } from './assets.js';
+import { AssetCareConflict, createAssetCare } from './asset-care.js';
 import { checkHealth } from './health.js';
 import { TylerIntegrationError } from './integrations/tyler/client.js';
 
@@ -22,6 +29,8 @@ const APP_DIR = new URL('../app/', import.meta.url);
 const PAGES = {
   '/system': ['system.html', 'text/html; charset=utf-8'],
   '/system.js': ['system.js', 'text/javascript; charset=utf-8'],
+  '/assets': ['assets.html', 'text/html; charset=utf-8'],
+  '/assets.js': ['assets.js', 'text/javascript; charset=utf-8'],
   '/budget': ['budget.html', 'text/html; charset=utf-8'],
   '/budget.js': ['budget.js', 'text/javascript; charset=utf-8'],
 };
@@ -70,56 +79,100 @@ async function readJson(req) {
   }
 }
 
-export function createApp({ db, audit, assets, tyler, version = null, currentFiscalYear = () => new Date().getFullYear() }) {
+export function createApp({ db, audit, assets, care = createAssetCare(db, audit, assets), tyler, version = null, currentFiscalYear = () => new Date().getFullYear() }) {
   function getHealth(res) {
     const health = checkHealth(db);
     return send(res, health.status === 'ok' ? 200 : 503, { ...health, version });
   }
 
-  function allowAssets(req, res, roles = ASSET_ROLES) {
+  function allowRead(req, res) {
     const who = identify(req);
     if (!who) { fail(res, 401, 'unauthenticated', 'Sign in to work with assets.'); return null; }
-    if (!roles.includes(who.role)) { fail(res, 403, 'forbidden', `The ${who.role} role is not allowed to ${roles === ASSET_ROLES ? 'change' : 'view'} assets.`); return null; }
+    if (!ASSET_READ_ROLES.includes(who.role)) { fail(res, 403, 'forbidden', `The ${who.role} role is not allowed to view assets.`); return null; }
     return who;
   }
 
-  async function patchAsset(req, res, id) {
-    const who = allowAssets(req, res);
-    if (!who) return;
-    const input = await readJson(req);
-    try {
-      const result = assets.update({ actor: who.user, id, input });
-      if (!result) return fail(res, 404, 'not_found', `No asset with id ${id}.`);
-      return send(res, 200, result);
-    } catch (err) {
-      if (err instanceof AssetValidationError) return fail(res, 400, 'invalid', err.message, { problems: err.problems });
-      throw err;
+  // A refused attempt to change an asset is on the record too.
+  function allowWrite(req, res, assetId = null) {
+    const who = identify(req);
+    if (!who) { fail(res, 401, 'unauthenticated', 'Sign in to work with assets.'); return null; }
+    if (!ASSET_ROLES.includes(who.role)) {
+      audit.record({ actor: who.user, action: 'asset.update_denied', entityType: 'asset', entityId: assetId, after: { role: who.role, method: req.method, path: req.url } });
+      fail(res, 403, 'forbidden', `The ${who.role} role is not allowed to change assets.`);
+      return null;
     }
+    return who;
+  }
+
+  const noAsset = (res, id) => fail(res, 404, 'not_found', `No asset with id ${id}.`);
+
+  async function patchAsset(req, res, id) {
+    const who = allowWrite(req, res, id);
+    if (!who) return;
+    const result = assets.update({ actor: who.user, id, input: await readJson(req) });
+    if (!result) return noAsset(res, id);
+    return send(res, 200, { updated: result.updated, asset: care.view(assets.get(id), { detail: true }) });
   }
 
   async function postAsset(req, res) {
-    const who = allowAssets(req, res);
+    const who = allowWrite(req, res);
     if (!who) return;
-    const input = await readJson(req);
-    try {
-      const { created, asset } = assets.create({ actor: who.user, input });
-      return send(res, created ? 201 : 200, { created, asset });
-    } catch (err) {
-      if (err instanceof AssetValidationError) return fail(res, 400, 'invalid', err.message, { problems: err.problems });
-      if (err instanceof AssetConflictError) return fail(res, 409, 'conflict', err.message, { existing: err.existing });
-      throw err;
-    }
+    const { created, asset } = assets.create({ actor: who.user, input: await readJson(req) });
+    return send(res, created ? 201 : 200, { created, asset });
   }
 
-  function getAssets(req, res) {
-    if (!allowAssets(req, res, ASSET_READ_ROLES)) return;
-    return send(res, 200, { assets: assets.list() });
+  function getAssets(req, res, url) {
+    if (!allowRead(req, res)) return;
+    const p = url.searchParams;
+    return send(res, 200, care.search({
+      status: p.get('status') || undefined,
+      assetType: p.get('asset_type') || undefined,
+      condition: p.get('condition') || undefined,
+      q: p.get('q') || undefined,
+      limit: p.has('limit') ? Number(p.get('limit')) : undefined,
+      offset: p.has('offset') ? Number(p.get('offset')) : undefined,
+    }));
   }
 
   function getAsset(req, res, id) {
-    if (!allowAssets(req, res, ASSET_READ_ROLES)) return;
+    if (!allowRead(req, res)) return;
     const asset = assets.get(id);
-    return asset ? send(res, 200, { asset }) : fail(res, 404, 'not_found', `No asset with id ${id}.`);
+    return asset ? send(res, 200, { asset: care.view(asset, { detail: true }) }) : noAsset(res, id);
+  }
+
+  function getAssetHistory(req, res, id) {
+    if (!allowRead(req, res)) return;
+    if (!assets.get(id)) return noAsset(res, id);
+    return send(res, 200, { events: audit.list({ entityType: 'asset', entityId: id, limit: 50 }) });
+  }
+
+  async function postCondition(req, res, id) {
+    const who = allowWrite(req, res, id);
+    if (!who) return;
+    const result = care.recordCondition({ actor: who.user, assetId: id, input: await readJson(req) });
+    if (!result) return noAsset(res, id);
+    return send(res, result.recorded ? 201 : 200, result);
+  }
+
+  async function postMaintenance(req, res, id) {
+    const who = allowWrite(req, res, id);
+    if (!who) return;
+    const result = care.scheduleMaintenance({ actor: who.user, assetId: id, input: await readJson(req) });
+    if (!result) return noAsset(res, id);
+    return send(res, result.created ? 201 : 200, result);
+  }
+
+  async function patchMaintenance(req, res, id, taskId) {
+    const who = allowWrite(req, res, id);
+    if (!who) return;
+    const result = care.closeMaintenance({ actor: who.user, assetId: id, taskId, input: await readJson(req) });
+    if (!result) return fail(res, 404, 'not_found', `No maintenance task ${taskId} on asset ${id}.`);
+    return send(res, 200, result);
+  }
+
+  function getMaintenance(req, res) {
+    if (!allowRead(req, res)) return;
+    return send(res, 200, { tasks: care.openMaintenance() });
   }
 
   async function getBudget(req, res, url) {
@@ -169,13 +222,36 @@ export function createApp({ db, audit, assets, tyler, version = null, currentFis
 
   async function route(req, res, url) {
     const { pathname } = url;
-    if (req.method === 'POST' && pathname === '/api/assets') return await postAsset(req, res);
-    if (req.method === 'PATCH' && pathname.startsWith('/api/assets/')) return await patchAsset(req, res, decodeURIComponent(pathname.slice('/api/assets/'.length)));
-    if (req.method !== 'GET') return fail(res, 405, 'method_not_allowed', `${req.method} is not supported here.`);
+    const { method } = req;
+
+    // /api/assets/:id[/:part[/:partId]]
+    if (pathname === '/api/assets') {
+      if (method === 'GET') return getAssets(req, res, url);
+      if (method === 'POST') return await postAsset(req, res);
+      return fail(res, 405, 'method_not_allowed', `${method} is not supported here.`);
+    }
+    if (pathname.startsWith('/api/assets/')) {
+      const [id, part, partId, ...rest] = pathname.slice('/api/assets/'.length).split('/').map(decodeURIComponent);
+      if (rest.length) return fail(res, 404, 'not_found', 'Not found.');
+      if (part === undefined) {
+        if (method === 'GET') return getAsset(req, res, id);
+        if (method === 'PATCH') return await patchAsset(req, res, id);
+      } else if (part === 'history' && partId === undefined && method === 'GET') {
+        return getAssetHistory(req, res, id);
+      } else if (part === 'conditions' && partId === undefined && method === 'POST') {
+        return await postCondition(req, res, id);
+      } else if (part === 'maintenance' && partId === undefined && method === 'POST') {
+        return await postMaintenance(req, res, id);
+      } else if (part === 'maintenance' && partId !== undefined && method === 'PATCH') {
+        return await patchMaintenance(req, res, id, partId);
+      }
+      return fail(res, 404, 'not_found', 'Not found.');
+    }
+
+    if (method !== 'GET') return fail(res, 405, 'method_not_allowed', `${method} is not supported here.`);
     if (pathname === '/') { res.writeHead(302, { location: '/system' }); return res.end(); }
     if (pathname === '/api/health') return getHealth(res);
-    if (pathname === '/api/assets') return getAssets(req, res);
-    if (pathname.startsWith('/api/assets/')) return getAsset(req, res, decodeURIComponent(pathname.slice('/api/assets/'.length)));
+    if (pathname === '/api/maintenance') return getMaintenance(req, res);
     if (pathname === '/api/budget') return await getBudget(req, res, url);
     if (pathname === '/api/audit') return getAudit(req, res, url);
     if (PAGES[pathname]) return await page(res, PAGES[pathname]);
@@ -188,6 +264,12 @@ export function createApp({ db, audit, assets, tyler, version = null, currentFis
       return await route(req, res, url);
     } catch (err) {
       if (err instanceof BadRequest) return fail(res, 400, 'bad_request', err.message);
+      if (err instanceof URIError) return fail(res, 400, 'bad_request', 'The address is not valid.');
+      if (err instanceof AssetValidationError) return fail(res, 400, 'invalid', err.message, { problems: err.problems });
+      if (err instanceof AssetConflictError) return fail(res, 409, 'conflict', err.message, { existing: err.existing });
+      if (err instanceof AssetTransitionError) return fail(res, 409, err.kind, err.message, { from: err.from, to: err.to, allowed: err.allowed });
+      if (err instanceof AssetStaleError) return fail(res, 409, err.kind, err.message, { current: err.current });
+      if (err instanceof AssetCareConflict) return fail(res, 409, err.kind, err.message);
       if (err instanceof AuditWriteError) {
         console.error(err);
         return fail(res, 500, 'audit_unavailable', 'The audit trail is unavailable, so nothing was done or shown. Nothing happened unlogged.');

@@ -31,8 +31,8 @@ the same criteria out of `.colaberry/progress.json`, which Claude Code keeps in
 step (see the managed block in CLAUDE.md). Ticking something you have not
 actually met only misleads you.
 
-- [ ] Given an asset is added to the system, when I view its details, then I should see its lifecycle status.
-- [ ] Given an asset's condition changes, when I update its status, then the system should reflect the new condition.
-- [ ] Trust: Ensure all asset updates are logged for audit.
+- [x] Given an asset is added to the system, when I view its details, then I should see its lifecycle status.
+- [x] Given an asset's condition changes, when I update its status, then the system should reflect the new condition.
+- [x] Trust: Ensure all asset updates are logged for audit.
 
 When every box above is ticked, stop and show the demo.

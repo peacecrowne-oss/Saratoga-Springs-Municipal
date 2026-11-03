@@ -182,20 +182,31 @@
       "criteria": [
         {
           "text": "Given an asset is added to the system, when I view its details, then I should see its lifecycle status.",
-          "passed": false
+          "passed": true
         },
         {
           "text": "Given an asset's condition changes, when I update its status, then the system should reflect the new condition.",
-          "passed": false
+          "passed": true
         },
         {
           "text": "Trust: Ensure all asset updates are logged for audit.",
-          "passed": false
+          "passed": true
         }
       ],
-      "files_touched": [],
-      "tests_added": [],
-      "notes": null,
+      "files_touched": [
+        "server/asset-care.js",
+        "server/assets.js",
+        "server/app.js",
+        "server/db.js",
+        "app/assets.html",
+        "app/assets.js",
+        "app/system.html",
+        "docs/stories/STORY-004.md"
+      ],
+      "tests_added": [
+        "server/asset-care.test.js"
+      ],
+      "notes": "Inventory (filter, search, paging), lifecycle (allowed moves only; retired is final), condition readings (good, fair, poor, critical; append-only; current = latest by observed time) and one-off maintenance tasks with due dates and overdue flags. Dashboard at /assets. Every change and refusal is audited. Failure paths: data entry errors name each wrong field; illegal or out-of-date status updates are refused and audited, and a refused move also discards its reading; condition discrepancies (critical but active, late older reading, two readings for one moment, retired with open work) are flagged and audited, and the status is left for a person to change. Criteria proven by HTTP tests and a real deployment. Not proven: the /assets page was served and its script syntax-checked, but it has not been clicked through in a browser. REQ-001 is not finished by this story: no load test for about 80 users, no recurring maintenance, no real sign-in (STORY-012), and Cityworks data is not migrated (STORY-013). The status moves and the condition scale were chosen during the build and need confirming with the City's asset managers. Condition and maintenance are not sent to GIS.",
       "updated_at": null,
       "verification": {
         "state": "in_progress",

@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Asset Management</title>
+  <style>
+    :root {
+      --brand: #2f5d8a; --brand-ink: #fff;
+      --bg: #f6f7f9; --surface: #fff; --surface-2: #eef0f3; --border: #d9dde3;
+      --text: #1c2430; --text-muted: #5b6573;
+      --ok: #2e7d4f; --warn: #8a5a00; --warn-bg: #fff3d6; --bad: #b3261e; --bad-bg: #fdecea;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --brand: #7fb0e0; --brand-ink: #0d1520;
+        --bg: #12161c; --surface: #1a2029; --surface-2: #232a35; --border: #333c49;
+        --text: #e6e9ee; --text-muted: #9aa4b2;
+        --ok: #6cc28f; --warn: #f0c060; --warn-bg: #3a2e12; --bad: #f08a83; --bad-bg: #3a1c1a;
+      }
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 0 16px 48px; }
+    header { background: var(--surface); border-bottom: 1px solid var(--border); }
+    header .wrap { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; justify-content: space-between; padding: 12px 16px; }
+    h1 { font-size: 18px; margin: 0; }
+    h2 { font-size: 16px; margin: 24px 0 8px; }
+    h3 { font-size: 14px; margin: 16px 0 6px; }
+    a { color: var(--brand); }
+    form { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 13px; color: var(--text-muted); margin: 8px 0; }
+    input, select, button { font: inherit; font-size: 13px; padding: 4px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--text); }
+    button { background: var(--brand); color: var(--brand-ink); border: 0; cursor: pointer; }
+    button.plain { background: var(--surface-2); color: var(--text); }
+    .banner { margin: 16px 0 0; padding: 10px 14px; border-radius: 8px; font-size: 14px; background: var(--surface-2); }
+    .muted { color: var(--text-muted); }
+    .error { background: var(--bad-bg); color: var(--bad); border-radius: 8px; padding: 10px 14px; margin: 8px 0; }
+    .flag { background: var(--warn-bg); color: var(--warn); border-radius: 8px; padding: 8px 12px; margin: 6px 0; font-size: 14px; }
+    .done { color: var(--ok); font-size: 14px; margin: 8px 0; }
+    .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; margin: 12px 0; }
+    .table-scroll { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; background: var(--surface); border: 1px solid var(--border); }
+    th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); font-size: 14px; vertical-align: top; }
+    th { background: var(--surface-2); font-size: 13px; }
+    tbody tr.pick { cursor: pointer; }
+    tbody tr.pick:hover { background: var(--surface-2); }
+    .pill { display: inline-block; padding: 0 8px; border-radius: 999px; font-size: 12px; font-weight: 600; background: var(--surface-2); }
+    .pill.critical, .pill.overdue { background: var(--bad-bg); color: var(--bad); }
+    .pill.poor { background: var(--warn-bg); color: var(--warn); }
+    .facts { display: flex; flex-wrap: wrap; gap: 4px 24px; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <h1>Asset management</h1>
+      <form id="signin" style="margin:0">
+        <span>Development sign-in:</span>
+        <input id="user" aria-label="User" placeholder="user id" required>
+        <select id="role" aria-label="Role">
+          <option value="asset_manager">asset_manager</option>
+          <option value="it_administrator">it_administrator</option>
+          <option value="gis_analyst">gis_analyst</option>
+          <option value="citizen">citizen</option>
+        </select>
+        <button type="submit">Use</button>
+      </form>
+    </div>
+  </header>
+  <main class="wrap">
+    <div class="banner">Development sign-in: you pick who you are. Real sign-in through Active Directory arrives with STORY-012. <a href="/system">System dashboard</a> · <a href="/budget">Budget tracking</a>.</div>
+
+    <h2>Inventory</h2>
+    <form id="filters">
+      <input id="q" aria-label="Search" placeholder="search tag, name, location">
+      <input id="asset_type_filter" aria-label="Type" placeholder="type">
+      <select id="status_filter" aria-label="Status">
+        <option value="">any status</option><option>planned</option><option>active</option><option>maintenance</option><option>retired</option>
+      </select>
+      <select id="condition_filter" aria-label="Condition">
+        <option value="">any condition</option><option>good</option><option>fair</option><option>poor</option><option>critical</option>
+      </select>
+      <button type="submit">Search</button>
+    </form>
+    <div id="inventory" class="muted">Sign in as an asset manager, IT administrator or GIS analyst to see it.</div>
+    <div id="pager" class="muted" style="font-size:13px;margin-top:6px"></div>
+
+    <div id="detail"></div>
+
+    <h2>Add an asset</h2>
+    <form id="add">
+      <input id="asset_tag" aria-label="Asset tag" placeholder="asset tag, e.g. HYD-0001" required>
+      <input id="name" aria-label="Name" placeholder="name" required>
+      <input id="asset_type" aria-label="Type" placeholder="type, e.g. hydrant" required>
+      <input id="location" aria-label="Location" placeholder="location (optional)">
+      <select id="status" aria-label="Status"><option>active</option><option>planned</option></select>
+      <button type="submit">Add asset</button>
+    </form>
+    <div id="add-result"></div>
+
+    <h2>Maintenance still to do</h2>
+    <div id="due" class="muted">Sign in to see it.</div>
+  </main>
+  <script type="module" src="/assets.js"></script>
+</body>
+</html>

@@ -13,6 +13,13 @@ import { randomUUID } from 'node:crypto';
 import { transaction } from './db.js';
 
 export const ASSET_STATUSES = ['planned', 'active', 'maintenance', 'retired'];
+// The lifecycle (STORY-004): where each status may go next. Retired is final.
+export const NEXT_STATUSES = {
+  planned: ['active', 'retired'],
+  active: ['maintenance', 'retired'],
+  maintenance: ['active', 'retired'],
+  retired: [],
+};
 const EDITABLE = ['name', 'asset_type', 'status', 'location'];
 
 export class AssetValidationError extends Error {
@@ -28,6 +35,27 @@ export class AssetConflictError extends Error {
     super(`Asset tag ${existing.assetTag} already exists with different details.`);
     this.name = 'AssetConflictError';
     this.existing = existing;
+  }
+}
+
+export class AssetTransitionError extends Error {
+  constructor(from, to) {
+    const allowed = NEXT_STATUSES[from];
+    super(`An asset cannot go from ${from} to ${to}. ${allowed.length ? `From ${from} it can go to: ${allowed.join(', ')}.` : `${from} is final.`}`);
+    this.name = 'AssetTransitionError';
+    this.kind = 'illegal_transition';
+    this.from = from;
+    this.to = to;
+    this.allowed = allowed;
+  }
+}
+
+export class AssetStaleError extends Error {
+  constructor(current) {
+    super(`Someone else changed asset ${current.assetTag} after you opened it. Reload it and try again.`);
+    this.name = 'AssetStaleError';
+    this.kind = 'stale';
+    this.current = current;
   }
 }
 
@@ -92,7 +120,8 @@ const sameDetails = (a, b) =>
   a.name === b.name && a.assetType === b.assetType && a.status === b.status && a.location === b.location;
 
 export function createAssetStore(db, audit, { now = () => new Date() } = {}) {
-  const byTag = db.prepare('SELECT * FROM asset WHERE asset_tag = ?');
+  // Case-insensitive, so hyd-0001 cannot become a second HYD-0001.
+  const byTag = db.prepare('SELECT * FROM asset WHERE asset_tag = ? COLLATE NOCASE');
   const byId = db.prepare('SELECT * FROM asset WHERE id = ?');
   const all = db.prepare('SELECT * FROM asset ORDER BY created_at DESC, rowid DESC LIMIT ?');
   const gisOf = db.prepare('SELECT * FROM asset_gis WHERE asset_id = ?');
@@ -104,7 +133,44 @@ export function createAssetStore(db, audit, { now = () => new Date() } = {}) {
 
   const withGis = asset => asset && { ...asset, gis: fromGisRow(gisOf.get(asset.id)) ?? null };
 
+  // The update itself, for a caller already inside a transaction.
+  // Returns null if there is no such asset.
+  function applyUpdate({ actor, id, input }) {
+    if (!isObject(input)) throw new AssetValidationError([{ field: 'body', problem: 'must be a JSON object' }]);
+    const { expected_updated_at: expected, ...changes } = input;
+    const unknown = Object.keys(changes).filter(k => !EDITABLE.includes(k));
+    if (unknown.length) throw new AssetValidationError(unknown.map(field => ({ field, problem: 'cannot be changed here' })));
+
+    const before = fromRow(byId.get(String(id)));
+    if (!before) return null;
+    if (expected !== undefined && expected !== before.updatedAt) throw new AssetStaleError(before);
+    const merged = validateAsset({
+      asset_tag: before.assetTag, name: before.name, asset_type: before.assetType,
+      status: before.status, location: before.location, ...changes,
+    });
+    if (sameDetails(before, merged)) return { updated: false, asset: before };
+    if (merged.status !== before.status && !NEXT_STATUSES[before.status].includes(merged.status)) {
+      throw new AssetTransitionError(before.status, merged.status);
+    }
+
+    // Strictly later than the last change, so "changed since last sync" is never ambiguous.
+    const at = new Date(Math.max(now().getTime(), Date.parse(before.updatedAt) + 1)).toISOString();
+    const after = { ...before, ...merged, updatedAt: at };
+    save.run(after.name, after.assetType, after.status, after.location, at, after.id);
+    audit.record({ actor, action: 'asset.update', entityType: 'asset', entityId: after.id, before, after });
+    return { updated: true, asset: after };
+  }
+
+  // A refused change is on the record too. Written after any rollback, so it survives it.
+  function recordRejection({ actor, id, input, err }) {
+    audit.record({ actor, action: 'asset.update_rejected', entityType: 'asset', entityId: String(id),
+      after: { kind: err.kind, message: err.message, requested: input } });
+  }
+
   return {
+    applyUpdate,
+    recordRejection,
+
     create({ actor, input }) {
       const asset = validateAsset(input);
       return transaction(db, () => {
@@ -123,26 +189,12 @@ export function createAssetStore(db, audit, { now = () => new Date() } = {}) {
 
     // Changes the fields this system owns. Returns null if there is no such asset.
     update({ actor, id, input }) {
-      if (!isObject(input)) throw new AssetValidationError([{ field: 'body', problem: 'must be a JSON object' }]);
-      const unknown = Object.keys(input).filter(k => !EDITABLE.includes(k));
-      if (unknown.length) throw new AssetValidationError(unknown.map(field => ({ field, problem: 'cannot be changed here' })));
-
-      return transaction(db, () => {
-        const before = fromRow(byId.get(String(id)));
-        if (!before) return null;
-        const merged = validateAsset({
-          asset_tag: before.assetTag, name: before.name, asset_type: before.assetType,
-          status: before.status, location: before.location, ...input,
-        });
-        if (sameDetails(before, merged)) return { updated: false, asset: before };
-
-        // Strictly later than the last change, so "changed since last sync" is never ambiguous.
-        const at = new Date(Math.max(now().getTime(), Date.parse(before.updatedAt) + 1)).toISOString();
-        const after = { ...before, ...merged, updatedAt: at };
-        save.run(after.name, after.assetType, after.status, after.location, at, after.id);
-        audit.record({ actor, action: 'asset.update', entityType: 'asset', entityId: after.id, before, after });
-        return { updated: true, asset: after };
-      });
+      try {
+        return transaction(db, () => applyUpdate({ actor, id, input }));
+      } catch (err) {
+        if (err instanceof AssetTransitionError || err instanceof AssetStaleError) recordRejection({ actor, id, input, err });
+        throw err;
+      }
     },
 
     get(id) {

@@ -60,6 +60,43 @@ const SCHEMA = `
     last_error    TEXT
   );
 
+  -- Condition readings (STORY-004). The asset's current condition is its latest
+  -- reading by observed_at, and readings are history: they are never rewritten.
+  CREATE TABLE IF NOT EXISTS asset_condition (
+    id          TEXT PRIMARY KEY,
+    asset_id    TEXT NOT NULL REFERENCES asset(id),
+    condition   TEXT NOT NULL,
+    notes       TEXT,
+    observed_at TEXT NOT NULL,
+    recorded_by TEXT NOT NULL,
+    recorded_at TEXT NOT NULL,
+    UNIQUE (asset_id, observed_at)
+  );
+
+  CREATE TRIGGER IF NOT EXISTS asset_condition_no_update
+  BEFORE UPDATE ON asset_condition
+  BEGIN SELECT RAISE(ABORT, 'asset_condition is append-only'); END;
+
+  CREATE TRIGGER IF NOT EXISTS asset_condition_no_delete
+  BEFORE DELETE ON asset_condition
+  BEGIN SELECT RAISE(ABORT, 'asset_condition is append-only'); END;
+
+  -- Scheduled maintenance (STORY-004). The unique key makes a repeated
+  -- schedule request return the first task rather than create a second.
+  CREATE TABLE IF NOT EXISTS maintenance_task (
+    id           TEXT PRIMARY KEY,
+    asset_id     TEXT NOT NULL REFERENCES asset(id),
+    title        TEXT NOT NULL,
+    due_on       TEXT NOT NULL,
+    notes        TEXT,
+    status       TEXT NOT NULL,
+    created_by   TEXT NOT NULL,
+    created_at   TEXT NOT NULL,
+    updated_at   TEXT NOT NULL,
+    completed_at TEXT,
+    UNIQUE (asset_id, title, due_on)
+  );
+
   CREATE TABLE IF NOT EXISTS sync_state (
     key   TEXT PRIMARY KEY,
     value TEXT

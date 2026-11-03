@@ -70,7 +70,10 @@ test('once deployed, a core function works: an asset can be created, read back a
 
     const read = await fetch(`${deployed.url}/api/assets/${asset.id}`, { headers: admin });
     assert.equal(read.status, 200);
-    assert.deepEqual((await read.json()).asset, { ...asset, gis: null });
+    const shown = (await read.json()).asset;
+    assert.equal(shown.id, asset.id);
+    assert.equal(shown.assetTag, 'HYD-0001');
+    assert.equal(shown.gis, null);
 
     const repeat = await post({ asset_tag: 'HYD-0001', name: 'Hydrant at Broadway & Main', asset_type: 'hydrant' });
     assert.equal(repeat.status, 200, 'a repeated create is not a second asset');
