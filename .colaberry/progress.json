@@ -3,13 +3,13 @@
   "project": "Municipal Asset Management and Permitting Software Solution",
   "totals": {
     "stories_total": 11,
-    "stories_verified": 4,
+    "stories_verified": 5,
     "stories_submitted": 0,
-    "stories_in_progress": 7,
+    "stories_in_progress": 6,
     "stories_not_started": 0,
     "criteria_total": 36,
-    "criteria_passed": 14,
-    "points_awarded": 276
+    "criteria_passed": 17,
+    "points_awarded": 349
   },
   "stories": [
     {
@@ -260,19 +260,15 @@
       "notes": "Verified against the SIMULATED ArcGIS stand-in, not yet against the City's ArcGIS Enterprise 11.3, so the 'accurate' in criterion 1 means accurate as read back from the stand-in. Pushed features are read back and compared (gis.verify_failed if the layer holds something else). Geometry stays owned by GIS, so spatial problems are flagged, never corrected: changed location text opens a location_review until the point moves, and an invalid or out-of-area point never replaces a good one. A whole-layer comparison runs at least daily (or --reconcile) and finds deleted features, which are not recreated, and edits that skipped editor tracking. Duplicate features cannot take over a link. A run lock stops two jobs racing. Every stopped run is audited as gis.sync_failed with stage, asset, error and a next step, including unexpected errors. Review with npm run gis-log (-- --errors), GET /api/gis/log and GET /api/gis/status. Logs live in the append-only audit trail. Limits: the out-of-area check needs the layer to publish an extent and only applies to point layers; a bad point replaces an open location_review flag, so that flag can be lost if GIS then returns to the same point; the audit trail has no retention or archiving policy, and gis.sync_run adds a row every run; ESRI code 1019 for a missing feature is from memory and needs checking against real 11.3, though the whole-layer comparison finds deletions regardless.",
       "updated_at": null,
       "verification": {
-        "state": "in_progress",
-        "criteria_passed": 0,
+        "state": "verified",
+        "criteria_passed": 3,
         "criteria_total": 3,
-        "verified_at": null,
-        "commit_sha": null,
-        "commit_url": null,
-        "commit_at": null,
-        "points_awarded": null,
-        "outstanding": [
-          "Given asset data is updated, when I check GIS, then the spatial information should be accurate.",
-          "Given a synchronization error occurs, when I review logs, then I should see error details.",
-          "Trust: Ensure synchronization logs are maintained for audit."
-        ]
+        "verified_at": "2026-11-04T21:32:08.046Z",
+        "commit_sha": "25089d4ab17f8e38035261186f7c3230f79112e9",
+        "commit_url": "https://github.com/peacecrowne-oss/Saratoga-Springs-Municipal/commit/25089d4ab17f8e38035261186f7c3230f79112e9",
+        "commit_at": "2026-11-04T21:31:59Z",
+        "points_awarded": 73,
+        "outstanding": []
       }
     },
     {
