@@ -16,6 +16,12 @@
 //   GET  /api/maintenance   everything still to do, soonest first
 //   GET  /api/gis/status    the GIS sync now: last run, last failure, what needs attention
 //   GET  /api/gis/log       the GIS sync's history (?errors=1 for only what went wrong)
+//   GET  /permits           the Permitting Dashboard page (STORY-006)
+//   GET  /api/permits       the review queue: ?status= &q= &limit= &offset=
+//   POST /api/permits       submit an application (audited; a repeat is a no-op)
+//   GET  /api/permits/:id   one permit with its personal details (the read is audited)
+//   POST /api/permits/:id/decision  approve or reject (audited; final)
+//   GET  /api/permits/:id/history   that permit's audit trail
 //   GET  /login             the sign-in page (STORY-012)
 //   POST /api/auth/login    step 1: username and password
 //   POST /api/auth/mfa      step 2: the authenticator code; sets the session cookie
@@ -31,6 +37,7 @@ import { AuditWriteError } from './audit.js';
 import { AssetConflictError, AssetStaleError, AssetTransitionError, AssetValidationError } from './assets.js';
 import { AssetCareConflict, createAssetCare } from './asset-care.js';
 import { createAuth } from './auth.js';
+import { createPermits, PermitConflict, PermitValidationError } from './permits.js';
 import { checkHealth } from './health.js';
 import { describeGisEvent, gisStatus, readGisLog } from './gis-log.js';
 import { TylerIntegrationError } from './integrations/tyler/client.js';
@@ -44,6 +51,8 @@ const PAGES = {
   '/system.js': ['system.js', 'text/javascript; charset=utf-8'],
   '/assets': ['assets.html', 'text/html; charset=utf-8'],
   '/assets.js': ['assets.js', 'text/javascript; charset=utf-8'],
+  '/permits': ['permits.html', 'text/html; charset=utf-8'],
+  '/permits.js': ['permits.js', 'text/javascript; charset=utf-8'],
   '/budget': ['budget.html', 'text/html; charset=utf-8'],
   '/budget.js': ['budget.js', 'text/javascript; charset=utf-8'],
 };
@@ -53,13 +62,19 @@ export const ASSET_ROLES = ['asset_manager', 'it_administrator'];
 export const ASSET_READ_ROLES = [...ASSET_ROLES, 'gis_analyst'];
 export const GIS_LOG_ROLES = ['gis_analyst', 'it_administrator'];
 export const AUTH_LOG_ROLES = ['system_administrator', 'it_administrator'];
+export const PERMIT_DECIDE_ROLES = ['code_enforcement_officer'];
+// Permits hold residents' personal details, so administrators are not on this
+// list: they can read the permit audit events, which leave those details out.
+export const PERMIT_ROLES = [...PERMIT_DECIDE_ROLES, 'permit_clerk'];
 // Which audit events each role may read. The first is the default.
 export const AUDIT_SCOPES = {
   financial_manager: ['budget'],
   asset_manager: ['asset'],
   gis_analyst: ['gis_sync', 'asset', 'gis_feature'],
-  it_administrator: ['system', 'asset', 'gis_sync', 'gis_feature', 'budget', 'auth'],
+  it_administrator: ['system', 'asset', 'gis_sync', 'gis_feature', 'budget', 'auth', 'permit'],
   system_administrator: ['auth', 'system'],
+  code_enforcement_officer: ['permit'],
+  permit_clerk: ['permit'],
 };
 
 const MAX_BODY_BYTES = 64 * 1024;
@@ -105,7 +120,7 @@ async function readJson(req) {
   }
 }
 
-export function createApp({ db, audit, assets, care = createAssetCare(db, audit, assets), auth = createAuth(db, audit), tyler, version = null, allowDevHeaders = false, currentFiscalYear = () => new Date().getFullYear() }) {
+export function createApp({ db, audit, assets, care = createAssetCare(db, audit, assets), permits = createPermits(db, audit), auth = createAuth(db, audit), tyler, version = null, allowDevHeaders = false, currentFiscalYear = () => new Date().getFullYear() }) {
   // ── Sign-in ────────────────────────────────────────────────────────────────
 
   // The body of a sign-in step. A malformed one is still an attempt, so it is
@@ -258,6 +273,58 @@ export function createApp({ db, audit, assets, care = createAssetCare(db, audit,
     return send(res, 200, result);
   }
 
+  // A refused attempt to reach a permit is on the record too.
+  function allowPermit(req, res, url, roles, entityId = null) {
+    const who = identify(req);
+    if (!who) { fail(res, 401, 'unauthenticated', 'Sign in to work with permits.'); return null; }
+    if (!roles.includes(who.role)) {
+      audit.record({ actor: who.user, action: 'permit.access_denied', entityType: 'permit', entityId, after: { role: who.role, method: req.method, path: url.pathname } });
+      fail(res, 403, 'forbidden', `The ${who.role} role is not allowed to do this with permits.`);
+      return null;
+    }
+    return who;
+  }
+
+  const noPermit = (res, id) => fail(res, 404, 'not_found', `No permit with id ${id}.`);
+
+  function getPermits(req, res, url) {
+    if (!allowPermit(req, res, url, PERMIT_ROLES)) return;
+    const p = url.searchParams;
+    return send(res, 200, permits.search({
+      status: p.get('status') || undefined,
+      q: p.get('q') || undefined,
+      limit: p.has('limit') ? Number(p.get('limit')) : undefined,
+      offset: p.has('offset') ? Number(p.get('offset')) : undefined,
+    }));
+  }
+
+  async function postPermit(req, res, url) {
+    const who = allowPermit(req, res, url, PERMIT_ROLES);
+    if (!who) return;
+    const result = permits.submit({ actor: who.user, input: await readJson(req) });
+    return send(res, result.created ? 201 : 200, result);
+  }
+
+  function getPermit(req, res, url, id) {
+    const who = allowPermit(req, res, url, PERMIT_ROLES, id);
+    if (!who) return;
+    const permit = permits.view({ actor: who.user, id });
+    return permit ? send(res, 200, { permit }) : noPermit(res, id);
+  }
+
+  async function postDecision(req, res, url, id) {
+    const who = allowPermit(req, res, url, PERMIT_DECIDE_ROLES, id);
+    if (!who) return;
+    const result = permits.decide({ actor: who.user, id, input: await readJson(req) });
+    return result ? send(res, 200, result) : noPermit(res, id);
+  }
+
+  function getPermitHistory(req, res, url, id) {
+    if (!allowPermit(req, res, url, PERMIT_ROLES, id)) return;
+    if (!permits.exists(id)) return noPermit(res, id);
+    return send(res, 200, { events: audit.list({ entityType: 'permit', entityId: id, limit: 50 }) });
+  }
+
   function allowGisLog(req, res) {
     const who = identify(req);
     if (!who) { fail(res, 401, 'unauthenticated', 'Sign in to review the GIS sync.'); return null; }
@@ -367,6 +434,22 @@ export function createApp({ db, audit, assets, care = createAssetCare(db, audit,
       return fail(res, 404, 'not_found', 'Not found.');
     }
 
+    // /api/permits/:id[/:part]
+    if (pathname === '/api/permits') {
+      if (method === 'GET') return getPermits(req, res, url);
+      if (method === 'POST') return await postPermit(req, res, url);
+      return fail(res, 405, 'method_not_allowed', `${method} is not supported here.`);
+    }
+    if (pathname.startsWith('/api/permits/')) {
+      const [id, part, ...rest] = pathname.slice('/api/permits/'.length).split('/').map(decodeURIComponent);
+      if (!rest.length) {
+        if (part === undefined && method === 'GET') return getPermit(req, res, url, id);
+        if (part === 'decision' && method === 'POST') return await postDecision(req, res, url, id);
+        if (part === 'history' && method === 'GET') return getPermitHistory(req, res, url, id);
+      }
+      return fail(res, 404, 'not_found', 'Not found.');
+    }
+
     if (method !== 'GET') return fail(res, 405, 'method_not_allowed', `${method} is not supported here.`);
     if (pathname === '/') { res.writeHead(302, { location: '/system' }); return res.end(); }
     if (pathname === '/api/health') return getHealth(res);
@@ -408,6 +491,8 @@ export function createApp({ db, audit, assets, care = createAssetCare(db, audit,
       if (err instanceof AssetTransitionError) return fail(res, 409, err.kind, err.message, { from: err.from, to: err.to, allowed: err.allowed });
       if (err instanceof AssetStaleError) return fail(res, 409, err.kind, err.message, { current: err.current });
       if (err instanceof AssetCareConflict) return fail(res, 409, err.kind, err.message);
+      if (err instanceof PermitValidationError) return fail(res, 400, err.kind, err.message, { problems: err.problems });
+      if (err instanceof PermitConflict) return fail(res, 409, err.kind, err.message, { problems: err.problems });
       if (err instanceof AuditWriteError) {
         console.error(err);
         return fail(res, 500, 'audit_unavailable', 'The audit trail is unavailable, so nothing was done or shown. Nothing happened unlogged.');

@@ -23,7 +23,7 @@ import { transaction } from './db.js';
 
 const scryptAsync = promisify(scrypt);
 
-export const ROLES = ['system_administrator', 'it_administrator', 'asset_manager', 'gis_analyst', 'financial_manager', 'citizen'];
+export const ROLES = ['system_administrator', 'it_administrator', 'asset_manager', 'gis_analyst', 'financial_manager', 'code_enforcement_officer', 'permit_clerk', 'citizen'];
 export const SESSION_COOKIE = 'sid';
 
 export const LIMITS = {

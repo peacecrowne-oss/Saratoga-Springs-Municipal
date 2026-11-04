@@ -278,20 +278,34 @@
       "criteria": [
         {
           "text": "Given a code enforcement permit application is submitted, when I review it, then I should be able to approve or reject it.",
-          "passed": false
+          "passed": true
         },
         {
           "text": "Given a permit is approved, when I check the system, then it should reflect the approved status.",
-          "passed": false
+          "passed": true
         },
         {
           "text": "Trust: Ensure all permit actions are logged for audit.",
-          "passed": false
+          "passed": true
         }
       ],
-      "files_touched": [],
-      "tests_added": [],
-      "notes": null,
+      "files_touched": [
+        "server/permits.js",
+        "server/app.js",
+        "server/db.js",
+        "server/auth.js",
+        "server/assets.js",
+        "app/permits.html",
+        "app/permits.js",
+        "app/assets.html",
+        "app/system.html",
+        "docs/SECURITY.md",
+        "docs/stories/STORY-006.md"
+      ],
+      "tests_added": [
+        "server/permits.test.js"
+      ],
+      "notes": "Tested over HTTP, including a real deployment with real sign-in. REQ-007 is only partly met: code enforcement is the only permit type. The compliance checks are working assumptions for the City to confirm. The page has not been clicked through in a browser.",
       "updated_at": null,
       "verification": {
         "state": "in_progress",

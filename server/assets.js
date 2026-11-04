@@ -61,7 +61,7 @@ export class AssetStaleError extends Error {
 
 const TAG = /^[A-Za-z0-9._-]{1,64}$/;
 
-function text(input, field, max, problems, { required = true } = {}) {
+export function text(input, field, max, problems, { required = true } = {}) {
   const value = input[field];
   if (value === undefined || value === null || value === '') {
     if (required) problems.push({ field, problem: 'is required' });

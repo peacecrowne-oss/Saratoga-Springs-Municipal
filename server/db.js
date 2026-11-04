@@ -99,6 +99,27 @@ const SCHEMA = `
     UNIQUE (asset_id, title, due_on)
   );
 
+  -- Permit applications and their decisions (STORY-006). submission_key makes a
+  -- repeated submission return the first permit rather than create a second.
+  CREATE TABLE IF NOT EXISTS permit (
+    id                TEXT PRIMARY KEY,
+    permit_number     TEXT NOT NULL UNIQUE,
+    permit_type       TEXT NOT NULL,
+    status            TEXT NOT NULL,
+    submission_key    TEXT NOT NULL UNIQUE,
+    applicant_name    TEXT NOT NULL,
+    applicant_contact TEXT NOT NULL,
+    property_address  TEXT NOT NULL,
+    code_section      TEXT NOT NULL,
+    description       TEXT NOT NULL,
+    submitted_by      TEXT NOT NULL,
+    submitted_at      TEXT NOT NULL,
+    decided_by        TEXT,
+    decided_at        TEXT,
+    decision_reason   TEXT,
+    checks            TEXT
+  );
+
   -- Sign-in (STORY-012). Only hashes of passwords, challenges and session tokens
   -- are stored. The TOTP secret must be readable to check codes, so it is encrypted.
   CREATE TABLE IF NOT EXISTS auth_user (

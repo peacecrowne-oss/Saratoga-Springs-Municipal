@@ -31,8 +31,10 @@ the same criteria out of `.colaberry/progress.json`, which Claude Code keeps in
 step (see the managed block in CLAUDE.md). Ticking something you have not
 actually met only misleads you.
 
-- [ ] Given a code enforcement permit application is submitted, when I review it, then I should be able to approve or reject it.
-- [ ] Given a permit is approved, when I check the system, then it should reflect the approved status.
-- [ ] Trust: Ensure all permit actions are logged for audit.
+- [x] Given a code enforcement permit application is submitted, when I review it, then I should be able to approve or reject it.
+- [x] Given a permit is approved, when I check the system, then it should reflect the approved status.
+- [x] Trust: Ensure all permit actions are logged for audit.
+
+_REQ-007's other permit types are not built. The compliance checks (code section verified, site inspected) and the rule that nobody decides their own application are working assumptions for the City to confirm._
 
 When every box above is ticked, stop and show the demo.

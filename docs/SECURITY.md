@@ -60,16 +60,21 @@ failures). Alerts also go to the server's error output.
 | IP address, browser string | `audit_event`, `auth_session`, `auth_challenge` | Security audit | Administrators only |
 | Username typed at login | `audit_event` | Security audit | Administrators only. Someone could type their password here by mistake. |
 | Who did what, and when | `audit_event` | Accountability | Append-only, read by role |
+| Permit applicant's name and contact, property address, description | `permit` | Decide the application | Code enforcement officers and permit clerks only. The queue leaves them out, and opening a permit is logged. Administrators cannot read them. |
 
-Passwords, codes and session tokens are never logged.
+Passwords, codes and session tokens are never logged. Because the audit trail cannot
+be erased, permit audit events leave out the applicant's name and contact, the
+address and the description. They do keep the officer's decision reason, so officers
+should not put personal details in it.
 
 **Decisions the City still has to make:**
 
 - **Retention.** Nothing is deleted today. The audit trail is append-only and grows
   forever, and expired sessions and challenges stay in their tables. The City should
   set a retention period that fits its records rules.
-- **Resident data.** The public portal (STORY-007) will add residents' personal data,
-  and this document must be updated then.
+- **Resident data.** Permits already hold applicants' details, entered by staff. The
+  public portal (STORY-007) will let residents enter their own, and this document must
+  be updated then.
 - **Encryption at rest.** The database file itself is not encrypted, so full-disk
   encryption on the server is expected.
 
