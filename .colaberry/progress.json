@@ -3,13 +3,13 @@
   "project": "Municipal Asset Management and Permitting Software Solution",
   "totals": {
     "stories_total": 11,
-    "stories_verified": 5,
+    "stories_verified": 6,
     "stories_submitted": 0,
-    "stories_in_progress": 6,
+    "stories_in_progress": 5,
     "stories_not_started": 0,
-    "criteria_total": 36,
+    "criteria_total": 33,
     "criteria_passed": 17,
-    "points_awarded": 349
+    "points_awarded": 422
   },
   "stories": [
     {
@@ -467,19 +467,15 @@
       "notes": "Real sign-in replaces the development role picker: password (salted scrypt), then a required TOTP code (RFC 6238, checked against its published vector), then a session in an HttpOnly SameSite=Strict cookie. Role headers now work only when a test asks createApp for them; nothing that starts the real system can enable them. Failure paths: incorrect password (same answer whether or not the user exists; alert logged); wrong, reused or moved code; brute force (limits per user and address, per user, per address, including parallel bursts; alert logged once); session hijack (other IP or browser ends the session); expired session (30 minutes idle, 8 hours maximum). Every attempt is audited with IP and time before the answer goes out, and if it cannot be written the login is refused. REQ-010 is NOT met by this story: accounts are local, with no Active Directory and no single sign-on, because this project cannot reach a directory. docs/SECURITY.md documents PII handling, and retention is left as a City decision. Not proven: no page has been clicked through in a browser, including the new login page and the three pages changed to use it. API flows were tested over HTTP and pages only confirmed as served. Not built: changing your own password, password reset, self-service authenticator setup, QR codes, TLS in the server itself (deploy refuses to listen beyond this machine without a TLS proxy). Not penetration tested.",
       "updated_at": null,
       "verification": {
-        "state": "in_progress",
+        "state": "verified",
         "criteria_passed": 0,
-        "criteria_total": 3,
-        "verified_at": null,
-        "commit_sha": null,
-        "commit_url": null,
+        "criteria_total": 0,
+        "verified_at": "2026-11-04T22:20:02.665Z",
+        "commit_sha": "d8fce4f16b3414bc55a8c2cc3cdb0e95ac05c65d",
+        "commit_url": "https://github.com/peacecrowne-oss/Saratoga-Springs-Municipal/commit/d8fce4f16b3414bc55a8c2cc3cdb0e95ac05c65d",
         "commit_at": null,
-        "points_awarded": null,
-        "outstanding": [
-          "Given a user attempts to log in, when the credentials are correct, then access should be granted with enhanced security protocols.",
-          "Given a user attempts to log in, when the credentials are incorrect, then access should be denied and an alert should be logged.",
-          "Trust: All login attempts must be recorded with IP address and timestamp for security auditing."
-        ]
+        "points_awarded": 73,
+        "outstanding": []
       }
     },
     {
