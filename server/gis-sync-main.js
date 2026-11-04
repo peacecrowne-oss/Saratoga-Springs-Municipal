@@ -1,5 +1,8 @@
 // Runs the GIS Sync Job:  npm run gis-sync            (once; exits 1 on failure)
 //                         npm run gis-sync -- --watch  (every GIS_SYNC_INTERVAL_S seconds)
+//                         npm run gis-sync -- --reconcile  (compare the whole layer now;
+//                                                           otherwise this happens daily)
+// To see what it did:     npm run gis-log  (add -- --errors for only what went wrong)
 //
 // Settings come from the environment, or from a local .env file that is never
 // committed:
@@ -27,15 +30,19 @@ const client = createArcGisClient({
   password: env.ARCGIS_PASSWORD,
 });
 
+const reconcile = process.argv.includes('--reconcile');
+
 async function once() {
   try {
-    const r = await runGisSync({ db, audit, client });
+    const r = await runGisSync({ db, audit, client, reconcile });
     console.log(`${new Date().toISOString()} GIS sync with "${r.layer}"${r.simulated ? ' (SIMULATED)' : ''}: ` +
-      `pulled ${r.pulled}, mismatches ${r.mismatches}, unknown features ${r.unknown}, pushed ${r.pushed}, push failures ${r.pushFailed}, ${r.durationMs} ms.`);
+      `pulled ${r.pulled}, mismatches ${r.mismatches}, unknown features ${r.unknown}, duplicates ${r.duplicates}, pushed ${r.pushed}, push failures ${r.pushFailed}, ` +
+      `verified ${r.verified}, read-back failures ${r.verifyFailed}, missing features ${r.missingFeatures}, spatial problems ${r.spatialProblems}, ` +
+      `no GIS point yet ${r.awaitingLocation}${r.reconciled ? ', whole layer compared' : ''}, ${r.durationMs} ms.`);
     return r.ok;
   } catch (err) {
-    if (!err.kind) throw err;
-    console.error(`${new Date().toISOString()} GIS SYNC FAILED (${err.kind}): ${err.message} Written to the audit trail as gis.sync_failed.`);
+    console.error(`${new Date().toISOString()} GIS SYNC FAILED at ${err.stage ?? 'start'} (${err.kind ?? err.name}): ${err.message} ` +
+      (err.auditRecorded ? 'Written to the audit trail as gis.sync_failed. See: npm run gis-log -- --errors' : `NOT written to the audit trail: ${err.auditError ?? 'the failure came before the audit step'}.`));
     return false;
   }
 }

@@ -10,6 +10,7 @@
     "start": "node --disable-warning=ExperimentalWarning --env-file-if-exists=.env server/main.js",
     "standin": "node tools/tyler-standin/server.js",
     "gis-sync": "node --disable-warning=ExperimentalWarning --env-file-if-exists=.env server/gis-sync-main.js",
+    "gis-log": "node --disable-warning=ExperimentalWarning --env-file-if-exists=.env server/gis-log-main.js",
     "arcgis-standin": "node tools/arcgis-standin/server.js"
   }
 }

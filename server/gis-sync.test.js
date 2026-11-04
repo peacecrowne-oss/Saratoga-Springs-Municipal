@@ -207,7 +207,7 @@ test('a single rejected edit is recorded on that asset and does not stop the oth
   assert.equal(run.pushFailed, 1);
   assert.equal(run.pushed, 1);
   const gis = assets.get(asset.id).gis;
-  assert.equal(gis.status, 'error');
+  assert.equal(gis.status, 'missing');
   assert.match(gis.lastError.description, /missing/i);
   assert.equal(audit.list({ entityType: 'asset', entityId: asset.id })[0].action, 'gis.push_failed');
 });

@@ -28,7 +28,29 @@ export function createAuditLog(db, { now = () => new Date() } = {}) {
     LIMIT :limit
   `);
 
+  const fromRow = row => ({
+    id: row.id,
+    actor: row.actor_id,
+    action: row.action,
+    entityType: row.entity_type,
+    entityId: row.entity_id,
+    before: fromJson(row.before),
+    after: fromJson(row.after),
+    occurredAt: row.occurred_at,
+  });
+
   return {
+    // Events by action, across entity types, newest first: every action
+    // starting with prefix, or only the actions named in only.
+    listActions({ prefix = null, only = null, limit = 100 } = {}) {
+      const where = only
+        ? `action IN (${only.map(() => '?').join(', ')})`
+        : "action LIKE ? ESCAPE '\\'";
+      const params = only ?? [`${String(prefix).replace(/[\\%_]/g, '\\$&')}%`];
+      return db.prepare(`SELECT * FROM audit_event WHERE ${where} ORDER BY occurred_at DESC, rowid DESC LIMIT ?`)
+        .all(...params, limit).map(fromRow);
+    },
+
     record({ actor, action, entityType, entityId = null, before = null, after = null }) {
       if (!actor || !action || !entityType) {
         throw new AuditWriteError('An audit event needs an actor, an action and an entity type.');
@@ -53,16 +75,7 @@ export function createAuditLog(db, { now = () => new Date() } = {}) {
     },
 
     list({ entityType = null, entityId = null, limit = 100 } = {}) {
-      return select.all({ entity_type: entityType, entity_id: entityId, limit }).map(row => ({
-        id: row.id,
-        actor: row.actor_id,
-        action: row.action,
-        entityType: row.entity_type,
-        entityId: row.entity_id,
-        before: fromJson(row.before),
-        after: fromJson(row.after),
-        occurredAt: row.occurred_at,
-      }));
+      return select.all({ entity_type: entityType, entity_id: entityId, limit }).map(fromRow);
     },
   };
 }

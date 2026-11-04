@@ -14,6 +14,8 @@
 //   POST /api/assets/:id/maintenance    schedule a maintenance task
 //   PATCH /api/assets/:id/maintenance/:taskId   complete or cancel a task
 //   GET  /api/maintenance   everything still to do, soonest first
+//   GET  /api/gis/status    the GIS sync now: last run, last failure, what needs attention
+//   GET  /api/gis/log       the GIS sync's history (?errors=1 for only what went wrong)
 //   GET  /api/budget       budget lines from Tyler, for a financial manager
 //   GET  /api/audit         recent audit events in the caller's scope (?entity_type=)
 
@@ -23,6 +25,7 @@ import { AuditWriteError } from './audit.js';
 import { AssetConflictError, AssetStaleError, AssetTransitionError, AssetValidationError } from './assets.js';
 import { AssetCareConflict, createAssetCare } from './asset-care.js';
 import { checkHealth } from './health.js';
+import { describeGisEvent, gisStatus, readGisLog } from './gis-log.js';
 import { TylerIntegrationError } from './integrations/tyler/client.js';
 
 const APP_DIR = new URL('../app/', import.meta.url);
@@ -38,6 +41,7 @@ const PAGES = {
 export const BUDGET_ROLES = ['financial_manager'];
 export const ASSET_ROLES = ['asset_manager', 'it_administrator'];
 export const ASSET_READ_ROLES = [...ASSET_ROLES, 'gis_analyst'];
+export const GIS_LOG_ROLES = ['gis_analyst', 'it_administrator'];
 // Which audit events each role may read. The first is the default.
 export const AUDIT_SCOPES = {
   financial_manager: ['budget'],
@@ -170,6 +174,27 @@ export function createApp({ db, audit, assets, care = createAssetCare(db, audit,
     return send(res, 200, result);
   }
 
+  function allowGisLog(req, res) {
+    const who = identify(req);
+    if (!who) { fail(res, 401, 'unauthenticated', 'Sign in to review the GIS sync.'); return null; }
+    if (!GIS_LOG_ROLES.includes(who.role)) { fail(res, 403, 'forbidden', `The ${who.role} role is not allowed to review the GIS sync.`); return null; }
+    return who;
+  }
+
+  function getGisLog(req, res, url) {
+    if (!allowGisLog(req, res)) return;
+    const limit = url.searchParams.has('limit') ? Number(url.searchParams.get('limit')) : 50;
+    if (!Number.isInteger(limit) || limit < 1 || limit > 500) return fail(res, 400, 'bad_request', 'limit must be a whole number from 1 to 500.');
+    const errorsOnly = url.searchParams.get('errors') === '1';
+    const events = readGisLog(audit, { errorsOnly, limit }).map(e => ({ ...e, summary: describeGisEvent(e) }));
+    return send(res, 200, { events });
+  }
+
+  function getGisStatus(req, res) {
+    if (!allowGisLog(req, res)) return;
+    return send(res, 200, gisStatus(db, audit));
+  }
+
   function getMaintenance(req, res) {
     if (!allowRead(req, res)) return;
     return send(res, 200, { tasks: care.openMaintenance() });
@@ -252,6 +277,8 @@ export function createApp({ db, audit, assets, care = createAssetCare(db, audit,
     if (pathname === '/') { res.writeHead(302, { location: '/system' }); return res.end(); }
     if (pathname === '/api/health') return getHealth(res);
     if (pathname === '/api/maintenance') return getMaintenance(req, res);
+    if (pathname === '/api/gis/log') return getGisLog(req, res, url);
+    if (pathname === '/api/gis/status') return getGisStatus(req, res);
     if (pathname === '/api/budget') return await getBudget(req, res, url);
     if (pathname === '/api/audit') return getAudit(req, res, url);
     if (PAGES[pathname]) return await page(res, PAGES[pathname]);

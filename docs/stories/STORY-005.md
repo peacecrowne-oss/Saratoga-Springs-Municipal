@@ -31,8 +31,10 @@ the same criteria out of `.colaberry/progress.json`, which Claude Code keeps in
 step (see the managed block in CLAUDE.md). Ticking something you have not
 actually met only misleads you.
 
-- [ ] Given asset data is updated, when I check GIS, then the spatial information should be accurate.
-- [ ] Given a synchronization error occurs, when I review logs, then I should see error details.
-- [ ] Trust: Ensure synchronization logs are maintained for audit.
+- [x] Given asset data is updated, when I check GIS, then the spatial information should be accurate.
+- [x] Given a synchronization error occurs, when I review logs, then I should see error details.
+- [x] Trust: Ensure synchronization logs are maintained for audit.
+
+_Verified against the SIMULATED ArcGIS stand-in (`npm run arcgis-standin`), not yet against the City's ArcGIS Enterprise 11.3._
 
 When every box above is ticked, stop and show the demo.

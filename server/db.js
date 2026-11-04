@@ -57,7 +57,9 @@ const SCHEMA = `
     synced_at     TEXT,
     status        TEXT NOT NULL,
     mismatch      TEXT,
-    last_error    TEXT
+    last_error    TEXT,
+    spatial_problem TEXT,
+    verified_at   TEXT
   );
 
   -- Condition readings (STORY-004). The asset's current condition is its latest
@@ -103,6 +105,19 @@ const SCHEMA = `
   );
 `;
 
+// CREATE TABLE IF NOT EXISTS leaves an existing table alone, so columns added
+// after a table first shipped are added here. Safe to run on every open.
+const ADDED_COLUMNS = { asset_gis: ['spatial_problem TEXT', 'verified_at TEXT'] };
+
+function addMissingColumns(db) {
+  for (const [table, columns] of Object.entries(ADDED_COLUMNS)) {
+    const existing = new Set(db.prepare(`PRAGMA table_info(${table})`).all().map(c => c.name));
+    for (const column of columns) {
+      if (!existing.has(column.split(' ')[0])) db.exec(`ALTER TABLE ${table} ADD COLUMN ${column}`);
+    }
+  }
+}
+
 // Runs fn inside one transaction: all of its writes land, or none do.
 // A failed rollback is attached to the original error, never dropped.
 export function transaction(db, fn) {
@@ -127,5 +142,6 @@ export function openDb(file = process.env.DB_PATH ?? DEFAULT_DB_PATH) {
   // The server and the GIS sync job share the file: wait up to 5 s for a lock, never forever.
   const db = new DatabaseSync(file, { timeout: 5000 });
   db.exec(SCHEMA);
+  addMissingColumns(db);
   return db;
 }

@@ -61,8 +61,9 @@ function gisCell(gis) {
   const fields = Object.entries(gis.fields ?? {}).filter(([, v]) => v !== null).map(([k, v]) => `${k}: ${v}`);
   const point = gis.geometry ? `(${gis.geometry.x}, ${gis.geometry.y})` : 'no location';
   const note = gis.status === 'mismatch' ? ' · <strong>mismatch, our value will be pushed</strong>'
-    : gis.status === 'error' ? ` · <strong>push failed</strong>: ${esc(gis.lastError?.description)}` : '';
-  return `${esc(gis.layer)} #${esc(gis.objectId)} · ${esc(gis.status)}${note}<br><span class="muted">${esc(point)}${fields.length ? ` · ${esc(fields.join(', '))}` : ''}</span>`;
+    : gis.status === 'error' || gis.status === 'missing' ? ` · <strong>${esc(gis.lastError?.description)}</strong>` : '';
+  const spatial = gis.spatialProblem ? `<br><strong>${esc(gis.spatialProblem.message)}</strong>` : '';
+  return `${esc(gis.layer)} #${esc(gis.objectId)} · ${esc(gis.status)}${note}${spatial}<br><span class="muted">${esc(point)}${fields.length ? ` · ${esc(fields.join(', '))}` : ''}</span>`;
 }
 
 async function refreshAssets() {

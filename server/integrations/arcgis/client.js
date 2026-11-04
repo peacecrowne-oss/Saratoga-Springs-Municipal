@@ -136,9 +136,9 @@ export function createArcGisClient({
       return body;
     },
 
-    async query({ where = '1=1', outFields = '*', resultOffset = 0, resultRecordCount = 1000 } = {}) {
+    async query({ where = '1=1', outFields = '*', orderByFields = 'OBJECTID', resultOffset = 0, resultRecordCount = 1000 } = {}) {
       const body = await call('query', {
-        where, outFields, returnGeometry: 'true', orderByFields: 'OBJECTID',
+        where, outFields, returnGeometry: 'true', orderByFields,
         resultOffset: String(resultOffset), resultRecordCount: String(resultRecordCount),
       });
       if (!Array.isArray(body.features)) throw new ArcGisError('bad_response', 'The query answer has no features list.');

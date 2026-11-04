@@ -103,6 +103,8 @@ const fromGisRow = row => row && ({
   syncedAt: row.synced_at,
   mismatch: json(row.mismatch),
   lastError: json(row.last_error),
+  spatialProblem: json(row.spatial_problem),
+  verifiedAt: row.verified_at,
 });
 
 const fromRow = row => row && ({

@@ -19,15 +19,19 @@
 //   slow    never answers, to exercise timeouts
 //   auth    rejects every sign-in and every token
 //   schema  the layer is missing the STATUS field
+//   lossy   reports success but cuts NAME to 10 characters, to exercise read-back
 //
 // Simulate a GIS analyst editing a feature:
 //   POST /_edit  {"asset_tag": "HYD-0001", "attributes": {"MATERIAL": "Ductile iron"}, "geometry": {"x": -73.78, "y": 43.08}}
+//     add "quiet": true for an edit that skips editor tracking (a direct database change)
+// Simulate a feature being deleted in GIS:
+//   POST /_delete  {"asset_tag": "HYD-0001"}
 
 import http from 'node:http';
 import { randomUUID } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 
-export const MODES = ['ok', 'down', 'slow', 'auth', 'schema'];
+export const MODES = ['ok', 'down', 'slow', 'auth', 'schema', 'lossy'];
 export const STANDIN_USER = 'gis-sync';
 export const STANDIN_PASSWORD = 'SIMULATED-password';
 export const TOKEN_PATH = '/portal/sharing/rest/generateToken';
@@ -71,6 +75,8 @@ function matcher(where) {
   if (m) { const tag = m[1].replace(/''/g, "'"); return f => f.attributes.ASSET_TAG === tag; }
   m = w.match(/^last_edited_date\s*>=\s*TIMESTAMP\s*'(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})'$/i);
   if (m) { const at = Date.parse(m[1].replace(' ', 'T') + 'Z'); return f => f.attributes.last_edited_date >= at; }
+  m = w.match(/^OBJECTID\s+IN\s*\(([\d,\s]+)\)$/i);
+  if (m) { const ids = new Set(m[1].split(',').map(Number)); return f => ids.has(f.attributes.OBJECTID); }
   return null;
 }
 
@@ -98,19 +104,23 @@ export function createArcGisStandin({ mode = 'ok', now = () => Date.now(), maxRe
     const bad = badFields(attributes);
     if (bad.length) return { success: false, error: { code: 1000, description: `Unknown or read-only fields: ${bad.join(', ')}` } };
     const objectId = nextId++;
-    features.set(objectId, { attributes: stamp({ ...attributes, OBJECTID: objectId }, user, true), geometry });
+    features.set(objectId, { attributes: stamp({ ...lossy(attributes), OBJECTID: objectId }, user, true), geometry });
     return { objectId, globalId: `{${randomUUID().toUpperCase()}}`, success: true };
   }
 
-  function updateFeature({ attributes = {}, geometry }, user) {
+  const lossy = attributes => (state.mode === 'lossy' && typeof attributes.NAME === 'string'
+    ? { ...attributes, NAME: attributes.NAME.slice(0, 10) }
+    : attributes);
+
+  function updateFeature({ attributes = {}, geometry }, user, { quiet = false } = {}) {
     const objectId = attributes.OBJECTID;
     const feature = features.get(objectId);
     if (!feature) return { objectId, success: false, error: { code: 1019, description: 'Object is missing' } };
     const bad = badFields(attributes);
     if (bad.length) return { objectId, success: false, error: { code: 1000, description: `Unknown or read-only fields: ${bad.join(', ')}` } };
-    Object.assign(feature.attributes, attributes);
+    Object.assign(feature.attributes, lossy(attributes));
     if (geometry !== undefined) feature.geometry = geometry;
-    stamp(feature.attributes, user, false);
+    if (!quiet) stamp(feature.attributes, user, false);
     return { objectId, success: true };
   }
 
@@ -138,8 +148,14 @@ export function createArcGisStandin({ mode = 'ok', now = () => Date.now(), maxRe
         if (url.pathname === '/_edit') {
           const entry = [...features.values()].find(f => f.attributes.ASSET_TAG === body.asset_tag);
           if (!entry) return send(res, 404, { simulated: true, error: `No feature with ASSET_TAG ${body.asset_tag}.` });
-          const result = updateFeature({ attributes: { ...body.attributes, OBJECTID: entry.attributes.OBJECTID }, geometry: body.geometry }, body.user ?? 'gis.analyst');
+          const result = updateFeature({ attributes: { ...body.attributes, OBJECTID: entry.attributes.OBJECTID }, geometry: body.geometry }, body.user ?? 'gis.analyst', { quiet: body.quiet === true });
           return send(res, result.success ? 200 : 400, { simulated: true, ...result, feature: entry });
+        }
+        if (url.pathname === '/_delete') {
+          const entry = [...features.values()].find(f => f.attributes.ASSET_TAG === body.asset_tag);
+          if (!entry) return send(res, 404, { simulated: true, error: `No feature with ASSET_TAG ${body.asset_tag}.` });
+          features.delete(entry.attributes.OBJECTID);
+          return send(res, 200, { simulated: true, deleted: entry.attributes.OBJECTID });
         }
         if (url.pathname === '/_features') return send(res, 200, { simulated: true, features: [...features.values()] });
         if (url.pathname === '/_expire_tokens') { tokens.clear(); return send(res, 200, { simulated: true }); }
@@ -174,6 +190,8 @@ export function createArcGisStandin({ mode = 'ok', now = () => Date.now(), maxRe
           type: 'Feature Layer',
           geometryType: 'esriGeometryPoint',
           objectIdField: 'OBJECTID',
+          // Roughly the Saratoga Springs area, in longitude and latitude.
+          extent: { xmin: -74.0, ymin: 42.9, xmax: -73.5, ymax: 43.3, spatialReference: { wkid: 4326 } },
           maxRecordCount,
           capabilities: 'Query,Create,Update',
           editFieldsInfo: EDIT_FIELDS,
