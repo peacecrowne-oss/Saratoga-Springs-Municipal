@@ -3,13 +3,13 @@
   "project": "Municipal Asset Management and Permitting Software Solution",
   "totals": {
     "stories_total": 11,
-    "stories_verified": 3,
+    "stories_verified": 4,
     "stories_submitted": 0,
-    "stories_in_progress": 8,
+    "stories_in_progress": 7,
     "stories_not_started": 0,
     "criteria_total": 36,
-    "criteria_passed": 11,
-    "points_awarded": 203
+    "criteria_passed": 14,
+    "points_awarded": 276
   },
   "stories": [
     {
@@ -209,19 +209,15 @@
       "notes": "Inventory (filter, search, paging), lifecycle (allowed moves only; retired is final), condition readings (good, fair, poor, critical; append-only; current = latest by observed time) and one-off maintenance tasks with due dates and overdue flags. Dashboard at /assets. Every change and refusal is audited. Failure paths: data entry errors name each wrong field; illegal or out-of-date status updates are refused and audited, and a refused move also discards its reading; condition discrepancies (critical but active, late older reading, two readings for one moment, retired with open work) are flagged and audited, and the status is left for a person to change. Criteria proven by HTTP tests and a real deployment. Not proven: the /assets page was served and its script syntax-checked, but it has not been clicked through in a browser. REQ-001 is not finished by this story: no load test for about 80 users, no recurring maintenance, no real sign-in (STORY-012), and Cityworks data is not migrated (STORY-013). The status moves and the condition scale were chosen during the build and need confirming with the City's asset managers. Condition and maintenance are not sent to GIS.",
       "updated_at": null,
       "verification": {
-        "state": "in_progress",
-        "criteria_passed": 0,
+        "state": "verified",
+        "criteria_passed": 3,
         "criteria_total": 3,
-        "verified_at": null,
-        "commit_sha": null,
-        "commit_url": null,
-        "commit_at": null,
-        "points_awarded": null,
-        "outstanding": [
-          "Given an asset is added to the system, when I view its details, then I should see its lifecycle status.",
-          "Given an asset's condition changes, when I update its status, then the system should reflect the new condition.",
-          "Trust: Ensure all asset updates are logged for audit."
-        ]
+        "verified_at": "2026-11-03T18:01:03.733Z",
+        "commit_sha": "ae040367c47aba98ea58647ef52c14471cd8c0bc",
+        "commit_url": "https://github.com/peacecrowne-oss/Saratoga-Springs-Municipal/commit/ae040367c47aba98ea58647ef52c14471cd8c0bc",
+        "commit_at": "2026-11-03T18:00:51Z",
+        "points_awarded": 73,
+        "outstanding": []
       }
     },
     {
