@@ -69,7 +69,7 @@ test('criterion 2: a GIS field value changed in ArcGIS shows in the system', asy
   assert.equal(gis.editedBy, 'gis.analyst');
 
   // ...and through the API, as a GIS analyst checking the system.
-  const server = http.createServer(createApp({ db, audit, assets, tyler: {} }));
+  const server = http.createServer(createApp({ db, audit, assets, tyler: {}, allowDevHeaders: true }));
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   t.after(() => new Promise(resolve => server.close(resolve)));
   const res = await fetch(`http://127.0.0.1:${server.address().port}/api/assets/${asset.id}`, { headers: { 'x-user-id': 'gis-1', 'x-user-role': 'gis_analyst' } });

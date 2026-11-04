@@ -54,21 +54,11 @@
   <header>
     <div class="wrap">
       <h1>Asset management</h1>
-      <form id="signin" style="margin:0">
-        <span>Development sign-in:</span>
-        <input id="user" aria-label="User" placeholder="user id" required>
-        <select id="role" aria-label="Role">
-          <option value="asset_manager">asset_manager</option>
-          <option value="it_administrator">it_administrator</option>
-          <option value="gis_analyst">gis_analyst</option>
-          <option value="citizen">citizen</option>
-        </select>
-        <button type="submit">Use</button>
-      </form>
+      <div id="session" class="muted" style="font-size:13px"></div>
     </div>
   </header>
   <main class="wrap">
-    <div class="banner">Development sign-in: you pick who you are. Real sign-in through Active Directory arrives with STORY-012. <a href="/system">System dashboard</a> · <a href="/budget">Budget tracking</a>.</div>
+    <div class="banner"><a href="/system">System dashboard</a> · <a href="/budget">Budget tracking</a></div>
 
     <h2>Inventory</h2>
     <form id="filters">
@@ -82,7 +72,7 @@
       </select>
       <button type="submit">Search</button>
     </form>
-    <div id="inventory" class="muted">Sign in as an asset manager, IT administrator or GIS analyst to see it.</div>
+    <div id="inventory" class="muted">Loading…</div>
     <div id="pager" class="muted" style="font-size:13px;margin-top:6px"></div>
 
     <div id="detail"></div>
@@ -99,7 +89,7 @@
     <div id="add-result"></div>
 
     <h2>Maintenance still to do</h2>
-    <div id="due" class="muted">Sign in to see it.</div>
+    <div id="due" class="muted">Loading…</div>
   </main>
   <script type="module" src="/assets.js"></script>
 </body>

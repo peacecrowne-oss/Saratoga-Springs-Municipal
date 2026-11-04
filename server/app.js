@@ -16,6 +16,12 @@
 //   GET  /api/maintenance   everything still to do, soonest first
 //   GET  /api/gis/status    the GIS sync now: last run, last failure, what needs attention
 //   GET  /api/gis/log       the GIS sync's history (?errors=1 for only what went wrong)
+//   GET  /login             the sign-in page (STORY-012)
+//   POST /api/auth/login    step 1: username and password
+//   POST /api/auth/mfa      step 2: the authenticator code; sets the session cookie
+//   POST /api/auth/logout   ends the session
+//   GET  /api/auth/me       who is signed in
+//   GET  /api/auth/attempts every login attempt, for administrators (?alerts=1)
 //   GET  /api/budget       budget lines from Tyler, for a financial manager
 //   GET  /api/audit         recent audit events in the caller's scope (?entity_type=)
 
@@ -24,13 +30,17 @@ import { fileURLToPath } from 'node:url';
 import { AuditWriteError } from './audit.js';
 import { AssetConflictError, AssetStaleError, AssetTransitionError, AssetValidationError } from './assets.js';
 import { AssetCareConflict, createAssetCare } from './asset-care.js';
+import { createAuth } from './auth.js';
 import { checkHealth } from './health.js';
 import { describeGisEvent, gisStatus, readGisLog } from './gis-log.js';
 import { TylerIntegrationError } from './integrations/tyler/client.js';
 
 const APP_DIR = new URL('../app/', import.meta.url);
 const PAGES = {
-  '/system': ['system.html', 'text/html; charset=utf-8'],
+  '/login': ['login.html', 'text/html; charset=utf-8'],
+  '/login.js': ['login.js', 'text/javascript; charset=utf-8'],
+  '/session.js': ['session.js', 'text/javascript; charset=utf-8'],
+  '/system':['system.html', 'text/html; charset=utf-8'],
   '/system.js': ['system.js', 'text/javascript; charset=utf-8'],
   '/assets': ['assets.html', 'text/html; charset=utf-8'],
   '/assets.js': ['assets.js', 'text/javascript; charset=utf-8'],
@@ -42,12 +52,14 @@ export const BUDGET_ROLES = ['financial_manager'];
 export const ASSET_ROLES = ['asset_manager', 'it_administrator'];
 export const ASSET_READ_ROLES = [...ASSET_ROLES, 'gis_analyst'];
 export const GIS_LOG_ROLES = ['gis_analyst', 'it_administrator'];
+export const AUTH_LOG_ROLES = ['system_administrator', 'it_administrator'];
 // Which audit events each role may read. The first is the default.
 export const AUDIT_SCOPES = {
   financial_manager: ['budget'],
   asset_manager: ['asset'],
   gis_analyst: ['gis_sync', 'asset', 'gis_feature'],
-  it_administrator: ['system', 'asset', 'gis_sync', 'gis_feature', 'budget'],
+  it_administrator: ['system', 'asset', 'gis_sync', 'gis_feature', 'budget', 'auth'],
+  system_administrator: ['auth', 'system'],
 };
 
 const MAX_BODY_BYTES = 64 * 1024;
@@ -60,13 +72,23 @@ const send = (res, status, body) => {
 };
 const fail = (res, status, kind, message, extra = {}) => send(res, status, { error: { kind, message, ...extra } });
 
-// DEVELOPMENT ONLY: the caller states who they are in two headers.
-// STORY-012 (authentication) replaces this with real sign-in.
-function identify(req) {
+// Who the request is, as established by the session in handle() below.
+const identify = req => req.who ?? null;
+
+// FOR TESTS ONLY, and only when createApp is told allowDevHeaders. Nothing that
+// starts the real system can turn this on.
+function devIdentity(req) {
   const user = String(req.headers['x-user-id'] ?? '').trim();
   const role = String(req.headers['x-user-role'] ?? '').trim();
   return user && role ? { user, role } : null;
 }
+
+const SECURITY_HEADERS = {
+  'content-security-policy': "default-src 'self'; style-src 'self' 'unsafe-inline'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'",
+  'x-frame-options': 'DENY',
+  'x-content-type-options': 'nosniff',
+  'referrer-policy': 'same-origin',
+};
 
 async function readJson(req) {
   let size = 0;
@@ -83,7 +105,69 @@ async function readJson(req) {
   }
 }
 
-export function createApp({ db, audit, assets, care = createAssetCare(db, audit, assets), tyler, version = null, currentFiscalYear = () => new Date().getFullYear() }) {
+export function createApp({ db, audit, assets, care = createAssetCare(db, audit, assets), auth = createAuth(db, audit), tyler, version = null, allowDevHeaders = false, currentFiscalYear = () => new Date().getFullYear() }) {
+  // ── Sign-in ────────────────────────────────────────────────────────────────
+
+  // The body of a sign-in step. A malformed one is still an attempt, so it is
+  // recorded rather than rejected before it reaches the auth service.
+  async function signInBody(req) {
+    try {
+      return await readJson(req);
+    } catch (err) {
+      if (err instanceof BadRequest) return null;
+      throw err;
+    }
+  }
+
+  async function postLogin(req, res) {
+    const result = await auth.login(await signInBody(req), auth.context(req));
+    if (!result.ok) return fail(res, result.status, result.kind, result.message);
+    return send(res, 200, { mfaRequired: true, challenge: result.challenge, expiresAt: result.expiresAt });
+  }
+
+  async function postMfa(req, res) {
+    const result = await auth.verifyCode(await signInBody(req), auth.context(req));
+    if (!result.ok) return fail(res, result.status, result.kind, result.message);
+    res.setHeader('set-cookie', auth.cookie(result.token));
+    return send(res, 200, { user: result.user });
+  }
+
+  function postLogout(req, res) {
+    const who = identify(req);
+    if (who?.sessionId) auth.logout(who, auth.context(req));
+    res.setHeader('set-cookie', auth.clearCookie());
+    return send(res, 200, { signedOut: true });
+  }
+
+  function getMe(req, res) {
+    const who = identify(req);
+    if (!who) return fail(res, 401, 'unauthenticated', 'Sign in to continue.');
+    return send(res, 200, { user: { username: who.user, role: who.role } });
+  }
+
+  function getAttempts(req, res, url) {
+    const who = identify(req);
+    if (!who) return fail(res, 401, 'unauthenticated', 'Sign in to review login attempts.');
+    if (!AUTH_LOG_ROLES.includes(who.role)) return fail(res, 403, 'forbidden', `The ${who.role} role is not allowed to review login attempts.`);
+    const limit = url.searchParams.has('limit') ? Number(url.searchParams.get('limit')) : 100;
+    if (!Number.isInteger(limit) || limit < 1 || limit > 500) return fail(res, 400, 'bad_request', 'limit must be a whole number from 1 to 500.');
+    return send(res, 200, { events: auth.readAttempts({ alertsOnly: url.searchParams.get('alerts') === '1', limit }) });
+  }
+
+  // Stops another site making a signed-in person's browser change something:
+  // the session cookie is SameSite=Strict, and writes must also come from this
+  // origin and carry JSON, which a plain cross-site form cannot send.
+  function crossSiteProblem(req) {
+    const origin = req.headers.origin;
+    if (origin) {
+      let host;
+      try { host = new URL(origin).host; } catch { host = null; }
+      if (host !== req.headers.host) return 'The request came from another site.';
+    }
+    if (!String(req.headers['content-type'] ?? '').startsWith('application/json')) return 'The request must be sent as JSON.';
+    return null;
+  }
+
   function getHealth(res) {
     const health = checkHealth(db);
     return send(res, health.status === 'ok' ? 200 : 503, { ...health, version });
@@ -249,6 +333,16 @@ export function createApp({ db, audit, assets, care = createAssetCare(db, audit,
     const { pathname } = url;
     const { method } = req;
 
+    if (pathname === '/login') { if (method === 'GET') return await page(res, PAGES['/login']); }
+    if (pathname.startsWith('/api/auth/')) {
+      if (method === 'POST' && pathname === '/api/auth/login') return await postLogin(req, res);
+      if (method === 'POST' && pathname === '/api/auth/mfa') return await postMfa(req, res);
+      if (method === 'POST' && pathname === '/api/auth/logout') return postLogout(req, res);
+      if (method === 'GET' && pathname === '/api/auth/me') return getMe(req, res);
+      if (method === 'GET' && pathname === '/api/auth/attempts') return getAttempts(req, res, url);
+      return fail(res, 404, 'not_found', 'Not found.');
+    }
+
     // /api/assets/:id[/:part[/:partId]]
     if (pathname === '/api/assets') {
       if (method === 'GET') return getAssets(req, res, url);
@@ -287,7 +381,24 @@ export function createApp({ db, audit, assets, care = createAssetCare(db, audit,
 
   return async function handle(req, res) {
     const url = new URL(req.url, 'http://localhost');
+    for (const [name, value] of Object.entries(SECURITY_HEADERS)) res.setHeader(name, value);
     try {
+      const isApi = url.pathname.startsWith('/api/');
+      const isSignIn = url.pathname === '/api/auth/login' || url.pathname === '/api/auth/mfa';
+
+      const { who, problem } = auth.authenticate(req);
+      // A dead session must be told so, except where the person is signing in again.
+      if (problem && isApi && !isSignIn && url.pathname !== '/api/health') {
+        res.setHeader('set-cookie', auth.clearCookie());
+        return fail(res, 401, problem.kind, problem.message);
+      }
+      req.who = who ?? (allowDevHeaders ? devIdentity(req) : null);
+
+      if (isApi && req.method !== 'GET' && (who || isSignIn)) {
+        const crossSite = crossSiteProblem(req);
+        if (crossSite) return fail(res, 403, 'cross_site', crossSite);
+      }
+
       return await route(req, res, url);
     } catch (err) {
       if (err instanceof BadRequest) return fail(res, 400, 'bad_request', err.message);

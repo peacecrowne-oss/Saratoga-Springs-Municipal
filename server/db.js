@@ -99,6 +99,46 @@ const SCHEMA = `
     UNIQUE (asset_id, title, due_on)
   );
 
+  -- Sign-in (STORY-012). Only hashes of passwords, challenges and session tokens
+  -- are stored. The TOTP secret must be readable to check codes, so it is encrypted.
+  CREATE TABLE IF NOT EXISTS auth_user (
+    username       TEXT PRIMARY KEY,
+    display_name   TEXT,
+    role           TEXT NOT NULL,
+    password_hash  TEXT NOT NULL,
+    totp_secret    TEXT NOT NULL,
+    last_totp_step INTEGER NOT NULL DEFAULT 0,
+    created_at     TEXT NOT NULL,
+    disabled_at    TEXT
+  );
+
+  CREATE TABLE IF NOT EXISTS auth_challenge (
+    id_hash    TEXT PRIMARY KEY,
+    username   TEXT NOT NULL,
+    ip         TEXT,
+    user_agent TEXT,
+    expires_at TEXT NOT NULL,
+    attempts   INTEGER NOT NULL DEFAULT 0,
+    used_at    TEXT
+  );
+
+  CREATE TABLE IF NOT EXISTS auth_session (
+    id             TEXT PRIMARY KEY,
+    token_hash     TEXT NOT NULL UNIQUE,
+    username       TEXT NOT NULL,
+    role           TEXT NOT NULL,
+    kind           TEXT NOT NULL,
+    ip             TEXT,
+    user_agent     TEXT,
+    created_at     TEXT NOT NULL,
+    last_seen_at   TEXT NOT NULL,
+    expires_at     TEXT NOT NULL,
+    revoked_at     TEXT,
+    revoked_reason TEXT
+  );
+
+  CREATE INDEX IF NOT EXISTS audit_event_action_time ON audit_event (action, occurred_at);
+
   CREATE TABLE IF NOT EXISTS sync_state (
     key   TEXT PRIMARY KEY,
     value TEXT

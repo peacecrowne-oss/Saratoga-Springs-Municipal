@@ -19,7 +19,7 @@ const manager = { 'x-user-id': 'fm-1', 'x-user-role': 'financial_manager' };
 async function withApp({ tyler = connected, db = openDb(':memory:') } = {}, fn) {
   const audit = createAuditLog(db);
   const assets = createAssetStore(db, audit);
-  const server = http.createServer(createApp({ db, audit, assets, tyler, currentFiscalYear: () => 2026 }));
+  const server = http.createServer(createApp({ db, audit, assets, tyler, allowDevHeaders: true, currentFiscalYear: () => 2026 }));
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   const base = `http://127.0.0.1:${server.address().port}`;
   const get = async (path, headers = {}) => {

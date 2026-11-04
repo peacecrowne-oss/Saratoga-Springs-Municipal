@@ -18,6 +18,7 @@ import { execFileSync } from 'node:child_process';
 import { openDb, DEFAULT_DB_PATH } from './db.js';
 import { createAuditLog } from './audit.js';
 import { createAssetStore } from './assets.js';
+import { createAuth, resolveAuthKey, SESSION_COOKIE } from './auth.js';
 import { createTylerClient } from './integrations/tyler/client.js';
 import { createApp } from './app.js';
 
@@ -83,6 +84,8 @@ export async function deploy({
   sleep = defaultSleep,
   makeAudit = createAuditLog,
   now = () => new Date(),
+  trustProxy = process.env.TRUST_PROXY === '1',
+  allowDevHeaders = false, // tests only: deliberately not readable from the environment
 } = {}) {
   const started = now();
   const checks = [];
@@ -114,7 +117,24 @@ export async function deploy({
   const audit = makeAudit(db);
   const assets = createAssetStore(db, audit);
   const tyler = createTylerClient({ baseUrl: tylerBaseUrl, apiKey: tylerApiKey });
-  const server = http.createServer(createApp({ db, audit, assets, tyler, version: VERSION }));
+  // Passwords must not cross a network in clear text. This server speaks plain
+  // HTTP, so anything but this machine has to come through a TLS proxy.
+  const loopback = ['127.0.0.1', '::1', 'localhost'].includes(host);
+  if (!loopback && !trustProxy) {
+    db.close();
+    throw new DeployError('insecure_transport',
+      `Refusing to listen on ${host} without TLS: sign-in would send passwords in clear text. Put a TLS reverse proxy in front and set TRUST_PROXY=1, or listen on 127.0.0.1.`,
+      { ...details(), auditRecorded: false });
+  }
+  let secretKey;
+  try {
+    secretKey = resolveAuthKey(dbPath);
+  } catch (err) {
+    db.close();
+    throw new DeployError('core_init_failed', `The sign-in key could not be loaded: ${err.message}. Nothing was started.`, { ...details(), auditRecorded: false });
+  }
+  const auth = createAuth(db, audit, { secretKey, trustProxy });
+  const server = http.createServer(createApp({ db, audit, assets, auth, tyler, version: VERSION, allowDevHeaders }));
 
   async function abort(kind, message) {
     await closeServer(server);
@@ -171,9 +191,12 @@ export async function deploy({
   }
   checks.push({ name: 'health', ok: true, attempts: health.attempts });
 
+  // The check signs in like anyone else, with a session that lives only for it.
+  const probe = auth.serviceSession('deploy-check', 'it_administrator');
   let core;
   try {
-    core = await call('/api/assets', { 'x-user-id': actor, 'x-user-role': 'it_administrator' });
+    core = await call('/api/assets', { cookie: `${SESSION_COOKIE}=${probe.token}` });
+    auth.endServiceSession(probe.id);
   } catch (err) {
     checks.push({ name: 'assets', ok: false, detail: err.message, attempts: err.attempts });
     throw await abort('core_check_failed', `The asset records did not answer at ${url}: ${err.message}.`);
@@ -202,6 +225,7 @@ export async function deploy({
     event,
     server,
     db,
+    users: auth.countUsers(),
     async stop() {
       await closeServer(server);
       db.close();

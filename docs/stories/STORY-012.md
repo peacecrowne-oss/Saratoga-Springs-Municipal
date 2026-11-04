@@ -33,8 +33,10 @@ the same criteria out of `.colaberry/progress.json`, which Claude Code keeps in
 step (see the managed block in CLAUDE.md). Ticking something you have not
 actually met only misleads you.
 
-- [ ] Given a user attempts to log in, when the credentials are correct, then access should be granted with enhanced security protocols.
-- [ ] Given a user attempts to log in, when the credentials are incorrect, then access should be denied and an alert should be logged.
-- [ ] Trust: All login attempts must be recorded with IP address and timestamp for security auditing.
+- [x] Given a user attempts to log in, when the credentials are correct, then access should be granted with enhanced security protocols.
+- [x] Given a user attempts to log in, when the credentials are incorrect, then access should be denied and an alert should be logged.
+- [x] Trust: All login attempts must be recorded with IP address and timestamp for security auditing.
+
+_REQ-010's Active Directory and single sign-on are not met: accounts are local. See `docs/SECURITY.md`._
 
 When every box above is ticked, stop and show the demo.

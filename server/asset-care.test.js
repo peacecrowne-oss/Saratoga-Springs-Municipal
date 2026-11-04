@@ -19,7 +19,7 @@ async function setup(t, { makeAudit = createAuditLog } = {}) {
   const audit = makeAudit(db, { now: clock });
   const assets = createAssetStore(db, audit, { now: clock });
   const care = createAssetCare(db, audit, assets, { now: clock });
-  const server = http.createServer(createApp({ db, audit, assets, care, tyler: {} }));
+  const server = http.createServer(createApp({ db, audit, assets, care, tyler: {}, allowDevHeaders: true }));
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   t.after(() => new Promise(resolve => server.close(resolve)));
   const base = `http://127.0.0.1:${server.address().port}`;

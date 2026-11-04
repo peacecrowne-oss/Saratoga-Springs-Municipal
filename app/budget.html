@@ -52,25 +52,15 @@
   <header>
     <div class="wrap">
       <h1>Budget tracking</h1>
-      <form class="signin" id="signin">
-        <span>Development sign-in:</span>
-        <input id="user" aria-label="User" placeholder="user id" required>
-        <select id="role" aria-label="Role">
-          <option value="financial_manager">financial_manager</option>
-          <option value="asset_manager">asset_manager</option>
-          <option value="citizen">citizen</option>
-        </select>
-        <button type="submit">Use</button>
-      </form>
+      <div id="session" class="signin"></div>
     </div>
   </header>
   <main class="wrap">
-    <div class="banner dev">Development sign-in: you pick who you are. Real sign-in through Active Directory arrives with STORY-012.</div>
     <div id="sim"></div>
     <div class="status" id="status"><span><span class="dot"></span>Not checked yet</span></div>
     <div id="budget"></div>
     <h2>Recent budget activity (audit trail)</h2>
-    <div id="audit" class="muted">Sign in as a financial manager to see it.</div>
+    <div id="audit" class="muted">Loading…</div>
   </main>
   <script type="module" src="/budget.js"></script>
 </body>

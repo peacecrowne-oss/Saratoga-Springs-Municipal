@@ -324,7 +324,7 @@ test('criterion 2: an analyst reviewing the log sees each error in plain words, 
   standin.setMode('auth');
   await assert.rejects(sync());
 
-  const server = http.createServer(createApp({ db, audit, assets, tyler: {} }));
+  const server = http.createServer(createApp({ db, audit, assets, tyler: {}, allowDevHeaders: true }));
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   t.after(() => new Promise(resolve => server.close(resolve)));
   const api = `http://127.0.0.1:${server.address().port}`;

@@ -2,7 +2,8 @@
 // condition and maintenance, and everything still to do. All rules live on the
 // server; this page shows what it answers, including why it refused.
 
-const KEY = 'assets-signin';
+import { currentUser } from '/session.js';
+
 const PAGE = 50;
 
 const $ = id => document.getElementById(id);
@@ -10,23 +11,12 @@ const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': 
 const when = iso => new Date(iso).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' });
 const pill = (text, cls = text) => `<span class="pill ${esc(cls)}">${esc(text)}</span>`;
 
-let who = load();
-let selected = null; // the asset id open in the detail panel
 let offset = 0;
-
-function load() {
-  try { return JSON.parse(localStorage.getItem(KEY)) ?? null; } catch { return null; }
-}
-function save(value) {
-  try { localStorage.setItem(KEY, JSON.stringify(value)); } catch { /* storage unavailable; sign-in lasts this visit */ }
-}
-
-const headers = () => (who ? { 'x-user-id': who.user, 'x-user-role': who.role } : {});
 
 async function call(path, { method = 'GET', body } = {}) {
   const res = await fetch(path, {
     method, cache: 'no-store',
-    headers: { ...headers(), ...(body === undefined ? {} : { 'content-type': 'application/json' }) },
+    headers: body === undefined ? {} : { 'content-type': 'application/json' },
     body: body === undefined ? undefined : JSON.stringify(body),
   });
   return { status: res.status, body: await res.json() };
@@ -41,8 +31,7 @@ function refusal(body, status) {
 const unreachable = err => `<div class="error" role="alert">The server did not answer: ${esc(err.message)}</div>`;
 
 async function refreshInventory() {
-  if (!who) return;
-  const p = new URLSearchParams({ limit: PAGE, offset });
+  const p =new URLSearchParams({ limit: PAGE, offset });
   const filters = { q: $('q').value.trim(), asset_type: $('asset_type_filter').value.trim(), status: $('status_filter').value, condition: $('condition_filter').value };
   for (const [k, v] of Object.entries(filters)) if (v) p.set(k, v);
   try {
@@ -67,7 +56,6 @@ async function refreshInventory() {
 }
 
 async function refreshDue() {
-  if (!who) return;
   try {
     const { status, body } = await call('/api/maintenance');
     if (status !== 200) { $('due').innerHTML = refusal(body, status); return; }
@@ -99,7 +87,6 @@ const describe = e => {
 };
 
 async function openAsset(id, note = '') {
-  selected = id;
   try {
     const [{ status, body }, history] = await Promise.all([call(`/api/assets/${encodeURIComponent(id)}`), call(`/api/assets/${encodeURIComponent(id)}/history`)]);
     if (status !== 200) { $('detail').innerHTML = refusal(body, status); return; }
@@ -213,15 +200,6 @@ $('add').addEventListener('submit', async e => {
   }
 });
 
-$('signin').addEventListener('submit', e => {
-  e.preventDefault();
-  who = { user: $('user').value.trim(), role: $('role').value };
-  save(who);
-  refreshInventory();
-  refreshDue();
-  if (selected) openAsset(selected);
-});
-if (who) { $('user').value = who.user; $('role').value = who.role; }
-
+await currentUser();
 refreshInventory();
 refreshDue();

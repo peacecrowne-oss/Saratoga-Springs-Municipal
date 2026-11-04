@@ -11,7 +11,7 @@ import { openDb } from './db.js';
 import { AuditWriteError, createAuditLog } from './audit.js';
 import { deploy, DeployError } from './deploy.js';
 
-const fast = { port: 0, actor: 'it-admin-1', checkRetries: 2, retryDelayMs: 0, sleep: async () => {} };
+const fast = { port: 0, actor: 'it-admin-1', checkRetries: 2, retryDelayMs: 0, sleep: async () => {}, allowDevHeaders: true };
 const admin = { 'x-user-id': 'it-admin-1', 'x-user-role': 'it_administrator' };
 
 function tempDb(t) {

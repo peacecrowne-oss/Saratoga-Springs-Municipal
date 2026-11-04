@@ -1,26 +1,18 @@
 // System dashboard: health, recent deployments from the audit trail, and the
 // asset records. Refreshes every 30 seconds.
 
+import { currentUser } from '/session.js';
+
 const REFRESH_MS = 30000;
-const KEY = 'system-signin';
 
 const $ = id => document.getElementById(id);
 const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const when = iso => new Date(iso).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'medium' });
 
-let who = load();
-
-function load() {
-  try { return JSON.parse(localStorage.getItem(KEY)) ?? null; } catch { return null; }
-}
-function save(value) {
-  try { localStorage.setItem(KEY, JSON.stringify(value)); } catch { /* storage unavailable; sign-in lasts this visit */ }
-}
-
-const headers = () => (who ? { 'x-user-id': who.user, 'x-user-role': who.role } : {});
+let who = null;
 
 async function call(path, options = {}) {
-  const res = await fetch(path, { ...options, headers: { ...headers(), ...options.headers }, cache: 'no-store' });
+  const res = await fetch(path, { ...options, cache: 'no-store' });
   return { status: res.status, body: await res.json() };
 }
 
@@ -67,7 +59,6 @@ function gisCell(gis) {
 }
 
 async function refreshAssets() {
-  if (!who) return;
   try {
     const { status, body } = await call('/api/assets');
     if (status !== 200) { $('assets').textContent = body.error?.message ?? `HTTP ${status}`; return; }
@@ -85,14 +76,6 @@ async function refresh() {
   await Promise.all([refreshHealth(), refreshDeployments(), refreshAssets()]);
 }
 
-$('signin').addEventListener('submit', e => {
-  e.preventDefault();
-  who = { user: $('user').value.trim(), role: $('role').value };
-  save(who);
-  refresh();
-});
-if (who) { $('user').value = who.user; $('role').value = who.role; }
-
 $('asset-form').addEventListener('submit', async e => {
   e.preventDefault();
   const input = Object.fromEntries(['asset_tag', 'name', 'asset_type', 'location', 'status'].map(f => [f, $(f).value]));
@@ -107,5 +90,6 @@ $('asset-form').addEventListener('submit', async e => {
   refreshAssets();
 });
 
+who = await currentUser();
 refresh();
 setInterval(refresh, REFRESH_MS);

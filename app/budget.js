@@ -1,27 +1,17 @@
 // Budget tracking dashboard. Reads /api/budget every minute and shows either
 // the budget or the integration error — never stale figures after a failure.
 
+import { currentUser } from '/session.js';
+
 const REFRESH_MS = 60000;
-const KEY = 'budget-signin';
 
 const $ = id => document.getElementById(id);
 const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const money = n => n.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
 const when = iso => new Date(iso).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'medium' });
 
-let who = load();
-
-function load() {
-  try { return JSON.parse(localStorage.getItem(KEY)) ?? null; } catch { return null; }
-}
-function save(value) {
-  try { localStorage.setItem(KEY, JSON.stringify(value)); } catch { /* storage unavailable; sign-in lasts this visit */ }
-}
-
-const headers = () => (who ? { 'x-user-id': who.user, 'x-user-role': who.role } : {});
-
 async function getJson(path) {
-  const res = await fetch(path, { headers: headers(), cache: 'no-store' });
+  const res = await fetch(path, { cache: 'no-store' });
   return { status: res.status, body: await res.json() };
 }
 
@@ -54,7 +44,6 @@ function renderError({ kind, message }, integration) {
 }
 
 async function refreshAudit() {
-  if (!who) return;
   try {
     const { status: code, body } = await getJson('/api/audit');
     if (code !== 200) { $('audit').textContent = body.error?.message ?? 'Not available.'; return; }
@@ -69,7 +58,6 @@ async function refreshAudit() {
 }
 
 async function refresh() {
-  if (!who) { renderError({ kind: 'unauthenticated', message: 'Use the development sign-in above.' }, false); return; }
   try {
     const { status: code, body } = await getJson('/api/budget');
     if (code === 200) renderBudget(body);
@@ -80,13 +68,6 @@ async function refresh() {
   await refreshAudit();
 }
 
-$('signin').addEventListener('submit', e => {
-  e.preventDefault();
-  who = { user: $('user').value.trim(), role: $('role').value };
-  save(who);
-  refresh();
-});
-if (who) { $('user').value = who.user; $('role').value = who.role; }
-
+await currentUser();
 refresh();
 setInterval(refresh, REFRESH_MS);
