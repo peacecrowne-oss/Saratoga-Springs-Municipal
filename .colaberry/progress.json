@@ -3,13 +3,13 @@
   "project": "Municipal Asset Management and Permitting Software Solution",
   "totals": {
     "stories_total": 11,
-    "stories_verified": 6,
+    "stories_verified": 7,
     "stories_submitted": 0,
-    "stories_in_progress": 5,
+    "stories_in_progress": 4,
     "stories_not_started": 0,
-    "criteria_total": 33,
-    "criteria_passed": 17,
-    "points_awarded": 422
+    "criteria_total": 36,
+    "criteria_passed": 23,
+    "points_awarded": 495
   },
   "stories": [
     {
@@ -308,19 +308,15 @@
       "notes": "Tested over HTTP, including a real deployment with real sign-in. REQ-007 is only partly met: code enforcement is the only permit type. The compliance checks are working assumptions for the City to confirm. The page has not been clicked through in a browser.",
       "updated_at": null,
       "verification": {
-        "state": "in_progress",
-        "criteria_passed": 0,
+        "state": "verified",
+        "criteria_passed": 3,
         "criteria_total": 3,
-        "verified_at": null,
-        "commit_sha": null,
-        "commit_url": null,
-        "commit_at": null,
-        "points_awarded": null,
-        "outstanding": [
-          "Given a code enforcement permit application is submitted, when I review it, then I should be able to approve or reject it.",
-          "Given a permit is approved, when I check the system, then it should reflect the approved status.",
-          "Trust: Ensure all permit actions are logged for audit."
-        ]
+        "verified_at": "2026-11-04T23:33:40.764Z",
+        "commit_sha": "5421aa23610b9d6c5f91af3b0218636c53ab9348",
+        "commit_url": "https://github.com/peacecrowne-oss/Saratoga-Springs-Municipal/commit/5421aa23610b9d6c5f91af3b0218636c53ab9348",
+        "commit_at": "2026-11-04T23:33:32Z",
+        "points_awarded": 73,
+        "outstanding": []
       }
     },
     {
@@ -482,12 +478,12 @@
       "updated_at": null,
       "verification": {
         "state": "verified",
-        "criteria_passed": 0,
-        "criteria_total": 0,
+        "criteria_passed": 3,
+        "criteria_total": 3,
         "verified_at": "2026-11-04T22:20:02.665Z",
         "commit_sha": "d8fce4f16b3414bc55a8c2cc3cdb0e95ac05c65d",
         "commit_url": "https://github.com/peacecrowne-oss/Saratoga-Springs-Municipal/commit/d8fce4f16b3414bc55a8c2cc3cdb0e95ac05c65d",
-        "commit_at": null,
+        "commit_at": "2026-11-04T22:18:39Z",
         "points_awarded": 73,
         "outstanding": []
       }
