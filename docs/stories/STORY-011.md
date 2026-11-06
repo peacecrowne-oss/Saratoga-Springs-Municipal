@@ -32,8 +32,10 @@ the same criteria out of `.colaberry/progress.json`, which Claude Code keeps in
 step (see the managed block in CLAUDE.md). Ticking something you have not
 actually met only misleads you.
 
-- [ ] Given the system is fully developed, when final testing is conducted, then all functionalities should perform as expected.
+- [x] Given the system is fully developed, when final testing is conducted, then all functionalities should perform as expected.
 - [ ] Given the system is tested, when a user performs acceptance testing, then no critical issues should be found.
-- [ ] Trust: Given the testing phase, when it concludes, then a comprehensive test report is generated.
+- [x] Trust: Given the testing phase, when it concludes, then a comprehensive test report is generated.
+
+_Acceptance testing is not done: it needs people to run the 14 scenarios on the Testing Dashboard (`/testing`) and record what they find. Then run `npm run test-report` again. Final testing ran against SIMULATED Tyler, Caselle, ArcGIS and Cityworks stand-ins, not the City's systems._
 
 When every box above is ticked, stop and show the demo.

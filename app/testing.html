@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Testing Dashboard</title>
+  <style>
+    :root {
+      --brand: #2f5d8a; --brand-ink: #fff;
+      --bg: #f6f7f9; --surface: #fff; --surface-2: #eef0f3; --border: #d9dde3;
+      --text: #1c2430; --text-muted: #5b6573;
+      --ok: #2e7d4f; --ok-bg: #e5f4ea; --warn: #8a5a00; --warn-bg: #fff3d6; --bad: #b3261e; --bad-bg: #fdecea;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --brand: #7fb0e0; --brand-ink: #0d1520;
+        --bg: #12161c; --surface: #1a2029; --surface-2: #232a35; --border: #333c49;
+        --text: #e6e9ee; --text-muted: #9aa4b2;
+        --ok: #6cc28f; --ok-bg: #16301f; --warn: #f0c060; --warn-bg: #3a2e12; --bad: #f08a83; --bad-bg: #3a1c1a;
+      }
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 0 16px 48px; }
+    header { background: var(--surface); border-bottom: 1px solid var(--border); }
+    header .wrap { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; justify-content: space-between; padding: 12px 16px; }
+    h1 { font-size: 18px; margin: 0; }
+    h2 { font-size: 16px; margin: 24px 0 8px; }
+    a { color: var(--brand); }
+    .banner { margin: 16px 0 0; padding: 10px 14px; border-radius: 8px; font-size: 14px; background: var(--surface-2); }
+    .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; margin: 12px 0; }
+    .muted { color: var(--text-muted); }
+    .error { background: var(--bad-bg); color: var(--bad); border-radius: 8px; padding: 10px 14px; margin: 8px 0; }
+    .done { color: var(--ok); font-size: 14px; }
+    .verdict { font-size: 18px; font-weight: 700; }
+    .verdict.good { color: var(--ok); } .verdict.bad { color: var(--bad); }
+    .table-scroll { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; background: var(--surface); border: 1px solid var(--border); }
+    th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); font-size: 14px; vertical-align: top; }
+    th { background: var(--surface-2); font-size: 13px; }
+    .pill { display: inline-block; padding: 0 8px; border-radius: 999px; font-size: 12px; font-weight: 600; background: var(--surface-2); white-space: nowrap; }
+    .pill.pass { background: var(--ok-bg); color: var(--ok); }
+    .pill.fail { background: var(--bad-bg); color: var(--bad); }
+    .pill.blocked { background: var(--warn-bg); color: var(--warn); }
+    form { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; margin: 0; }
+    input, select, button { font: inherit; font-size: 13px; padding: 3px 6px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--text); }
+    input { min-width: 140px; flex: 1; }
+    button { background: var(--brand); color: var(--brand-ink); border: 0; cursor: pointer; }
+    ul { margin: 4px 0; padding-left: 18px; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <h1>Testing dashboard</h1>
+      <div id="session" class="muted" style="font-size:13px"></div>
+    </div>
+  </header>
+  <main class="wrap">
+    <div class="banner"><a href="/system">System dashboard</a> · <a href="/assets">Asset management</a> · <a href="/permits">Permitting</a> · <a href="/portal">Public portal</a> · <a href="/history">Cityworks history</a> · <a href="/budget">Budget</a></div>
+
+    <h2>Latest test report</h2>
+    <div id="report" class="panel muted">Loading…</div>
+
+    <h2>User acceptance</h2>
+    <div id="summary"></div>
+    <p class="muted" style="font-size:13px">Sign in as the role a scenario names, try it, then record what happened here. A retest adds a new result; the latest counts. A critical failure stays open until the scenario passes again.</p>
+    <div id="scenarios">Loading…</div>
+  </main>
+  <script type="module" src="/testing.js"></script>
+</body>
+</html>
