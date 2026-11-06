@@ -35,6 +35,8 @@ and REQ-010. Everything here describes what is built today; the gaps are listed.
 | Clickjacking, script injection | Content Security Policy, `X-Frame-Options`, `X-Content-Type-Options` |
 | Clear-text passwords | The server speaks plain HTTP, so `deploy` refuses to listen beyond this machine unless `TRUST_PROXY=1` says a TLS proxy is in front |
 | Forged client address | `X-Forwarded-For` is ignored unless `TRUST_PROXY=1` |
+| Guessing portal links | Links are 256-bit; 20 misses in 15 minutes from one address blocks that address, and every miss is logged |
+| Portal spam | 10 applications an hour from one address; a retry of an earlier one is still answered |
 
 Because a session is tied to its IP address, someone whose address changes mid-session
 (moving between networks, for example) has to sign in again.
@@ -61,6 +63,9 @@ failures). Alerts also go to the server's error output.
 | Username typed at login | `audit_event` | Security audit | Administrators only. Someone could type their password here by mistake. |
 | Who did what, and when | `audit_event` | Accountability | Append-only, read by role |
 | Permit applicant's name and contact, property address, description | `permit` | Decide the application | Code enforcement officers and permit clerks only. The queue leaves them out, and opening a permit is logged. Administrators cannot read them. |
+| Resident's email address, and the messages sent to it | `notification` | Confirm applications and inspections | Shown to the resident through their private link. Kept out of the audit trail. |
+| Resident's IP address and browser on the portal | `audit_event` | Security audit, abuse limits | Administrators only. Removed from what officers and clerks see. |
+| Private portal link | `permit_access` | Lets a resident back to their application | Only a hash is stored |
 
 Passwords, codes and session tokens are never logged. Because the audit trail cannot
 be erased, permit audit events leave out the applicant's name and contact, the
@@ -72,9 +77,13 @@ should not put personal details in it.
 - **Retention.** Nothing is deleted today. The audit trail is append-only and grows
   forever, and expired sessions and challenges stay in their tables. The City should
   set a retention period that fits its records rules.
-- **Resident data.** Permits already hold applicants' details, entered by staff. The
-  public portal (STORY-007) will let residents enter their own, and this document must
-  be updated then.
+- **Resident identity.** Residents have no accounts. Anyone with a resident's private
+  link can see that application and move its inspection, so the link is treated like a
+  password: it is shown once, emailed, kept out of the address sent to the server
+  (it sits after `#`), and only its hash is stored. A lost link cannot be recovered;
+  staff would have to help. Whether the City wants resident accounts instead is open.
+- **Email.** No mail service is connected. Messages are sent through a simulated
+  transport and shown on the portal, and nothing leaves the machine.
 - **Encryption at rest.** The database file itself is not encrypted, so full-disk
   encryption on the server is expected.
 

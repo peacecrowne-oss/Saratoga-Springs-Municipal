@@ -120,6 +120,41 @@ const SCHEMA = `
     checks            TEXT
   );
 
+  -- The public portal (STORY-007). A resident reaches their application with a
+  -- private link; only the hash of its token is stored.
+  CREATE TABLE IF NOT EXISTS permit_access (
+    token_hash TEXT PRIMARY KEY,
+    permit_id  TEXT NOT NULL UNIQUE REFERENCES permit(id),
+    created_at TEXT NOT NULL
+  );
+
+  -- One inspection per permit; rescheduling moves its date.
+  CREATE TABLE IF NOT EXISTS inspection (
+    permit_id    TEXT PRIMARY KEY REFERENCES permit(id),
+    scheduled_on TEXT NOT NULL,
+    created_at   TEXT NOT NULL,
+    updated_at   TEXT NOT NULL
+  );
+
+  -- Messages to residents. dedupe_key makes each one go out once, however many
+  -- times the action behind it is retried.
+  CREATE TABLE IF NOT EXISTS notification (
+    id         TEXT PRIMARY KEY,
+    permit_id  TEXT NOT NULL REFERENCES permit(id),
+    kind       TEXT NOT NULL,
+    dedupe_key TEXT NOT NULL UNIQUE,
+    recipient  TEXT NOT NULL,
+    subject    TEXT NOT NULL,
+    body       TEXT NOT NULL,
+    status     TEXT NOT NULL,
+    attempts   INTEGER NOT NULL DEFAULT 0,
+    last_error TEXT,
+    transport  TEXT,
+    created_at TEXT NOT NULL,
+    claimed_at TEXT,
+    sent_at    TEXT
+  );
+
   -- Sign-in (STORY-012). Only hashes of passwords, challenges and session tokens
   -- are stored. The TOTP secret must be readable to check codes, so it is encrypted.
   CREATE TABLE IF NOT EXISTS auth_user (

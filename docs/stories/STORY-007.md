@@ -31,8 +31,10 @@ the same criteria out of `.colaberry/progress.json`, which Claude Code keeps in
 step (see the managed block in CLAUDE.md). Ticking something you have not
 actually met only misleads you.
 
-- [ ] Given I access the public portal, when I submit a permit application, then I should receive a confirmation notification.
-- [ ] Given I schedule an inspection, when I check the portal, then I should see the scheduled date.
-- [ ] Trust: Ensure all public interactions are logged for audit.
+- [x] Given I access the public portal, when I submit a permit application, then I should receive a confirmation notification.
+- [x] Given I schedule an inspection, when I check the portal, then I should see the scheduled date.
+- [x] Trust: Ensure all public interactions are logged for audit.
+
+_Email is SIMULATED: no mail service is connected, so the confirmation is shown on the portal and nothing leaves the machine. Residents have no accounts; a private link is their key. Only code enforcement permits are offered._
 
 When every box above is ticked, stop and show the demo.

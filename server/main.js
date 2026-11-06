@@ -16,6 +16,8 @@
 //   TYLER_BASE_URL    where Tyler's budget API is, e.g. http://127.0.0.1:4100
 //                     for the SIMULATED stand-in (npm run standin)
 //   TYLER_API_KEY     only if the Tyler endpoint needs one
+//   PUBLIC_BASE_URL   the portal's public address, for the links sent to residents
+//                     (default: http://HOST:PORT)
 //
 // Exits non-zero, naming the failed step, if the deployment does not come up.
 
@@ -28,6 +30,8 @@ try {
   console.log(`Checks: ${d.checks.map(c => `${c.name} ok`).join(', ')}.`);
   console.log(`Audit entry ${event.id} (system.deploy) written at ${event.occurredAt}.`);
   console.log(`System dashboard: ${url}/system`);
+  console.log(`Public portal:    ${url}/portal`);
+  console.log('Resident emails: SIMULATED. No mail service is connected, so nothing is actually sent; the portal shows each message.');
   if (!users) console.log('No user accounts yet, so nobody can sign in. Create one: npm run auth-admin -- add-user <username> --role it_administrator');
   if (!d.tylerConfigured) console.log('Tyler integration: not configured (set TYLER_BASE_URL). The budget page will say so.');
 

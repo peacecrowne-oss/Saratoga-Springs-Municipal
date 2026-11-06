@@ -22,6 +22,10 @@
 //   GET  /api/permits/:id   one permit with its personal details (the read is audited)
 //   POST /api/permits/:id/decision  approve or reject (audited; final)
 //   GET  /api/permits/:id/history   that permit's audit trail
+//   GET  /portal            the public portal page, no sign-in (STORY-007)
+//   POST /api/portal/applications  a resident submits an application (audited; a repeat is a no-op)
+//   GET  /api/portal/application   the application a private link opens (x-portal-token)
+//   POST /api/portal/inspection    book or move its inspection (x-portal-token)
 //   GET  /login             the sign-in page (STORY-012)
 //   POST /api/auth/login    step 1: username and password
 //   POST /api/auth/mfa      step 2: the authenticator code; sets the session cookie
@@ -38,6 +42,9 @@ import { AssetConflictError, AssetStaleError, AssetTransitionError, AssetValidat
 import { AssetCareConflict, createAssetCare } from './asset-care.js';
 import { createAuth } from './auth.js';
 import { createPermits, PermitConflict, PermitValidationError } from './permits.js';
+import { createNotifier } from './notify.js';
+import { createPortal, PortalError } from './portal.js';
+import { randomBytes } from 'node:crypto';
 import { checkHealth } from './health.js';
 import { describeGisEvent, gisStatus, readGisLog } from './gis-log.js';
 import { TylerIntegrationError } from './integrations/tyler/client.js';
@@ -53,6 +60,8 @@ const PAGES = {
   '/assets.js': ['assets.js', 'text/javascript; charset=utf-8'],
   '/permits': ['permits.html', 'text/html; charset=utf-8'],
   '/permits.js': ['permits.js', 'text/javascript; charset=utf-8'],
+  '/portal': ['portal.html', 'text/html; charset=utf-8'],
+  '/portal.js': ['portal.js', 'text/javascript; charset=utf-8'],
   '/budget': ['budget.html', 'text/html; charset=utf-8'],
   '/budget.js': ['budget.js', 'text/javascript; charset=utf-8'],
 };
@@ -71,7 +80,7 @@ export const AUDIT_SCOPES = {
   financial_manager: ['budget'],
   asset_manager: ['asset'],
   gis_analyst: ['gis_sync', 'asset', 'gis_feature'],
-  it_administrator: ['system', 'asset', 'gis_sync', 'gis_feature', 'budget', 'auth', 'permit'],
+  it_administrator: ['system', 'asset', 'gis_sync', 'gis_feature', 'budget', 'auth', 'permit', 'portal'],
   system_administrator: ['auth', 'system'],
   code_enforcement_officer: ['permit'],
   permit_clerk: ['permit'],
@@ -120,7 +129,7 @@ async function readJson(req) {
   }
 }
 
-export function createApp({ db, audit, assets, care = createAssetCare(db, audit, assets), permits = createPermits(db, audit), auth = createAuth(db, audit), tyler, version = null, allowDevHeaders = false, currentFiscalYear = () => new Date().getFullYear() }) {
+export function createApp({ db, audit, assets, care = createAssetCare(db, audit, assets), permits = createPermits(db, audit), notifier = createNotifier(db, audit), portal = createPortal(db, audit, permits, notifier, { secretKey: randomBytes(32) }), auth = createAuth(db, audit), tyler, version = null, allowDevHeaders = false, currentFiscalYear = () => new Date().getFullYear() }) {
   // ── Sign-in ────────────────────────────────────────────────────────────────
 
   // The body of a sign-in step. A malformed one is still an attempt, so it is
@@ -322,7 +331,32 @@ export function createApp({ db, audit, assets, care = createAssetCare(db, audit,
   function getPermitHistory(req, res, url, id) {
     if (!allowPermit(req, res, url, PERMIT_ROLES, id)) return;
     if (!permits.exists(id)) return noPermit(res, id);
-    return send(res, 200, { events: audit.list({ entityType: 'permit', entityId: id, limit: 50 }) });
+    return send(res, 200, { events: audit.list({ entityType: 'permit', entityId: id, limit: 50 }).map(withoutAddress) });
+  }
+
+  // Residents' IP addresses and browsers are for administrators only (docs/SECURITY.md).
+  function withoutAddress(event) {
+    if (!event.after || typeof event.after !== 'object') return event;
+    const { ip, userAgent, ...after } = event.after;
+    return { ...event, after };
+  }
+
+  // ── The public portal: no sign-in, so the private link is the only key ─────
+
+  const portalToken = req => String(req.headers['x-portal-token'] ?? '').trim();
+
+  async function postPortalApplication(req, res) {
+    const result = await portal.submit({ input: await readJson(req), ctx: auth.context(req) });
+    return send(res, result.created ? 201 : 200, result);
+  }
+
+  function getPortalApplication(req, res) {
+    return send(res, 200, portal.lookup({ token: portalToken(req), ctx: auth.context(req) }));
+  }
+
+  async function postPortalInspection(req, res) {
+    const result = await portal.scheduleInspection({ token: portalToken(req), input: await readJson(req), ctx: auth.context(req) });
+    return send(res, 200, result);
   }
 
   function allowGisLog(req, res) {
@@ -387,7 +421,8 @@ export function createApp({ db, audit, assets, care = createAssetCare(db, audit,
     if (!entityType || !scopes.includes(entityType)) {
       return fail(res, 403, 'forbidden', `The ${who.role} role is not allowed to view ${entityType ?? 'the'} audit events.`);
     }
-    return send(res, 200, { events: audit.list({ entityType, limit: 20 }) });
+    const events = audit.list({ entityType, limit: 20 });
+    return send(res, 200, { events: AUTH_LOG_ROLES.includes(who.role) ? events : events.map(withoutAddress) });
   }
 
   async function page(res, [file, type]) {
@@ -434,6 +469,13 @@ export function createApp({ db, audit, assets, care = createAssetCare(db, audit,
       return fail(res, 404, 'not_found', 'Not found.');
     }
 
+    if (pathname.startsWith('/api/portal/')) {
+      if (method === 'POST' && pathname === '/api/portal/applications') return await postPortalApplication(req, res);
+      if (method === 'GET' && pathname === '/api/portal/application') return getPortalApplication(req, res);
+      if (method === 'POST' && pathname === '/api/portal/inspection') return await postPortalInspection(req, res);
+      return fail(res, 404, 'not_found', 'Not found.');
+    }
+
     // /api/permits/:id[/:part]
     if (pathname === '/api/permits') {
       if (method === 'GET') return getPermits(req, res, url);
@@ -468,16 +510,18 @@ export function createApp({ db, audit, assets, care = createAssetCare(db, audit,
     try {
       const isApi = url.pathname.startsWith('/api/');
       const isSignIn = url.pathname === '/api/auth/login' || url.pathname === '/api/auth/mfa';
+      const isPortal = url.pathname.startsWith('/api/portal/');
 
       const { who, problem } = auth.authenticate(req);
-      // A dead session must be told so, except where the person is signing in again.
-      if (problem && isApi && !isSignIn && url.pathname !== '/api/health') {
+      // A dead session must be told so, except where the person is signing in
+      // again or using the public portal, which needs no session.
+      if (problem && isApi && !isSignIn && !isPortal && url.pathname !== '/api/health') {
         res.setHeader('set-cookie', auth.clearCookie());
         return fail(res, 401, problem.kind, problem.message);
       }
       req.who = who ?? (allowDevHeaders ? devIdentity(req) : null);
 
-      if (isApi && req.method !== 'GET' && (who || isSignIn)) {
+      if (isApi && req.method !== 'GET' && (who || isSignIn || isPortal)) {
         const crossSite = crossSiteProblem(req);
         if (crossSite) return fail(res, 403, 'cross_site', crossSite);
       }
@@ -491,6 +535,7 @@ export function createApp({ db, audit, assets, care = createAssetCare(db, audit,
       if (err instanceof AssetTransitionError) return fail(res, 409, err.kind, err.message, { from: err.from, to: err.to, allowed: err.allowed });
       if (err instanceof AssetStaleError) return fail(res, 409, err.kind, err.message, { current: err.current });
       if (err instanceof AssetCareConflict) return fail(res, 409, err.kind, err.message);
+      if (err instanceof PortalError) return fail(res, err.status, err.kind, err.message);
       if (err instanceof PermitValidationError) return fail(res, 400, err.kind, err.message, { problems: err.problems });
       if (err instanceof PermitConflict) return fail(res, 409, err.kind, err.message, { problems: err.problems });
       if (err instanceof AuditWriteError) {

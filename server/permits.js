@@ -51,9 +51,10 @@ export class PermitConflict extends Error {
 
 const isObject = v => v && typeof v === 'object' && !Array.isArray(v);
 
-function validateApplication(input) {
+// extra(input) returns any further problems a caller's own rules find.
+function validateApplication(input, extra) {
   if (!isObject(input)) throw new PermitValidationError([{ field: 'body', problem: 'must be a JSON object' }]);
-  const problems = [];
+  const problems = extra(input);
   if (!PERMIT_TYPES.includes(input.permit_type)) problems.push({ field: 'permit_type', problem: `must be one of ${PERMIT_TYPES.join(', ')}` });
   const application = {
     permitType: input.permit_type,
@@ -86,6 +87,7 @@ const fromRow = row => row && ({
   decidedAt: row.decided_at,
   decisionReason: row.decision_reason,
   checks: row.checks === null ? null : JSON.parse(row.checks),
+  inspectionOn: row.inspection_on ?? null,
 });
 
 // What the audit trail keeps of a permit: nothing that identifies the resident.
@@ -100,6 +102,7 @@ const forAudit = p => ({
   decidedAt: p.decidedAt,
   decisionReason: p.decisionReason,
   checks: p.checks,
+  inspectionOn: p.inspectionOn,
 });
 
 // The queue's view. Personal details are only in a single permit, whose reads are logged.
@@ -113,10 +116,11 @@ const forQueue = p => ({
   submittedAt: p.submittedAt,
   decidedBy: p.decidedBy,
   decidedAt: p.decidedAt,
+  inspectionOn: p.inspectionOn,
 });
 
 export function createPermits(db, audit, { now = () => new Date() } = {}) {
-  const byId = db.prepare('SELECT * FROM permit WHERE id = ?');
+  const byId = db.prepare('SELECT p.*, i.scheduled_on AS inspection_on FROM permit p LEFT JOIN inspection i ON i.permit_id = p.id WHERE p.id = ?');
   const byKey = db.prepare('SELECT * FROM permit WHERE submission_key = ?');
   const countFor = db.prepare('SELECT COUNT(*) AS n FROM permit WHERE permit_number LIKE ?');
   const insert = db.prepare(`
@@ -126,13 +130,15 @@ export function createPermits(db, audit, { now = () => new Date() } = {}) {
   `);
   const saveDecision = db.prepare('UPDATE permit SET status = ?, decided_by = ?, decided_at = ?, decision_reason = ?, checks = ? WHERE id = ?');
 
-  const refuseSubmission = (actor, err) => audit.record({ actor, action: 'permit.submit_rejected', entityType: 'permit',
-    after: { kind: err.kind, message: err.message, problems: err.problems } });
+  const refuseSubmission = (actor, err, context) => audit.record({ actor, action: 'permit.submit_rejected', entityType: 'permit',
+    after: { kind: err.kind, message: err.message, problems: err.problems, ...context } });
 
   return {
-    submit({ actor, input }) {
+    // context is added to the audit events (the public portal adds the address).
+    // onCreated(permit) runs inside the same transaction, only for a new permit.
+    submit({ actor, input, context = {}, extraProblems = () => [], onCreated = () => {} }) {
       try {
-        const application = validateApplication(input);
+        const application = validateApplication(input, extraProblems);
         return transaction(db, () => {
           const existing = fromRow(byKey.get(application.submissionKey));
           if (existing) {
@@ -146,11 +152,12 @@ export function createPermits(db, audit, { now = () => new Date() } = {}) {
           insert.run(id, permitNumber, application.permitType, application.submissionKey, application.applicantName, application.applicantContact,
             application.propertyAddress, application.codeSection, application.description, actor, at.toISOString());
           const permit = fromRow(byId.get(id));
-          audit.record({ actor, action: 'permit.submit', entityType: 'permit', entityId: id, after: forAudit(permit) });
+          audit.record({ actor, action: 'permit.submit', entityType: 'permit', entityId: id, after: { ...forAudit(permit), ...context } });
+          onCreated(permit);
           return { created: true, permit };
         });
       } catch (err) {
-        if (err instanceof PermitValidationError || err instanceof PermitConflict) refuseSubmission(actor, err);
+        if (err instanceof PermitValidationError || err instanceof PermitConflict) refuseSubmission(actor, err, context);
         throw err;
       }
     },
@@ -226,10 +233,13 @@ export function createPermits(db, audit, { now = () => new Date() } = {}) {
       }
       const clause = where.length ? `WHERE ${where.join(' AND ')}` : '';
       const total = db.prepare(`SELECT COUNT(*) AS n FROM permit ${clause}`).get(...params).n;
-      const rows = db.prepare(`SELECT * FROM permit ${clause} ORDER BY submitted_at, permit_number LIMIT ? OFFSET ?`).all(...params, limit, offset);
+      const rows = db.prepare(`SELECT p.*, i.scheduled_on AS inspection_on FROM permit p LEFT JOIN inspection i ON i.permit_id = p.id ${clause} ORDER BY submitted_at, permit_number LIMIT ? OFFSET ?`).all(...params, limit, offset);
       return { permits: rows.map(r => forQueue(fromRow(r))), total, limit, offset };
     },
 
     exists: id => Boolean(byId.get(String(id))),
+
+    // For callers that log their own read (the public portal).
+    get: id => fromRow(byId.get(String(id))) ?? null,
   };
 }

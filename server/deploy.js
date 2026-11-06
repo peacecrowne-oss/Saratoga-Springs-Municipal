@@ -21,6 +21,9 @@ import { createAssetStore } from './assets.js';
 import { createAuth, resolveAuthKey, SESSION_COOKIE } from './auth.js';
 import { createTylerClient } from './integrations/tyler/client.js';
 import { createApp } from './app.js';
+import { createPermits } from './permits.js';
+import { createNotifier, simulatedTransport } from './notify.js';
+import { createPortal } from './portal.js';
 
 export class DeployError extends Error {
   constructor(kind, message, details = {}) {
@@ -86,6 +89,9 @@ export async function deploy({
   now = () => new Date(),
   trustProxy = process.env.TRUST_PROXY === '1',
   allowDevHeaders = false, // tests only: deliberately not readable from the environment
+  publicBaseUrl = process.env.PUBLIC_BASE_URL, // the portal address put in residents' links
+  notifyTransport = simulatedTransport(),
+  notifyRetryMs = 60000,
 } = {}) {
   const started = now();
   const checks = [];
@@ -134,7 +140,10 @@ export async function deploy({
     throw new DeployError('core_init_failed', `The sign-in key could not be loaded: ${err.message}. Nothing was started.`, { ...details(), auditRecorded: false });
   }
   const auth = createAuth(db, audit, { secretKey, trustProxy });
-  const server = http.createServer(createApp({ db, audit, assets, auth, tyler, version: VERSION, allowDevHeaders }));
+  const permits = createPermits(db, audit);
+  const notifier = createNotifier(db, audit, { transport: notifyTransport });
+  const portal = createPortal(db, audit, permits, notifier, { secretKey, publicBaseUrl: publicBaseUrl ?? `http://${host}:${port}` });
+  const server = http.createServer(createApp({ db, audit, assets, permits, notifier, portal, auth, tyler, version: VERSION, allowDevHeaders }));
 
   async function abort(kind, message) {
     await closeServer(server);
@@ -220,13 +229,26 @@ export async function deploy({
       { ...details(), auditRecorded: false });
   }
 
+  // Messages to residents that did not go out are retried in the background.
+  let retrying = null;
+  const retryTimer = setInterval(() => {
+    if (retrying) return;
+    retrying = notifier.retryDue()
+      .catch(err => console.error(`[notification retry failed] ${err.stack ?? err.message}`))
+      .finally(() => { retrying = null; });
+  }, notifyRetryMs);
+  retryTimer.unref();
+
   return {
     url,
     event,
     server,
     db,
+    notifier,
     users: auth.countUsers(),
     async stop() {
+      clearInterval(retryTimer);
+      await retrying;
       await closeServer(server);
       db.close();
     },

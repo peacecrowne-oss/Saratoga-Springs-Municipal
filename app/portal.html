@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>Permit Portal</title>
+  <style>
+    :root {
+      --brand: #2f5d8a; --brand-ink: #fff;
+      --bg: #f6f7f9; --surface: #fff; --surface-2: #eef0f3; --border: #d9dde3;
+      --text: #1c2430; --text-muted: #5b6573;
+      --ok: #2e7d4f; --ok-bg: #e5f4ea; --warn: #8a5a00; --warn-bg: #fff3d6; --bad: #b3261e; --bad-bg: #fdecea;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --brand: #7fb0e0; --brand-ink: #0d1520;
+        --bg: #12161c; --surface: #1a2029; --surface-2: #232a35; --border: #333c49;
+        --text: #e6e9ee; --text-muted: #9aa4b2;
+        --ok: #6cc28f; --ok-bg: #16301f; --warn: #f0c060; --warn-bg: #3a2e12; --bad: #f08a83; --bad-bg: #3a1c1a;
+      }
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+    .wrap { max-width: 720px; margin: 0 auto; padding: 0 16px 48px; }
+    header { background: var(--brand); color: var(--brand-ink); }
+    header .wrap { padding: 16px; }
+    h1 { font-size: 20px; margin: 0; }
+    header p { margin: 2px 0 0; font-size: 14px; opacity: .85; }
+    h2 { font-size: 18px; margin: 28px 0 8px; }
+    h3 { font-size: 15px; margin: 20px 0 6px; }
+    p { margin: 8px 0; }
+    .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin: 12px 0; }
+    label { display: block; font-size: 14px; font-weight: 600; margin: 12px 0 4px; }
+    .hint { font-weight: 400; color: var(--text-muted); font-size: 13px; }
+    input, textarea, button { font: inherit; padding: 8px 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--text); }
+    input, textarea { width: 100%; }
+    textarea { min-height: 90px; }
+    button { margin-top: 14px; background: var(--brand); color: var(--brand-ink); border: 0; font-weight: 600; cursor: pointer; }
+    button:disabled { opacity: .6; cursor: default; }
+    button.plain { background: var(--surface-2); color: var(--text); }
+    .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: end; }
+    .row input { width: auto; flex: 1 1 180px; }
+    .row button { margin-top: 0; }
+    .muted { color: var(--text-muted); }
+    .error { background: var(--bad-bg); color: var(--bad); border-radius: 8px; padding: 10px 14px; margin: 10px 0; }
+    .done { background: var(--ok-bg); color: var(--ok); border-radius: 8px; padding: 10px 14px; margin: 10px 0; }
+    .flag { background: var(--warn-bg); color: var(--warn); border-radius: 8px; padding: 10px 14px; margin: 10px 0; }
+    .link { font-family: ui-monospace, Consolas, monospace; font-size: 13px; overflow-wrap: anywhere; background: var(--surface-2); padding: 8px; border-radius: 6px; }
+    .facts { display: grid; grid-template-columns: max-content 1fr; gap: 4px 16px; margin: 0; }
+    .facts dt { color: var(--text-muted); }
+    .facts dd { margin: 0; overflow-wrap: anywhere; }
+    .message { border-top: 1px solid var(--border); padding: 10px 0; }
+    .message pre { white-space: pre-wrap; font: inherit; font-size: 14px; margin: 6px 0 0; overflow-wrap: anywhere; }
+    .pill { display: inline-block; padding: 0 8px; border-radius: 999px; font-size: 13px; font-weight: 600; background: var(--surface-2); }
+    .pill.approved, .pill.sent { background: var(--ok-bg); color: var(--ok); }
+    .pill.rejected, .pill.failed, .pill.gave_up { background: var(--bad-bg); color: var(--bad); }
+    .pill.submitted, .pill.pending, .pill.sending { background: var(--warn-bg); color: var(--warn); }
+    [hidden] { display: none; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <h1>Permit portal</h1>
+      <p>City of Saratoga Springs · code enforcement permits</p>
+    </div>
+  </header>
+  <main class="wrap">
+    <section id="start">
+      <h2>Apply for a code enforcement permit</h2>
+      <form id="apply" class="panel" novalidate>
+        <label for="applicant_name">Your name</label>
+        <input id="applicant_name" autocomplete="name" required maxlength="200">
+        <label for="applicant_contact">Email <span class="hint">for your confirmation</span></label>
+        <input id="applicant_contact" type="email" autocomplete="email" required maxlength="200">
+        <label for="property_address">Property address</label>
+        <input id="property_address" autocomplete="street-address" required maxlength="200">
+        <label for="code_section">Code section <span class="hint">shown on your notice of violation</span></label>
+        <input id="code_section" required maxlength="64">
+        <label for="description">What the permit is for</label>
+        <textarea id="description" required maxlength="2000"></textarea>
+        <button type="submit">Submit application</button>
+        <div id="apply-result"></div>
+      </form>
+
+      <h2>Already applied?</h2>
+      <form id="open" class="panel">
+        <label for="link">Paste the link from your confirmation</label>
+        <div class="row"><input id="link" autocomplete="off" required><button type="submit">Open</button></div>
+        <div id="open-result"></div>
+      </form>
+    </section>
+
+    <section id="mine" hidden></section>
+  </main>
+  <script type="module" src="/portal.js"></script>
+</body>
+</html>

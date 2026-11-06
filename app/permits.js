@@ -41,10 +41,11 @@ async function refreshQueue() {
     const { status, body } = await call(`/api/permits?${p}`);
     if (status !== 200) { $('queue').innerHTML = refusal(body, status); $('pager').textContent = ''; return; }
     $('queue').innerHTML = body.permits.length ? `<div class="table-scroll"><table>
-      <thead><tr><th>Number</th><th>Code section</th><th>Status</th><th>Submitted</th><th>Decided</th></tr></thead>
+      <thead><tr><th>Number</th><th>Code section</th><th>Status</th><th>Submitted</th><th>Inspection</th><th>Decided</th></tr></thead>
       <tbody>${body.permits.map(a => `<tr class="pick" data-id="${esc(a.id)}" tabindex="0">
         <td>${esc(a.permitNumber)}</td><td>${esc(a.codeSection)}</td><td>${pill(a.status)}</td>
         <td>${esc(when(a.submittedAt))} by ${esc(a.submittedBy)}</td>
+        <td>${a.inspectionOn ? esc(a.inspectionOn) : '<span class="muted">Not booked</span>'}</td>
         <td>${a.decidedAt ? `${esc(when(a.decidedAt))} by ${esc(a.decidedBy)}` : '<span class="muted">Not yet</span>'}</td></tr>`).join('')}</tbody></table></div>`
       : 'No permits match.';
     $('pager').innerHTML = body.total > PAGE
@@ -65,6 +66,12 @@ const describe = e => {
     case 'permit.decision_refused': return `Refused: ${a.message}`;
     case 'permit.access_denied': return `Refused: the ${a.role} role cannot do this`;
     case 'permit.view': return 'Opened the permit';
+    case 'portal.view': return 'The resident checked it on the portal';
+    case 'portal.inspection_scheduled': return `Inspection booked for ${a.date}`;
+    case 'portal.inspection_rescheduled': return `Inspection moved from ${e.before?.date} to ${a.date}`;
+    case 'portal.inspection_refused': return `Refused: ${a.message}`;
+    case 'notification.sent': return `Message to the resident sent (${a.kind}, via ${a.transport})`;
+    case 'notification.failed': case 'notification.gave_up': return `Message to the resident not sent (${a.kind}): ${a.error}`;
     default: return '';
   }
 };
@@ -85,7 +92,8 @@ async function openPermit(id, note = '') {
         <dt>Property</dt><dd>${esc(p.propertyAddress)}</dd>
         <dt>Code section</dt><dd>${esc(p.codeSection)}</dd>
         <dt>Description</dt><dd>${esc(p.description)}</dd>
-        <dt>Submitted</dt><dd>${esc(when(p.submittedAt))} by ${esc(p.submittedBy)}</dd>
+        <dt>Submitted</dt><dd>${esc(when(p.submittedAt))} by ${esc(p.submittedBy === 'public' ? 'the resident, on the portal' : p.submittedBy)}</dd>
+        <dt>Inspection</dt><dd>${p.inspectionOn ? esc(p.inspectionOn) : '<span class="muted">Not booked</span>'}</dd>
         ${p.decidedAt ? `<dt>Decision</dt><dd>${esc(p.status)}, ${esc(when(p.decidedAt))} by ${esc(p.decidedBy)}</dd><dt>Reason</dt><dd>${esc(p.decisionReason)}</dd>` : ''}
       </dl>
 
