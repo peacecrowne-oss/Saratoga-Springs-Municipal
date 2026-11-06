@@ -66,6 +66,7 @@ failures). Alerts also go to the server's error output.
 | Resident's email address, and the messages sent to it | `notification` | Confirm applications and inspections | Shown to the resident through their private link. Kept out of the audit trail. |
 | Resident's IP address and browser on the portal | `audit_event` | Security audit, abuse limits | Administrators only. Removed from what officers and clerks see. |
 | Private portal link | `permit_access` | Lets a resident back to their application | Only a hash is stored |
+| Historical Cityworks records: people, addresses, fees, attachments | `legacy_record`, `legacy_attachment`, files in `attachments/` | Look-up and analysis after migration | Read-only. Staff who work cases (IT, asset, GIS, code enforcement, permit clerks) only; every record opened and every attachment downloaded is logged. Attachments are always downloaded, never displayed, so a migrated HTML file cannot run in the browser. |
 | Caselle customer name, address, bills | Not stored: read from Caselle per request | Billing requests | Billing managers only. The audit trail keeps the account number, balance and who asked, not the name or address. |
 
 Passwords, codes and session tokens are never logged. Because the audit trail cannot

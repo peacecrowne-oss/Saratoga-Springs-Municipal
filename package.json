@@ -13,6 +13,9 @@
     "auth-admin": "node --disable-warning=ExperimentalWarning --env-file-if-exists=.env server/auth-admin-main.js",
     "gis-log":"node --disable-warning=ExperimentalWarning --env-file-if-exists=.env server/gis-log-main.js",
     "arcgis-standin": "node tools/arcgis-standin/server.js",
+    "migrate": "node --disable-warning=ExperimentalWarning --env-file-if-exists=.env server/migrate-main.js",
+    "sample-export": "node --disable-warning=ExperimentalWarning tools/cityworks-sample/make-export.js",
+    "test-report": "node --disable-warning=ExperimentalWarning --env-file-if-exists=.env server/final-report-main.js",
     "caselle-standin": "node tools/caselle-standin/server.js",
     "caselle": "node --disable-warning=ExperimentalWarning --env-file-if-exists=.env server/caselle-main.js"
   }

@@ -26,6 +26,16 @@
 //   POST /api/portal/applications  a resident submits an application (audited; a repeat is a no-op)
 //   GET  /api/portal/application   the application a private link opens (x-portal-token)
 //   POST /api/portal/inspection    book or move its inspection (x-portal-token)
+//   GET  /history           historical Cityworks records, read-only (STORY-013)
+//   GET  /api/legacy/records          search them: ?type= &q= &department= &open=1
+//   GET  /api/legacy/records/:id      one record with its GIS links and attachments (audited)
+//   GET  /api/legacy/records/:id/attachments/:attId   download an attachment (audited)
+//   GET  /api/legacy/migration        the latest migration's reconciliation report
+//   (any other method on /api/legacy is refused as read-only, and audited)
+//   GET  /testing           the Testing Dashboard (STORY-011)
+//   GET  /api/testing/uat   acceptance scenarios and their latest results
+//   POST /api/testing/uat   record a result (audited; a repeat is a no-op)
+//   GET  /api/testing/report        the latest final test report
 //   GET  /login             the sign-in page (STORY-012)
 //   POST /api/auth/login    step 1: username and password
 //   POST /api/auth/mfa      step 2: the authenticator code; sets the session cookie
@@ -51,6 +61,9 @@ import { describeGisEvent, gisStatus, readGisLog } from './gis-log.js';
 import { TylerIntegrationError } from './integrations/tyler/client.js';
 import { createCaselleClient } from './integrations/caselle/client.js';
 import { createBilling } from './billing.js';
+import { createLegacy, LegacyQueryError } from './legacy.js';
+import { createUat, UatValidationError } from './uat.js';
+import { createReadStream } from 'node:fs';
 
 const APP_DIR = new URL('../app/', import.meta.url);
 const PAGES = {
@@ -65,12 +78,19 @@ const PAGES = {
   '/permits.js': ['permits.js', 'text/javascript; charset=utf-8'],
   '/portal': ['portal.html', 'text/html; charset=utf-8'],
   '/portal.js': ['portal.js', 'text/javascript; charset=utf-8'],
+  '/history': ['history.html', 'text/html; charset=utf-8'],
+  '/history.js': ['history.js', 'text/javascript; charset=utf-8'],
+  '/testing': ['testing.html', 'text/html; charset=utf-8'],
+  '/testing.js': ['testing.js', 'text/javascript; charset=utf-8'],
   '/budget': ['budget.html', 'text/html; charset=utf-8'],
   '/budget.js': ['budget.js', 'text/javascript; charset=utf-8'],
 };
 
 export const BUDGET_ROLES = ['financial_manager'];
 export const BILLING_ROLES = ['billing_manager'];
+// Historical records include residents' details, so this is staff who work cases.
+export const LEGACY_ROLES = ['it_administrator', 'asset_manager', 'gis_analyst', 'code_enforcement_officer', 'permit_clerk'];
+export const MIGRATION_REPORT_ROLES = ['it_administrator', 'gis_analyst'];
 export const ASSET_ROLES = ['asset_manager', 'it_administrator'];
 export const ASSET_READ_ROLES = [...ASSET_ROLES, 'gis_analyst'];
 export const GIS_LOG_ROLES = ['gis_analyst', 'it_administrator'];
@@ -84,7 +104,7 @@ export const AUDIT_SCOPES = {
   financial_manager: ['budget'],
   asset_manager: ['asset'],
   gis_analyst: ['gis_sync', 'asset', 'gis_feature'],
-  it_administrator: ['system', 'asset', 'gis_sync', 'gis_feature', 'budget', 'auth', 'permit', 'portal', 'billing'],
+  it_administrator: ['system', 'asset', 'gis_sync', 'gis_feature', 'budget', 'auth', 'permit', 'portal', 'billing', 'legacy', 'migration'],
   billing_manager: ['billing'],
   system_administrator: ['auth', 'system'],
   code_enforcement_officer: ['permit'],
@@ -134,7 +154,7 @@ async function readJson(req) {
   }
 }
 
-export function createApp({ db, audit, assets, care = createAssetCare(db, audit, assets), permits = createPermits(db, audit), notifier = createNotifier(db, audit), portal = createPortal(db, audit, permits, notifier, { secretKey: randomBytes(32) }), auth = createAuth(db, audit), tyler, caselle = createCaselleClient(), billing = createBilling({ audit, caselle }), version = null, allowDevHeaders = false, currentFiscalYear = () => new Date().getFullYear() }) {
+export function createApp({ db, audit, assets, care = createAssetCare(db, audit, assets), permits = createPermits(db, audit), notifier = createNotifier(db, audit), portal = createPortal(db, audit, permits, notifier, { secretKey: randomBytes(32) }), auth = createAuth(db, audit), tyler, caselle = createCaselleClient(), billing = createBilling({ audit, caselle }), legacy = createLegacy(db), uat = createUat(db, audit), version = null, allowDevHeaders = false, currentFiscalYear = () => new Date().getFullYear() }) {
   // ── Sign-in ────────────────────────────────────────────────────────────────
 
   // The body of a sign-in step. A malformed one is still an attempt, so it is
@@ -435,6 +455,92 @@ export function createApp({ db, audit, assets, care = createAssetCare(db, audit,
     return send(res, status, body);
   }
 
+  // ── Testing Dashboard: any signed-in staff member can test ──────────────
+
+  async function testingRoute(req, res, url) {
+    const who = identify(req);
+    if (!who) return fail(res, 401, 'unauthenticated', 'Sign in to record test results.');
+    if (who.role === 'citizen') return fail(res, 403, 'forbidden', 'Only staff record acceptance results.');
+    if (url.pathname === '/api/testing/uat' && req.method === 'GET') return send(res, 200, uat.status());
+    if (url.pathname === '/api/testing/uat' && req.method === 'POST') {
+      const result = uat.record({ tester: who.user, input: await readJson(req) });
+      return send(res, result.recorded ? 201 : 200, result);
+    }
+    if (url.pathname === '/api/testing/report' && req.method === 'GET') {
+      const row = db.prepare('SELECT report FROM test_report ORDER BY generated_at DESC, rowid DESC LIMIT 1').get();
+      return row ? send(res, 200, { report: JSON.parse(row.report) }) : fail(res, 404, 'not_found', 'No test report has been generated yet.');
+    }
+    return fail(res, 404, 'not_found', 'Not found.');
+  }
+
+  // ── Historical Cityworks records: read-only ──────────────────────────────
+
+  function allowLegacy(req, res, url, roles = LEGACY_ROLES, entityId = null) {
+    const who = identify(req);
+    if (!who) { fail(res, 401, 'unauthenticated', 'Sign in to look up historical records.'); return null; }
+    if (!roles.includes(who.role)) {
+      audit.record({ actor: who.user, action: 'legacy.access_denied', entityType: 'legacy', entityId, after: { role: who.role, path: url.pathname } });
+      fail(res, 403, 'forbidden', `The ${who.role} role is not allowed to look up historical records.`);
+      return null;
+    }
+    return who;
+  }
+
+  async function legacyRoute(req, res, url) {
+    const parts = url.pathname.slice('/api/legacy/'.length).split('/').map(decodeURIComponent);
+    if (req.method !== 'GET') {
+      const who = identify(req);
+      audit.record({ actor: who?.user ?? 'anonymous', action: 'legacy.write_refused', entityType: 'legacy', entityId: parts[1] ?? null,
+        after: { method: req.method, path: url.pathname, ip: auth.context(req).ip } });
+      return fail(res, 405, 'read_only', 'Historical Cityworks records are read-only. They can be looked up, not changed.');
+    }
+
+    if (parts[0] === 'migration' && parts.length === 1) {
+      if (!allowLegacy(req, res, url, MIGRATION_REPORT_ROLES)) return;
+      const report = legacy.latestRun();
+      return report ? send(res, 200, { report }) : fail(res, 404, 'not_found', 'No migration has been run yet.');
+    }
+    if (parts[0] !== 'records') return fail(res, 404, 'not_found', 'Not found.');
+
+    if (parts.length === 1) {
+      if (!allowLegacy(req, res, url)) return;
+      const p = url.searchParams;
+      return send(res, 200, legacy.search({
+        type: p.get('type') || undefined, q: p.get('q') || undefined, department: p.get('department') || undefined, open: p.get('open') === '1',
+        limit: p.has('limit') ? Number(p.get('limit')) : undefined, offset: p.has('offset') ? Number(p.get('offset')) : undefined,
+      }));
+    }
+    const id = parts[1];
+    const who = allowLegacy(req, res, url, LEGACY_ROLES, id);
+    if (!who) return;
+    if (parts.length === 2) {
+      const record = legacy.get(id);
+      if (!record) return fail(res, 404, 'not_found', `No historical record ${id}.`);
+      audit.record({ actor: who.user, action: 'legacy.view', entityType: 'legacy', entityId: id, after: { recordType: record.recordType, caseNumber: record.caseNumber } });
+      return send(res, 200, { record });
+    }
+    if (parts.length === 4 && parts[2] === 'attachments') {
+      const found = legacy.attachment(id, parts[3]);
+      if (!found) return fail(res, 404, 'not_found', `No attachment ${parts[3]} on ${id}.`);
+      if (found.missing) {
+        audit.record({ actor: who.user, action: 'legacy.attachment_missing', entityType: 'legacy', entityId: id, after: { attachmentId: parts[3], storedPath: found.missing.stored_path } });
+        console.error(`[legacy] the stored file for ${parts[3]} on ${id} is missing: ${found.missing.stored_path}`);
+        return fail(res, 500, 'attachment_missing', 'This attachment is on record, but its stored file is missing. IT has been alerted in the audit trail.');
+      }
+      audit.record({ actor: who.user, action: 'legacy.attachment_download', entityType: 'legacy', entityId: id, after: { attachmentId: parts[3], size: found.row.size } });
+      const name = found.row.file_name.replace(/[^\w.\- ]/g, '_');
+      res.writeHead(200, {
+        'content-type': 'application/octet-stream',
+        'content-length': found.row.size,
+        'content-disposition': `attachment; filename="${name}"; filename*=UTF-8''${encodeURIComponent(found.row.file_name)}`,
+        'cache-control': 'no-store',
+      });
+      createReadStream(found.file).on('error', err => { console.error(`[legacy] reading ${found.file} failed: ${err.message}`); res.destroy(err); }).pipe(res);
+      return;
+    }
+    return fail(res, 404, 'not_found', 'Not found.');
+  }
+
   function getAudit(req, res, url) {
     const who = identify(req);
     if (!who) return fail(res, 401, 'unauthenticated', 'Sign in to view the audit trail.');
@@ -490,6 +596,9 @@ export function createApp({ db, audit, assets, care = createAssetCare(db, audit,
       }
       return fail(res, 404, 'not_found', 'Not found.');
     }
+
+    if (pathname.startsWith('/api/legacy/')) return await legacyRoute(req, res, url);
+    if (pathname.startsWith('/api/testing/')) return await testingRoute(req, res, url);
 
     if (pathname.startsWith('/api/billing/accounts/')) {
       const rest = pathname.slice('/api/billing/accounts/'.length);
@@ -564,6 +673,8 @@ export function createApp({ db, audit, assets, care = createAssetCare(db, audit,
       if (err instanceof AssetStaleError) return fail(res, 409, err.kind, err.message, { current: err.current });
       if (err instanceof AssetCareConflict) return fail(res, 409, err.kind, err.message);
       if (err instanceof PortalError) return fail(res, err.status, err.kind, err.message);
+      if (err instanceof UatValidationError) return fail(res, 400, 'invalid', err.message, { problems: err.problems });
+      if (err instanceof LegacyQueryError) return fail(res, 400, 'bad_request', err.message, { problems: err.problems });
       if (err instanceof PermitValidationError) return fail(res, 400, err.kind, err.message, { problems: err.problems });
       if (err instanceof PermitConflict) return fail(res, 409, err.kind, err.message, { problems: err.problems });
       if (err instanceof AuditWriteError) {

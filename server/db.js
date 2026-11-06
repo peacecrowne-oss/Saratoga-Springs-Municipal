@@ -155,6 +155,88 @@ const SCHEMA = `
     sent_at    TEXT
   );
 
+  -- Historical Cityworks records (STORY-013). Read-only: the triggers below refuse
+  -- every change unless the migration has opened them inside its own transaction.
+  CREATE TABLE IF NOT EXISTS legacy_record (
+    id           TEXT PRIMARY KEY,
+    record_type  TEXT NOT NULL,
+    source_table TEXT NOT NULL,
+    source_id    TEXT NOT NULL,
+    case_number  TEXT,
+    status       TEXT,
+    department   TEXT,
+    opened_at    TEXT,
+    closed_at    TEXT,
+    address      TEXT,
+    summary      TEXT,
+    data         TEXT NOT NULL,
+    run_id       TEXT NOT NULL,
+    migrated_at  TEXT NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS legacy_record_type ON legacy_record (record_type, department);
+
+  CREATE TABLE IF NOT EXISTS legacy_gis_link (
+    id          TEXT PRIMARY KEY,
+    record_id   TEXT NOT NULL REFERENCES legacy_record(id),
+    layer       TEXT NOT NULL,
+    feature_id  TEXT NOT NULL,
+    resolved_by TEXT NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS legacy_gis_link_record ON legacy_gis_link (record_id);
+
+  -- Source relationships that could not be linked, for a person to resolve.
+  CREATE TABLE IF NOT EXISTS legacy_gis_issue (
+    link_key    TEXT PRIMARY KEY,
+    record_id   TEXT NOT NULL,
+    layer       TEXT,
+    feature_ref TEXT,
+    problem     TEXT NOT NULL,
+    detail      TEXT
+  );
+
+  CREATE TABLE IF NOT EXISTS legacy_attachment (
+    id          TEXT PRIMARY KEY,
+    record_id   TEXT NOT NULL REFERENCES legacy_record(id),
+    file_name   TEXT NOT NULL,
+    size        INTEGER NOT NULL,
+    sha256      TEXT NOT NULL,
+    stored_path TEXT NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS legacy_attachment_record ON legacy_attachment (record_id);
+
+  CREATE TABLE IF NOT EXISTS migration_run (
+    id          TEXT PRIMARY KEY,
+    actor       TEXT NOT NULL,
+    started_at  TEXT NOT NULL,
+    finished_at TEXT NOT NULL,
+    verdict     TEXT NOT NULL,
+    report      TEXT NOT NULL
+  );
+
+  -- User acceptance results (STORY-011). Never edited: a retest is a new row.
+  CREATE TABLE IF NOT EXISTS uat_result (
+    id          TEXT PRIMARY KEY,
+    result_key  TEXT NOT NULL UNIQUE,
+    scenario_id TEXT NOT NULL,
+    tester      TEXT NOT NULL,
+    outcome     TEXT NOT NULL,
+    severity    TEXT NOT NULL,
+    notes       TEXT,
+    recorded_at TEXT NOT NULL
+  );
+
+  CREATE TRIGGER IF NOT EXISTS uat_result_no_update
+  BEFORE UPDATE ON uat_result
+  BEGIN SELECT RAISE(ABORT, 'uat_result is append-only'); END;
+
+  CREATE TABLE IF NOT EXISTS test_report (
+    id           TEXT PRIMARY KEY,
+    generated_at TEXT NOT NULL,
+    status       TEXT NOT NULL,
+    verdict      TEXT NOT NULL,
+    report       TEXT NOT NULL
+  );
+
   -- Sign-in (STORY-012). Only hashes of passwords, challenges and session tokens
   -- are stored. The TOTP secret must be readable to check codes, so it is encrypted.
   CREATE TABLE IF NOT EXISTS auth_user (
@@ -205,6 +287,18 @@ const SCHEMA = `
 // after a table first shipped are added here. Safe to run on every open.
 const ADDED_COLUMNS = { asset_gis: ['spatial_problem TEXT', 'verified_at TEXT'] };
 
+// Historical records are read-only (STORY-013). Only the migration opens them,
+// by setting legacy_writable inside its transaction and clearing it before commit.
+export const LEGACY_TABLES = ['legacy_record', 'legacy_gis_link', 'legacy_gis_issue', 'legacy_attachment'];
+
+function readOnlyTriggers() {
+  return LEGACY_TABLES.flatMap(table => ['INSERT', 'UPDATE', 'DELETE'].map(op => `
+    CREATE TRIGGER IF NOT EXISTS ${table}_read_only_${op.toLowerCase()}
+    BEFORE ${op} ON ${table}
+    WHEN (SELECT value FROM sync_state WHERE key = 'legacy_writable') IS NOT '1'
+    BEGIN SELECT RAISE(ABORT, 'Historical Cityworks records are read-only.'); END;`)).join('\n');
+}
+
 function addMissingColumns(db) {
   for (const [table, columns] of Object.entries(ADDED_COLUMNS)) {
     const existing = new Set(db.prepare(`PRAGMA table_info(${table})`).all().map(c => c.name));
@@ -238,6 +332,7 @@ export function openDb(file = process.env.DB_PATH ?? DEFAULT_DB_PATH) {
   // The server and the GIS sync job share the file: wait up to 5 s for a lock, never forever.
   const db = new DatabaseSync(file, { timeout: 5000 });
   db.exec(SCHEMA);
+  db.exec(readOnlyTriggers());
   addMissingColumns(db);
   return db;
 }

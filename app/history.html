@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cityworks History</title>
+  <style>
+    :root {
+      --brand: #2f5d8a; --brand-ink: #fff;
+      --bg: #f6f7f9; --surface: #fff; --surface-2: #eef0f3; --border: #d9dde3;
+      --text: #1c2430; --text-muted: #5b6573;
+      --ok: #2e7d4f; --warn: #8a5a00; --warn-bg: #fff3d6; --bad: #b3261e; --bad-bg: #fdecea;
+      --ro: #5a3e8a; --ro-bg: #efe8fa;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --brand: #7fb0e0; --brand-ink: #0d1520;
+        --bg: #12161c; --surface: #1a2029; --surface-2: #232a35; --border: #333c49;
+        --text: #e6e9ee; --text-muted: #9aa4b2;
+        --ok: #6cc28f; --warn: #f0c060; --warn-bg: #3a2e12; --bad: #f08a83; --bad-bg: #3a1c1a;
+        --ro: #c9b3f0; --ro-bg: #2a2140;
+      }
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 0 16px 48px; }
+    header { background: var(--surface); border-bottom: 1px solid var(--border); }
+    header .wrap { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; justify-content: space-between; padding: 12px 16px; }
+    h1 { font-size: 18px; margin: 0; }
+    h2 { font-size: 16px; margin: 24px 0 8px; }
+    h3 { font-size: 14px; margin: 16px 0 6px; }
+    a { color: var(--brand); }
+    form { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 13px; margin: 8px 0; }
+    input, select, button { font: inherit; font-size: 13px; padding: 4px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--text); }
+    button { background: var(--brand); color: var(--brand-ink); border: 0; cursor: pointer; }
+    button.plain { background: var(--surface-2); color: var(--text); }
+    .banner { margin: 16px 0 0; padding: 10px 14px; border-radius: 8px; font-size: 14px; background: var(--surface-2); }
+    .readonly { margin: 12px 0 0; padding: 10px 14px; border-radius: 8px; background: var(--ro-bg); color: var(--ro); font-weight: 600; }
+    .muted { color: var(--text-muted); }
+    .error { background: var(--bad-bg); color: var(--bad); border-radius: 8px; padding: 10px 14px; margin: 8px 0; }
+    .flag { background: var(--warn-bg); color: var(--warn); border-radius: 8px; padding: 8px 12px; margin: 6px 0; font-size: 14px; }
+    .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; margin: 12px 0; }
+    .table-scroll { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; background: var(--surface); border: 1px solid var(--border); }
+    th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); font-size: 14px; vertical-align: top; }
+    th { background: var(--surface-2); font-size: 13px; }
+    tbody tr.pick { cursor: pointer; }
+    tbody tr.pick:hover { background: var(--surface-2); }
+    .pill { display: inline-block; padding: 0 8px; border-radius: 999px; font-size: 12px; font-weight: 600; background: var(--surface-2); }
+    .pill.ro { background: var(--ro-bg); color: var(--ro); }
+    .facts { display: grid; grid-template-columns: max-content 1fr; gap: 2px 16px; font-size: 14px; margin: 0; }
+    .facts dt { color: var(--text-muted); }
+    .facts dd { margin: 0; overflow-wrap: anywhere; }
+    pre { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 12px; background: var(--surface-2); padding: 8px; border-radius: 6px; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <h1>Cityworks history</h1>
+      <div id="session" class="muted" style="font-size:13px"></div>
+    </div>
+  </header>
+  <main class="wrap">
+    <div class="banner"><a href="/system">System dashboard</a> · <a href="/assets">Asset management</a> · <a href="/permits">Permitting</a></div>
+    <div class="readonly" role="note">READ-ONLY · Records migrated from Cityworks, for look-up and analysis. They cannot be changed here.</div>
+
+    <div id="migration"></div>
+
+    <h2>Search</h2>
+    <form id="filters">
+      <input id="q" aria-label="Search" placeholder="number, address or description">
+      <select id="type" aria-label="Type">
+        <option value="">any type</option><option value="permit">permit</option><option value="license">license</option>
+        <option value="service_request">service request</option><option value="inspection">inspection</option><option value="work_order">work order</option>
+      </select>
+      <input id="department" aria-label="Department" placeholder="department">
+      <label class="muted"><input type="checkbox" id="open"> still open</label>
+      <button type="submit">Search</button>
+    </form>
+    <div id="results" class="muted">Loading…</div>
+    <div id="pager" class="muted" style="font-size:13px;margin-top:6px"></div>
+
+    <div id="detail"></div>
+  </main>
+  <script type="module" src="/history.js"></script>
+</body>
+</html>

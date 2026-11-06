@@ -27,9 +27,11 @@ the same criteria out of `.colaberry/progress.json`, which Claude Code keeps in
 step (see the managed block in CLAUDE.md). Ticking something you have not
 actually met only misleads you.
 
-- [ ] Given a Cityworks SQL export, when the migration runs, then permits, licenses, service requests, inspections, and work orders import with their GIS feature relationships intact.
-- [ ] Given attached documents up to ~200,000 files, when the migration completes, then each attachment is linked to its record and retrievable.
-- [ ] Given migrated data is designated read-only, when a user opens a historical case, then it is viewable for look-up and analysis and clearly marked read-only.
-- [ ] Trust the migration only when a reconciliation report shows source and target record counts match and zero orphaned GIS relationships remain.
+- [x] Given a Cityworks SQL export, when the migration runs, then permits, licenses, service requests, inspections, and work orders import with their GIS feature relationships intact.
+- [x] Given attached documents up to ~200,000 files, when the migration completes, then each attachment is linked to its record and retrievable.
+- [x] Given migrated data is designated read-only, when a user opens a historical case, then it is viewable for look-up and analysis and clearly marked read-only.
+- [x] Trust the migration only when a reconciliation report shows source and target record counts match and zero orphaned GIS relationships remain.
+
+_Proven on a SIMULATED export only (`npm run sample-export`). The table and column names follow Cityworks' conventions but must be checked against the City's real export; `SOURCE` in `server/migration.js` is the one place to adjust them. Workflow definitions are not migrated. The cutover plan is in `docs/CUTOVER.md`._
 
 When every box above is ticked, stop and show the demo.

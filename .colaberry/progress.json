@@ -524,24 +524,40 @@
       "criteria": [
         {
           "text": "Given a Cityworks SQL export, when the migration runs, then permits, licenses, service requests, inspections, and work orders import with their GIS feature relationships intact.",
-          "passed": false
+          "passed": true
         },
         {
           "text": "Given attached documents up to ~200,000 files, when the migration completes, then each attachment is linked to its record and retrievable.",
-          "passed": false
+          "passed": true
         },
         {
           "text": "Given migrated data is designated read-only, when a user opens a historical case, then it is viewable for look-up and analysis and clearly marked read-only.",
-          "passed": false
+          "passed": true
         },
         {
           "text": "Trust the migration only when a reconciliation report shows source and target record counts match and zero orphaned GIS relationships remain.",
-          "passed": false
+          "passed": true
         }
       ],
-      "files_touched": [],
-      "tests_added": [],
-      "notes": null,
+      "files_touched": [
+        "server/migration.js",
+        "server/migrate-main.js",
+        "server/legacy.js",
+        "server/app.js",
+        "server/db.js",
+        "app/history.html",
+        "app/history.js",
+        "app/system.html",
+        "tools/cityworks-sample/make-export.js",
+        "docs/CUTOVER.md",
+        "docs/SECURITY.md",
+        "docs/stories/STORY-013.md",
+        "package.json"
+      ],
+      "tests_added": [
+        "server/migration.test.js"
+      ],
+      "notes": "Proven on a SIMULATED Cityworks export only. A one-off run with 200,000 attachments was TRUSTED: all stored and hash-verified, counts matched, 0 orphaned GIS links; first run 34 min on this Windows laptop, rerun 3 min copying nothing. Table and column names must be checked against the City's real export. Workflow definitions are not migrated. Cutover plan: docs/CUTOVER.md.",
       "updated_at": null,
       "verification": {
         "state": "in_progress",
