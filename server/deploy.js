@@ -20,6 +20,7 @@ import { createAuditLog } from './audit.js';
 import { createAssetStore } from './assets.js';
 import { createAuth, resolveAuthKey, SESSION_COOKIE } from './auth.js';
 import { createTylerClient } from './integrations/tyler/client.js';
+import { createCaselleClient } from './integrations/caselle/client.js';
 import { createApp } from './app.js';
 import { createPermits } from './permits.js';
 import { createNotifier, simulatedTransport } from './notify.js';
@@ -79,6 +80,8 @@ export async function deploy({
   port = Number(process.env.PORT ?? 3000),
   tylerBaseUrl = process.env.TYLER_BASE_URL,
   tylerApiKey = process.env.TYLER_API_KEY,
+  caselleBaseUrl = process.env.CASELLE_BASE_URL,
+  caselleApiKey = process.env.CASELLE_API_KEY,
   actor = deployer(),
   checkTimeoutMs = 3000,
   checkRetries = 3,
@@ -103,6 +106,7 @@ export async function deploy({
     listen: `${host}:${port}`,
     database: dbPath,
     tylerConfigured: Boolean(tylerBaseUrl),
+    caselleConfigured: Boolean(caselleBaseUrl),
     checks,
     startedAt: started.toISOString(),
     durationMs: now() - started,
@@ -143,7 +147,8 @@ export async function deploy({
   const permits = createPermits(db, audit);
   const notifier = createNotifier(db, audit, { transport: notifyTransport });
   const portal = createPortal(db, audit, permits, notifier, { secretKey, publicBaseUrl: publicBaseUrl ?? `http://${host}:${port}` });
-  const server = http.createServer(createApp({ db, audit, assets, permits, notifier, portal, auth, tyler, version: VERSION, allowDevHeaders }));
+  const caselle = createCaselleClient({ baseUrl: caselleBaseUrl, apiKey: caselleApiKey });
+  const server = http.createServer(createApp({ db, audit, assets, permits, notifier, portal, auth, tyler, caselle, version: VERSION, allowDevHeaders }));
 
   async function abort(kind, message) {
     await closeServer(server);

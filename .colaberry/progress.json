@@ -379,20 +379,34 @@
       "criteria": [
         {
           "text": "Given the system is connected to Caselle, when a billing request is made, then the billing information should be accurately retrieved from Caselle.",
-          "passed": false
+          "passed": true
         },
         {
           "text": "Given the system is not connected to Caselle, when a billing request is made, then an error message should be displayed indicating the connection issue.",
-          "passed": false
+          "passed": true
         },
         {
           "text": "Trust: All billing transactions must be logged with a timestamp and user ID for audit purposes.",
-          "passed": false
+          "passed": true
         }
       ],
-      "files_touched": [],
-      "tests_added": [],
-      "notes": null,
+      "files_touched": [
+        "server/integrations/caselle/client.js",
+        "server/billing.js",
+        "server/caselle-main.js",
+        "server/app.js",
+        "server/auth.js",
+        "server/deploy.js",
+        "server/main.js",
+        "tools/caselle-standin/server.js",
+        "package.json",
+        "docs/SECURITY.md",
+        "docs/stories/STORY-010.md"
+      ],
+      "tests_added": [
+        "server/billing.test.js"
+      ],
+      "notes": "Tested against a SIMULATED Caselle stand-in over HTTP; no real Caselle API was available, so the interface is our own and must be mapped to Caselle's. The other REQ-011 systems are not built.",
       "updated_at": null,
       "verification": {
         "state": "in_progress",

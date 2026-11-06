@@ -16,7 +16,10 @@
 //   TYLER_BASE_URL    where Tyler's budget API is, e.g. http://127.0.0.1:4100
 //                     for the SIMULATED stand-in (npm run standin)
 //   TYLER_API_KEY     only if the Tyler endpoint needs one
-//   PUBLIC_BASE_URL   the portal's public address, for the links sent to residents
+//   CASELLE_BASE_URL  where Caselle's billing API is, e.g. http://127.0.0.1:4300
+//                     for the SIMULATED stand-in (npm run caselle-standin)
+//   CASELLE_API_KEY   the Caselle credential (simulated-key for the stand-in)
+//   PUBLIC_BASE_URL  the portal's public address, for the links sent to residents
 //                     (default: http://HOST:PORT)
 //
 // Exits non-zero, naming the failed step, if the deployment does not come up.
@@ -34,6 +37,7 @@ try {
   console.log('Resident emails: SIMULATED. No mail service is connected, so nothing is actually sent; the portal shows each message.');
   if (!users) console.log('No user accounts yet, so nobody can sign in. Create one: npm run auth-admin -- add-user <username> --role it_administrator');
   if (!d.tylerConfigured) console.log('Tyler integration: not configured (set TYLER_BASE_URL). The budget page will say so.');
+  if (!d.caselleConfigured) console.log('Caselle integration: not configured (set CASELLE_BASE_URL). Billing requests will say so.');
 
   const shutdown = async signal => {
     console.log(`${signal}: stopping.`);

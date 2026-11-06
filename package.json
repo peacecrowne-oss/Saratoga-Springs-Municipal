@@ -12,6 +12,8 @@
     "gis-sync": "node --disable-warning=ExperimentalWarning --env-file-if-exists=.env server/gis-sync-main.js",
     "auth-admin": "node --disable-warning=ExperimentalWarning --env-file-if-exists=.env server/auth-admin-main.js",
     "gis-log":"node --disable-warning=ExperimentalWarning --env-file-if-exists=.env server/gis-log-main.js",
-    "arcgis-standin": "node tools/arcgis-standin/server.js"
+    "arcgis-standin": "node tools/arcgis-standin/server.js",
+    "caselle-standin": "node tools/caselle-standin/server.js",
+    "caselle": "node --disable-warning=ExperimentalWarning --env-file-if-exists=.env server/caselle-main.js"
   }
 }

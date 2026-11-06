@@ -33,6 +33,7 @@
 //   GET  /api/auth/me       who is signed in
 //   GET  /api/auth/attempts every login attempt, for administrators (?alerts=1)
 //   GET  /api/budget       budget lines from Tyler, for a financial manager
+//   GET  /api/billing/accounts/:number  a Caselle billing account, for a billing manager (STORY-010)
 //   GET  /api/audit         recent audit events in the caller's scope (?entity_type=)
 
 import fs from 'node:fs/promises';
@@ -48,6 +49,8 @@ import { randomBytes } from 'node:crypto';
 import { checkHealth } from './health.js';
 import { describeGisEvent, gisStatus, readGisLog } from './gis-log.js';
 import { TylerIntegrationError } from './integrations/tyler/client.js';
+import { createCaselleClient } from './integrations/caselle/client.js';
+import { createBilling } from './billing.js';
 
 const APP_DIR = new URL('../app/', import.meta.url);
 const PAGES = {
@@ -67,6 +70,7 @@ const PAGES = {
 };
 
 export const BUDGET_ROLES = ['financial_manager'];
+export const BILLING_ROLES = ['billing_manager'];
 export const ASSET_ROLES = ['asset_manager', 'it_administrator'];
 export const ASSET_READ_ROLES = [...ASSET_ROLES, 'gis_analyst'];
 export const GIS_LOG_ROLES = ['gis_analyst', 'it_administrator'];
@@ -80,7 +84,8 @@ export const AUDIT_SCOPES = {
   financial_manager: ['budget'],
   asset_manager: ['asset'],
   gis_analyst: ['gis_sync', 'asset', 'gis_feature'],
-  it_administrator: ['system', 'asset', 'gis_sync', 'gis_feature', 'budget', 'auth', 'permit', 'portal'],
+  it_administrator: ['system', 'asset', 'gis_sync', 'gis_feature', 'budget', 'auth', 'permit', 'portal', 'billing'],
+  billing_manager: ['billing'],
   system_administrator: ['auth', 'system'],
   code_enforcement_officer: ['permit'],
   permit_clerk: ['permit'],
@@ -129,7 +134,7 @@ async function readJson(req) {
   }
 }
 
-export function createApp({ db, audit, assets, care = createAssetCare(db, audit, assets), permits = createPermits(db, audit), notifier = createNotifier(db, audit), portal = createPortal(db, audit, permits, notifier, { secretKey: randomBytes(32) }), auth = createAuth(db, audit), tyler, version = null, allowDevHeaders = false, currentFiscalYear = () => new Date().getFullYear() }) {
+export function createApp({ db, audit, assets, care = createAssetCare(db, audit, assets), permits = createPermits(db, audit), notifier = createNotifier(db, audit), portal = createPortal(db, audit, permits, notifier, { secretKey: randomBytes(32) }), auth = createAuth(db, audit), tyler, caselle = createCaselleClient(), billing = createBilling({ audit, caselle }), version = null, allowDevHeaders = false, currentFiscalYear = () => new Date().getFullYear() }) {
   // ── Sign-in ────────────────────────────────────────────────────────────────
 
   // The body of a sign-in step. A malformed one is still an attempt, so it is
@@ -413,6 +418,23 @@ export function createApp({ db, audit, assets, care = createAssetCare(db, audit,
     return send(res, 200, { connected: true, fiscalYear, ...budget });
   }
 
+  // A billing request, from a billing manager only. Every attempt is audited,
+  // including one from someone not signed in.
+  async function getBillingAccount(req, res, accountNumber) {
+    const who = identify(req);
+    const { ip } = auth.context(req);
+    if (!who) {
+      audit.record({ actor: 'anonymous', action: 'billing.unauthenticated', entityType: 'billing', entityId: String(accountNumber).slice(0, 64), after: { ip } });
+      return fail(res, 401, 'unauthenticated', 'Sign in to make billing requests.');
+    }
+    if (!BILLING_ROLES.includes(who.role)) {
+      audit.record({ actor: who.user, action: 'billing.view_denied', entityType: 'billing', entityId: String(accountNumber).slice(0, 64), after: { role: who.role, ip } });
+      return fail(res, 403, 'forbidden', `The ${who.role} role is not allowed to make billing requests.`);
+    }
+    const { status, body } = await billing.lookup({ actor: who.user, accountNumber, context: { via: 'api' } });
+    return send(res, status, body);
+  }
+
   function getAudit(req, res, url) {
     const who = identify(req);
     if (!who) return fail(res, 401, 'unauthenticated', 'Sign in to view the audit trail.');
@@ -466,6 +488,12 @@ export function createApp({ db, audit, assets, care = createAssetCare(db, audit,
       } else if (part === 'maintenance' && partId !== undefined && method === 'PATCH') {
         return await patchMaintenance(req, res, id, partId);
       }
+      return fail(res, 404, 'not_found', 'Not found.');
+    }
+
+    if (pathname.startsWith('/api/billing/accounts/')) {
+      const rest = pathname.slice('/api/billing/accounts/'.length);
+      if (method === 'GET' && rest && !rest.includes('/')) return await getBillingAccount(req, res, decodeURIComponent(rest));
       return fail(res, 404, 'not_found', 'Not found.');
     }
 
