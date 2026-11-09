@@ -66,41 +66,60 @@
     .facts dt { color: var(--text-muted); }
     .facts dd { margin: 0; overflow-wrap: anywhere; white-space: pre-wrap; }
   </style>
+  <link rel="stylesheet" href="/shell.css">
 </head>
-<body>
-  <header>
-    <div class="wrap">
-      <div class="title"><a id="back" class="back" href="/system">← Back</a><h1>Permitting</h1></div>
-      <div id="session" class="muted" style="font-size:13px"></div>
-    </div>
-  </header>
-  <main class="wrap">
-    <div class="banner"><a href="/system">System dashboard</a> · <a href="/assets">Asset management</a> · <a href="/budget">Budget tracking</a></div>
+<body class="shell">
+  <aside class="sidebar">
+      <a class="brand" href="/system">Saratoga Springs</a>
+      <span class="brand-sub">City staff</span>
+      <nav aria-label="Main">
+        <a href="/system">Dashboard</a>
+        <a href="/assets">Assets</a>
+        <a href="/permits" aria-current="page">Permitting</a>
+        <a href="/history">Cityworks history</a>
+        <a href="/budget">Budget</a>
+        <a href="/testing">Testing</a>
+        <span class="group">Public</span>
+        <a href="/portal">Permit portal</a>
+      </nav>
+    </aside>
+  <div class="frame">
+    <header class="topbar">
+        <a id="back" class="back" href="/system">← Back</a>
+        <span class="sysname">Municipal Asset Management &amp; Permitting</span>
+        <div id="session"></div>
+    </header>
+    <main class="wrap">
+      <h1 class="page-title">Permitting</h1>
+      <section class="card">
+        <h2>Code enforcement permits</h2>
+        <form id="filters">
+          <input id="q" aria-label="Search" placeholder="search number or code section">
+          <select id="status_filter" aria-label="Status">
+            <option value="submitted">awaiting decision</option><option value="approved">approved</option><option value="rejected">rejected</option><option value="">all</option>
+          </select>
+          <button type="submit">Search</button>
+        </form>
+        <div id="queue" class="muted">Loading…</div>
+        <div id="pager" class="muted" style="font-size:13px;margin-top:6px"></div>
 
-    <h2>Code enforcement permits</h2>
-    <form id="filters">
-      <input id="q" aria-label="Search" placeholder="search number or code section">
-      <select id="status_filter" aria-label="Status">
-        <option value="submitted">awaiting decision</option><option value="approved">approved</option><option value="rejected">rejected</option><option value="">all</option>
-      </select>
-      <button type="submit">Search</button>
-    </form>
-    <div id="queue" class="muted">Loading…</div>
-    <div id="pager" class="muted" style="font-size:13px;margin-top:6px"></div>
+        <div id="detail"></div>
+      </section>
 
-    <div id="detail"></div>
-
-    <h2>Submit an application</h2>
-    <form id="submit">
-      <input id="applicant_name" aria-label="Applicant name" placeholder="applicant name" required>
-      <input id="applicant_contact" aria-label="Applicant contact" placeholder="phone or email" required>
-      <input id="property_address" aria-label="Property address" placeholder="property address" required>
-      <input id="code_section" aria-label="Code section" placeholder="code section" required>
-      <textarea id="description" aria-label="Description" placeholder="what the application is for" required></textarea>
-      <button type="submit">Submit application</button>
-    </form>
-    <div id="submit-result"></div>
-  </main>
+      <section class="card">
+        <h2>Submit an application</h2>
+        <form id="submit">
+          <input id="applicant_name" aria-label="Applicant name" placeholder="applicant name" required>
+          <input id="applicant_contact" aria-label="Applicant contact" placeholder="phone or email" required>
+          <input id="property_address" aria-label="Property address" placeholder="property address" required>
+          <input id="code_section" aria-label="Code section" placeholder="code section" required>
+          <textarea id="description" aria-label="Description" placeholder="what the application is for" required></textarea>
+          <button type="submit">Submit application</button>
+        </form>
+        <div id="submit-result"></div>
+      </section>
+    </main>
+  </div>
   <script type="module" src="/permits.js"></script>
 </body>
 </html>

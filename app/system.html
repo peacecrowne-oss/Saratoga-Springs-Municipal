@@ -49,36 +49,54 @@
     th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); font-size: 14px; vertical-align: top; }
     th { background: var(--surface-2); font-size: 13px; }
   </style>
+  <link rel="stylesheet" href="/shell.css">
 </head>
-<body>
-  <header>
-    <div class="wrap">
-      <h1>System dashboard</h1>
-      <div id="session" class="signin"></div>
-    </div>
-  </header>
-  <main class="wrap">
-    <div class="banner"><a href="/assets">Asset management</a> · <a href="/permits">Permitting</a> · <a href="/history">Cityworks history</a> · <a href="/testing">Testing</a> · <a href="/budget">Budget tracking</a></div>
+<body class="shell">
+  <aside class="sidebar">
+      <a class="brand" href="/system">Saratoga Springs</a>
+      <span class="brand-sub">City staff</span>
+      <nav aria-label="Main">
+        <a href="/system" aria-current="page">Dashboard</a>
+        <a href="/assets">Assets</a>
+        <a href="/permits">Permitting</a>
+        <a href="/history">Cityworks history</a>
+        <a href="/budget">Budget</a>
+        <a href="/testing">Testing</a>
+        <span class="group">Public</span>
+        <a href="/portal">Permit portal</a>
+      </nav>
+    </aside>
+  <div class="frame">
+    <header class="topbar">
+        <span class="sysname">Municipal Asset Management &amp; Permitting</span>
+        <div id="session"></div>
+    </header>
+    <main class="wrap">
+      <h1 class="page-title">System dashboard</h1>
+      <div class="status" id="health"><span><span class="dot"></span>Not checked yet</span></div>
 
-    <div class="status" id="health"><span><span class="dot"></span>Not checked yet</span></div>
+      <section class="card">
+        <h2>Deployments</h2>
+        <div id="deployments" class="muted">Loading…</div>
+      </section>
 
-    <h2>Deployments</h2>
-    <div id="deployments" class="muted">Loading…</div>
-
-    <h2>Assets</h2>
-    <form class="asset" id="asset-form">
-      <input id="asset_tag" aria-label="Asset tag" placeholder="asset tag, e.g. HYD-0001" required>
-      <input id="name" aria-label="Name" placeholder="name" required>
-      <input id="asset_type" aria-label="Type" placeholder="type, e.g. hydrant" required>
-      <input id="location" aria-label="Location" placeholder="location (optional)">
-      <select id="status" aria-label="Status">
-        <option>active</option><option>planned</option><option>maintenance</option><option>retired</option>
-      </select>
-      <button type="submit">Add asset</button>
-    </form>
-    <div id="asset-result"></div>
-    <div id="assets" class="muted">Loading…</div>
-  </main>
+      <section class="card">
+        <h2>Assets</h2>
+        <form class="asset" id="asset-form">
+          <input id="asset_tag" aria-label="Asset tag" placeholder="asset tag, e.g. HYD-0001" required>
+          <input id="name" aria-label="Name" placeholder="name" required>
+          <input id="asset_type" aria-label="Type" placeholder="type, e.g. hydrant" required>
+          <input id="location" aria-label="Location" placeholder="location (optional)">
+          <select id="status" aria-label="Status">
+            <option>active</option><option>planned</option><option>maintenance</option><option>retired</option>
+          </select>
+          <button type="submit">Add asset</button>
+        </form>
+        <div id="asset-result"></div>
+        <div id="assets" class="muted">Loading…</div>
+      </section>
+    </main>
+  </div>
   <script type="module" src="/system.js"></script>
 </body>
 </html>

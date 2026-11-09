@@ -70,6 +70,7 @@ const PAGES = {
   '/login': ['login.html', 'text/html; charset=utf-8'],
   '/login.js': ['login.js', 'text/javascript; charset=utf-8'],
   '/session.js': ['session.js', 'text/javascript; charset=utf-8'],
+  '/shell.css': ['shell.css', 'text/css; charset=utf-8'],
   '/system':['system.html', 'text/html; charset=utf-8'],
   '/system.js': ['system.js', 'text/javascript; charset=utf-8'],
   '/assets': ['assets.html', 'text/html; charset=utf-8'],

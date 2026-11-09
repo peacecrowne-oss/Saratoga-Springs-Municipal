@@ -61,48 +61,69 @@
     .pill.poor { background: var(--warn-bg); color: var(--warn); }
     .facts { display: flex; flex-wrap: wrap; gap: 4px 24px; font-size: 14px; }
   </style>
+  <link rel="stylesheet" href="/shell.css">
 </head>
-<body>
-  <header>
-    <div class="wrap">
-      <div class="title"><a id="back" class="back" href="/system">← Back</a><h1>Asset management</h1></div>
-      <div id="session" class="muted" style="font-size:13px"></div>
-    </div>
-  </header>
-  <main class="wrap">
-    <div class="banner"><a href="/system">System dashboard</a> · <a href="/permits">Permitting</a> · <a href="/budget">Budget tracking</a></div>
+<body class="shell">
+  <aside class="sidebar">
+      <a class="brand" href="/system">Saratoga Springs</a>
+      <span class="brand-sub">City staff</span>
+      <nav aria-label="Main">
+        <a href="/system">Dashboard</a>
+        <a href="/assets" aria-current="page">Assets</a>
+        <a href="/permits">Permitting</a>
+        <a href="/history">Cityworks history</a>
+        <a href="/budget">Budget</a>
+        <a href="/testing">Testing</a>
+        <span class="group">Public</span>
+        <a href="/portal">Permit portal</a>
+      </nav>
+    </aside>
+  <div class="frame">
+    <header class="topbar">
+        <a id="back" class="back" href="/system">← Back</a>
+        <span class="sysname">Municipal Asset Management &amp; Permitting</span>
+        <div id="session"></div>
+    </header>
+    <main class="wrap">
+      <h1 class="page-title">Asset management</h1>
+      <section class="card">
+        <h2>Inventory</h2>
+        <form id="filters">
+          <input id="q" aria-label="Search" placeholder="search tag, name, location">
+          <input id="asset_type_filter" aria-label="Type" placeholder="type">
+          <select id="status_filter" aria-label="Status">
+            <option value="">any status</option><option>planned</option><option>active</option><option>maintenance</option><option>retired</option>
+          </select>
+          <select id="condition_filter" aria-label="Condition">
+            <option value="">any condition</option><option>good</option><option>fair</option><option>poor</option><option>critical</option>
+          </select>
+          <button type="submit">Search</button>
+        </form>
+        <div id="inventory" class="muted">Loading…</div>
+        <div id="pager" class="muted" style="font-size:13px;margin-top:6px"></div>
 
-    <h2>Inventory</h2>
-    <form id="filters">
-      <input id="q" aria-label="Search" placeholder="search tag, name, location">
-      <input id="asset_type_filter" aria-label="Type" placeholder="type">
-      <select id="status_filter" aria-label="Status">
-        <option value="">any status</option><option>planned</option><option>active</option><option>maintenance</option><option>retired</option>
-      </select>
-      <select id="condition_filter" aria-label="Condition">
-        <option value="">any condition</option><option>good</option><option>fair</option><option>poor</option><option>critical</option>
-      </select>
-      <button type="submit">Search</button>
-    </form>
-    <div id="inventory" class="muted">Loading…</div>
-    <div id="pager" class="muted" style="font-size:13px;margin-top:6px"></div>
+        <div id="detail"></div>
+      </section>
 
-    <div id="detail"></div>
+      <section class="card">
+        <h2>Add an asset</h2>
+        <form id="add">
+          <input id="asset_tag" aria-label="Asset tag" placeholder="asset tag, e.g. HYD-0001" required>
+          <input id="name" aria-label="Name" placeholder="name" required>
+          <input id="asset_type" aria-label="Type" placeholder="type, e.g. hydrant" required>
+          <input id="location" aria-label="Location" placeholder="location (optional)">
+          <select id="status" aria-label="Status"><option>active</option><option>planned</option></select>
+          <button type="submit">Add asset</button>
+        </form>
+        <div id="add-result"></div>
+      </section>
 
-    <h2>Add an asset</h2>
-    <form id="add">
-      <input id="asset_tag" aria-label="Asset tag" placeholder="asset tag, e.g. HYD-0001" required>
-      <input id="name" aria-label="Name" placeholder="name" required>
-      <input id="asset_type" aria-label="Type" placeholder="type, e.g. hydrant" required>
-      <input id="location" aria-label="Location" placeholder="location (optional)">
-      <select id="status" aria-label="Status"><option>active</option><option>planned</option></select>
-      <button type="submit">Add asset</button>
-    </form>
-    <div id="add-result"></div>
-
-    <h2>Maintenance still to do</h2>
-    <div id="due" class="muted">Loading…</div>
-  </main>
+      <section class="card">
+        <h2>Maintenance still to do</h2>
+        <div id="due" class="muted">Loading…</div>
+      </section>
+    </main>
+  </div>
   <script type="module" src="/assets.js"></script>
 </body>
 </html>

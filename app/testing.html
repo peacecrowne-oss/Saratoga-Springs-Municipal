@@ -60,25 +60,44 @@
     button { background: var(--brand); color: var(--brand-ink); border: 0; cursor: pointer; }
     ul { margin: 4px 0; padding-left: 18px; }
   </style>
+  <link rel="stylesheet" href="/shell.css">
 </head>
-<body>
-  <header>
-    <div class="wrap">
-      <div class="title"><a id="back" class="back" href="/system">← Back</a><h1>Testing dashboard</h1></div>
-      <div id="session" class="muted" style="font-size:13px"></div>
-    </div>
-  </header>
-  <main class="wrap">
-    <div class="banner"><a href="/system">System dashboard</a> · <a href="/assets">Asset management</a> · <a href="/permits">Permitting</a> · <a href="/portal">Public portal</a> · <a href="/history">Cityworks history</a> · <a href="/budget">Budget</a></div>
+<body class="shell">
+  <aside class="sidebar">
+      <a class="brand" href="/system">Saratoga Springs</a>
+      <span class="brand-sub">City staff</span>
+      <nav aria-label="Main">
+        <a href="/system">Dashboard</a>
+        <a href="/assets">Assets</a>
+        <a href="/permits">Permitting</a>
+        <a href="/history">Cityworks history</a>
+        <a href="/budget">Budget</a>
+        <a href="/testing" aria-current="page">Testing</a>
+        <span class="group">Public</span>
+        <a href="/portal">Permit portal</a>
+      </nav>
+    </aside>
+  <div class="frame">
+    <header class="topbar">
+        <a id="back" class="back" href="/system">← Back</a>
+        <span class="sysname">Municipal Asset Management &amp; Permitting</span>
+        <div id="session"></div>
+    </header>
+    <main class="wrap">
+      <h1 class="page-title">Testing dashboard</h1>
+      <section class="card">
+        <h2>Latest test report</h2>
+        <div id="report" class="panel muted">Loading…</div>
+      </section>
 
-    <h2>Latest test report</h2>
-    <div id="report" class="panel muted">Loading…</div>
-
-    <h2>User acceptance</h2>
-    <div id="summary"></div>
-    <p class="muted" style="font-size:13px">Sign in as the role a scenario names, try it, then record what happened here. A retest adds a new result; the latest counts. A critical failure stays open until the scenario passes again.</p>
-    <div id="scenarios">Loading…</div>
-  </main>
+      <section class="card">
+        <h2>User acceptance</h2>
+        <div id="summary"></div>
+        <p class="muted" style="font-size:13px">Sign in as the role a scenario names, try it, then record what happened here. A retest adds a new result; the latest counts. A critical failure stays open until the scenario passes again.</p>
+        <div id="scenarios">Loading…</div>
+      </section>
+    </main>
+  </div>
   <script type="module" src="/testing.js"></script>
 </body>
 </html>

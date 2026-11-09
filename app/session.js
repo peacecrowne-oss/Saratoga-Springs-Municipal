@@ -45,9 +45,11 @@ export async function currentUser() {
   if (!res.ok) throw new Error(`Could not check who is signed in (HTTP ${res.status}).`);
   const { user } = await res.json();
   const box = document.getElementById('session');
-  if (box) {
-    box.innerHTML = `<span>${esc(user.username)} · ${esc(user.role)}</span> <button type="button" id="sign-out">Sign out</button>`;
-    document.getElementById('sign-out').addEventListener('click', signOut);
-  }
+  // Sign out sits at the foot of the sidebar's links (under Permit portal) when the
+  // page has the sidebar, otherwise beside the name.
+  const nav = document.querySelector('.sidebar nav');
+  if (box) box.innerHTML = `<span>${esc(user.username)} · ${esc(user.role)}</span>${nav ? '' : ' <button type="button" id="sign-out">Sign out</button>'}`;
+  if (nav && !document.getElementById('sign-out')) nav.insertAdjacentHTML('beforeend', '<button type="button" id="sign-out" class="nav-signout">Sign out</button>');
+  document.getElementById('sign-out')?.addEventListener('click', signOut);
   return user;
 }

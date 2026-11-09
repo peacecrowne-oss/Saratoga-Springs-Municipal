@@ -65,36 +65,54 @@
     .facts dd { margin: 0; overflow-wrap: anywhere; }
     pre { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 12px; background: var(--surface-2); padding: 8px; border-radius: 6px; }
   </style>
+  <link rel="stylesheet" href="/shell.css">
 </head>
-<body>
-  <header>
-    <div class="wrap">
-      <div class="title"><a id="back" class="back" href="/system">← Back</a><h1>Cityworks history</h1></div>
-      <div id="session" class="muted" style="font-size:13px"></div>
-    </div>
-  </header>
-  <main class="wrap">
-    <div class="banner"><a href="/system">System dashboard</a> · <a href="/assets">Asset management</a> · <a href="/permits">Permitting</a></div>
-    <div class="readonly" role="note">READ-ONLY · Records migrated from Cityworks, for look-up and analysis. They cannot be changed here.</div>
+<body class="shell">
+  <aside class="sidebar">
+      <a class="brand" href="/system">Saratoga Springs</a>
+      <span class="brand-sub">City staff</span>
+      <nav aria-label="Main">
+        <a href="/system">Dashboard</a>
+        <a href="/assets">Assets</a>
+        <a href="/permits">Permitting</a>
+        <a href="/history" aria-current="page">Cityworks history</a>
+        <a href="/budget">Budget</a>
+        <a href="/testing">Testing</a>
+        <span class="group">Public</span>
+        <a href="/portal">Permit portal</a>
+      </nav>
+    </aside>
+  <div class="frame">
+    <header class="topbar">
+        <a id="back" class="back" href="/system">← Back</a>
+        <span class="sysname">Municipal Asset Management &amp; Permitting</span>
+        <div id="session"></div>
+    </header>
+    <main class="wrap">
+      <h1 class="page-title">Cityworks history</h1>
+      <div class="readonly" role="note">READ-ONLY · Records migrated from Cityworks, for look-up and analysis. They cannot be changed here.</div>
 
-    <div id="migration"></div>
+      <div id="migration"></div>
 
-    <h2>Search</h2>
-    <form id="filters">
-      <input id="q" aria-label="Search" placeholder="number, address or description">
-      <select id="type" aria-label="Type">
-        <option value="">any type</option><option value="permit">permit</option><option value="license">license</option>
-        <option value="service_request">service request</option><option value="inspection">inspection</option><option value="work_order">work order</option>
-      </select>
-      <input id="department" aria-label="Department" placeholder="department">
-      <label class="muted"><input type="checkbox" id="open"> still open</label>
-      <button type="submit">Search</button>
-    </form>
-    <div id="results" class="muted">Loading…</div>
-    <div id="pager" class="muted" style="font-size:13px;margin-top:6px"></div>
+      <section class="card">
+        <h2>Search</h2>
+        <form id="filters">
+          <input id="q" aria-label="Search" placeholder="number, address or description">
+          <select id="type" aria-label="Type">
+            <option value="">any type</option><option value="permit">permit</option><option value="license">license</option>
+            <option value="service_request">service request</option><option value="inspection">inspection</option><option value="work_order">work order</option>
+          </select>
+          <input id="department" aria-label="Department" placeholder="department">
+          <label class="muted"><input type="checkbox" id="open"> still open</label>
+          <button type="submit">Search</button>
+        </form>
+        <div id="results" class="muted">Loading…</div>
+        <div id="pager" class="muted" style="font-size:13px;margin-top:6px"></div>
 
-    <div id="detail"></div>
-  </main>
+        <div id="detail"></div>
+      </section>
+    </main>
+  </div>
   <script type="module" src="/history.js"></script>
 </body>
 </html>

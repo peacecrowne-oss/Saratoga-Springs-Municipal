@@ -1,0 +1,66 @@
+/* The staff dashboards' frame: a dark navigation sidebar, a white top bar, a large
+   page title, and each section on a white card. Loaded after each page's own styles,
+   so it only sets the frame and leaves the page's tables, forms and pills alone. */
+:root {
+  --side: #1b1d33; --side-ink: #d4d7e2; --side-active: #2c2e46; --side-accent: #4fc3f7;
+  --shell-bg: #f4f5f7; --card: #fff; --card-border: #e4e6ea; --title: #22344a;
+  --topbar: #fff; --topbar-ink: #22344a;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --side: #111325; --side-ink: #c3c7d4; --side-active: #23263d; --side-accent: #6fd0fa;
+    --shell-bg: #12161c; --card: #1a2029; --card-border: #2c3440; --title: #e6e9ee;
+    --topbar: #1a2029; --topbar-ink: #e6e9ee;
+  }
+}
+
+html { background: var(--shell-bg); }
+/* The sidebar's colour is painted on the body too, so the dark column runs the full page height. */
+body.shell { margin: 0; min-height: 100vh; background: linear-gradient(to right, var(--side) 260px, var(--shell-bg) 260px); display: grid; grid-template-columns: 260px minmax(0, 1fr); }
+
+/* Sidebar */
+.sidebar { background: var(--side); color: var(--side-ink); padding: 24px 16px; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+.sidebar .brand { display: block; color: #fff; text-decoration: none; font-weight: 700; font-size: 20px; line-height: 1.25; padding: 0 12px 4px; }
+.sidebar .brand-sub { display: block; color: var(--side-ink); opacity: .7; font-size: 12px; padding: 0 12px 24px; }
+.sidebar nav { display: flex; flex-direction: column; gap: 4px; }
+.sidebar nav a { color: var(--side-ink); text-decoration: none; font-size: 16px; padding: 10px 12px; border-radius: 6px; }
+.sidebar nav a:hover { background: var(--side-active); color: #fff; }
+.sidebar nav a[aria-current="page"] { background: var(--side-active); color: var(--side-accent); }
+.sidebar nav .nav-signout { all: unset; box-sizing: border-box; cursor: pointer; color: var(--side-ink); font-size: 16px; padding: 10px 12px; border-radius: 6px; }
+.sidebar nav .nav-signout:hover, .sidebar nav .nav-signout:focus-visible { background: var(--side-active); color: #fff; }
+.sidebar nav .nav-signout:focus-visible { outline: 2px solid var(--side-accent); outline-offset: 2px; }
+.sidebar nav .group { color: var(--side-ink); opacity: .55; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; padding: 18px 12px 4px; }
+
+/* Top bar */
+.frame { min-width: 0; display: flex; flex-direction: column; }
+.topbar { background: var(--topbar); color: var(--topbar-ink); border-bottom: 1px solid var(--card-border); display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding: 14px 32px; }
+.topbar .sysname { font-weight: 600; font-size: 17px; margin-right: auto; }
+.topbar .back { color: var(--topbar-ink); text-decoration: none; border: 1px solid var(--card-border); border-radius: 6px; padding: 3px 10px; font-size: 13px; white-space: nowrap; }
+.topbar .back:hover { background: var(--shell-bg); }
+.topbar #session { font-size: 13px; color: var(--text-muted); display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.topbar #session button { background: transparent; color: var(--topbar-ink); border: 1px solid var(--card-border); border-radius: 6px; padding: 3px 10px; cursor: pointer; font: inherit; font-size: 13px; }
+.topbar #session button:hover { background: var(--shell-bg); }
+
+/* Content */
+body.shell main.wrap { max-width: 1100px; width: 100%; margin: 0; padding: 8px 32px 48px; }
+body.shell .page-title { font-size: 44px; line-height: 1.15; font-weight: 700; color: var(--title); margin: 28px 0 24px; letter-spacing: -.01em; }
+body.shell .card { background: var(--card); border: 1px solid var(--card-border); border-radius: 10px; box-shadow: 0 1px 3px rgba(16, 24, 40, .06); padding: 20px 24px; margin: 0 0 20px; }
+body.shell .card > h2:first-child { font-size: 19px; margin: 0 0 14px; color: var(--title); }
+body.shell .card > :last-child { margin-bottom: 0; }
+
+/* Phones and narrow windows: the sidebar becomes a bar across the top. */
+@media (max-width: 800px) {
+  body.shell { grid-template-columns: 1fr; background: var(--shell-bg); }
+  .sidebar { position: static; height: auto; padding: 12px 16px; }
+  .sidebar .brand { padding: 0 0 2px; font-size: 18px; }
+  .sidebar .brand-sub { padding: 0 0 8px; }
+  .sidebar nav { flex-direction: row; flex-wrap: wrap; gap: 2px; }
+  .sidebar nav a, .sidebar nav .nav-signout { font-size: 14px; padding: 6px 10px; }
+  .sidebar nav .group { display: none; }
+  .topbar { padding: 10px 16px; justify-content: space-between; }
+  .topbar .sysname { display: none; }
+  .topbar:has(> .sysname:only-child) { display: none; }
+  body.shell main.wrap { padding: 4px 16px 40px; }
+  body.shell .page-title { font-size: 32px; margin: 20px 0 16px; }
+  body.shell .card { padding: 16px; }
+}

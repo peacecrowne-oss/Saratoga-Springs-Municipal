@@ -57,19 +57,30 @@
     .pill.rejected, .pill.failed, .pill.gave_up { background: var(--bad-bg); color: var(--bad); }
     .pill.submitted, .pill.pending, .pill.sending { background: var(--warn-bg); color: var(--warn); }
     [hidden] { display: none; }
+    body.shell main.wrap.narrow { max-width: 820px; }
+    .card h2:first-child { margin-top: 0; }
   </style>
+  <link rel="stylesheet" href="/shell.css">
 </head>
-<body>
-  <header>
-    <div class="wrap">
-      <h1>Permit portal</h1>
-      <p>City of Saratoga Springs · code enforcement permits</p>
-    </div>
+<body class="shell">
+  <aside class="sidebar">
+    <a class="brand" href="/portal">Saratoga Springs</a>
+    <span class="brand-sub">Residents</span>
+    <nav aria-label="Main">
+      <a href="/portal" aria-current="page">Permit portal</a>
+      <span class="group">City staff</span>
+      <a href="/login">Staff sign in</a>
+    </nav>
+  </aside>
+  <div class="frame">
+  <header class="topbar">
+    <span class="sysname">City of Saratoga Springs · code enforcement permits</span>
   </header>
-  <main class="wrap">
+  <main class="wrap narrow">
+    <h1 class="page-title">Permit portal</h1>
     <section id="start">
-      <h2>Apply for a code enforcement permit</h2>
-      <form id="apply" class="panel" novalidate>
+      <form id="apply" class="card" novalidate>
+        <h2>Apply for a code enforcement permit</h2>
         <label for="applicant_name">Your name</label>
         <input id="applicant_name" autocomplete="name" required maxlength="200">
         <label for="applicant_contact">Email <span class="hint">for your confirmation</span></label>
@@ -84,8 +95,8 @@
         <div id="apply-result"></div>
       </form>
 
-      <h2>Already applied?</h2>
-      <form id="open" class="panel">
+      <form id="open" class="card">
+        <h2>Already applied?</h2>
         <label for="link">Paste the link from your confirmation</label>
         <div class="row"><input id="link" autocomplete="off" required><button type="submit">Open</button></div>
         <div id="open-result"></div>
@@ -94,6 +105,7 @@
 
     <section id="mine" hidden></section>
   </main>
+  </div>
   <script type="module" src="/portal.js"></script>
 </body>
 </html>

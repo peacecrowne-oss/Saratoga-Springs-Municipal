@@ -59,21 +59,41 @@
     td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
     tfoot td { font-weight: 600; }
   </style>
+  <link rel="stylesheet" href="/shell.css">
 </head>
-<body>
-  <header>
-    <div class="wrap">
-      <div class="title"><a id="back" class="back" href="/system">← Back</a><h1>Budget tracking</h1></div>
-      <div id="session" class="signin"></div>
-    </div>
-  </header>
-  <main class="wrap">
-    <div id="sim"></div>
-    <div class="status" id="status"><span><span class="dot"></span>Not checked yet</span></div>
-    <div id="budget"></div>
-    <h2>Recent budget activity (audit trail)</h2>
-    <div id="audit" class="muted">Loading…</div>
-  </main>
+<body class="shell">
+  <aside class="sidebar">
+      <a class="brand" href="/system">Saratoga Springs</a>
+      <span class="brand-sub">City staff</span>
+      <nav aria-label="Main">
+        <a href="/system">Dashboard</a>
+        <a href="/assets">Assets</a>
+        <a href="/permits">Permitting</a>
+        <a href="/history">Cityworks history</a>
+        <a href="/budget" aria-current="page">Budget</a>
+        <a href="/testing">Testing</a>
+        <span class="group">Public</span>
+        <a href="/portal">Permit portal</a>
+      </nav>
+    </aside>
+  <div class="frame">
+    <header class="topbar">
+        <a id="back" class="back" href="/system">← Back</a>
+        <span class="sysname">Municipal Asset Management &amp; Permitting</span>
+        <div id="session"></div>
+    </header>
+    <main class="wrap">
+      <h1 class="page-title">Budget tracking</h1>
+      <div id="sim"></div>
+      <div class="status" id="status"><span><span class="dot"></span>Not checked yet</span></div>
+      <div id="budget"></div>
+
+      <section class="card">
+        <h2>Recent budget activity (audit trail)</h2>
+        <div id="audit" class="muted">Loading…</div>
+      </section>
+    </main>
+  </div>
   <script type="module" src="/budget.js"></script>
 </body>
 </html>

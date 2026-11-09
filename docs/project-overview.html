@@ -100,17 +100,17 @@
     <p class="mono" style="margin:0 0 6px">City of Saratoga Springs · Colaberry internship build</p>
     <h1>Municipal Asset Management and Permitting Software Solution</h1>
     <p>A system for managing municipal assets and permitting processes that integrates with the City's existing systems and gives staff and the public secure, easy-to-use access.</p>
-    <p>This page covers the project end to end: the plan, what has been built and verified, how it works, how to run it, and every file in the repository. Facts are as of <strong>3 November 2026</strong> (plan version 4, last platform sync 2026-11-03 16:40 UTC, latest commit <code>1a1504e</code>).</p>
+    <p>This page covers the project end to end: the plan, what has been built and verified, how it works, how to run it, and every file in the repository. Facts are as of <strong>9 November 2026</strong> (plan version 4, last platform sync 2026-11-06, latest commit <code>1467359</code>).</p>
   </div>
 </header>
 
 <nav class="toc" aria-label="Contents">
   <div class="wrap">
     <a href="#status">Status</a><a href="#architecture">Architecture</a><a href="#requirements">Requirements</a>
-    <a href="#roadmap">Releases &amp; stories</a><a href="#built">What's built</a><a href="#trust">Audit trail</a>
-    <a href="#api">API</a><a href="#data">Data model</a><a href="#integrations">Integrations</a>
-    <a href="#tests">Tests</a><a href="#run">How to run</a><a href="#artefacts">Artefacts</a>
-    <a href="#history">History</a><a href="#decisions">Decisions</a><a href="#gaps">Gaps &amp; risks</a>
+    <a href="#roadmap">Releases &amp; stories</a><a href="#built">What's built</a><a href="#migration">Migration</a>
+    <a href="#security">Security</a><a href="#trust">Audit trail</a><a href="#api">API</a><a href="#data">Data model</a>
+    <a href="#integrations">Integrations</a><a href="#tests">Tests</a><a href="#run">How to run</a>
+    <a href="#artefacts">Artefacts</a><a href="#history">History</a><a href="#decisions">Decisions</a><a href="#gaps">Gaps &amp; risks</a>
   </div>
 </nav>
 
@@ -119,111 +119,91 @@
 <!-- ───────────────────────── STATUS ───────────────────────── -->
 <section id="status">
   <h2>Status at a glance</h2>
-  <p class="lede">Both stories in release r0 (Initial Setup and Core Integration) are verified by the platform, along with the Command Center setup story. The r0 demo in the plan also calls for Active Directory sign-in, which doesn't exist until STORY-012. Release r1 is next.</p>
+  <p class="lede">Every story in the plan is built. Ten of the eleven are verified by the platform. The last, STORY-011, is waiting on one criterion: user acceptance testing by people, which is under way.</p>
   <div class="grid">
-    <div class="card"><div class="big">3</div><div class="label">stories verified (STORY-000, STORY-001, STORY-002)</div></div>
-    <div class="card"><div class="big">8</div><div class="label">not started (r1–r4)</div></div>
-    <div class="card"><div class="big">203</div><div class="label">points awarded (57 + 73 + 73)</div></div>
-    <div class="card"><div class="big">63</div><div class="label">automated tests, all passing</div></div>
-    <div class="card"><div class="big">7</div><div class="label">requirements in the plan (5 functional, 1 constraint, 1 safety)</div></div>
+    <div class="card"><div class="big">10 of 11</div><div class="label">stories verified</div></div>
+    <div class="card"><div class="big">35 of 36</div><div class="label">acceptance criteria passed</div></div>
+    <div class="card"><div class="big">714</div><div class="label">points awarded</div></div>
+    <div class="card"><div class="big">190</div><div class="label">automated tests, all passing</div></div>
+    <div class="card"><div class="big">13 of 13</div><div class="label">end-to-end smoke checks on a real deployment</div></div>
+    <div class="card"><div class="big">5 of 14</div><div class="label">acceptance scenarios recorded, all passing</div></div>
   </div>
-  <div class="note sim"><strong>Simulated integrations.</strong> This project has no access to the City's real Tyler or ArcGIS systems. Both integrations were built against stand-ins that are labelled <em>SIMULATED</em> everywhere they appear. ArcGIS has not yet been tested against the City's ArcGIS Enterprise 11.3; see <a href="#gaps">Gaps &amp; risks</a>.</div>
+  <div class="note sim"><strong>Simulated integrations.</strong> This project has no access to the City's real ArcGIS, Tyler, Caselle, mail server or Cityworks database. Each was built against a stand-in labelled <em>SIMULATED</em> everywhere it appears. The connection code is complete and tested, but it must be pointed at the real systems and checked against their real interfaces. See <a href="#gaps">Gaps &amp; risks</a>.</div>
 </section>
 
 <!-- ───────────────────────── ARCHITECTURE ───────────────────────── -->
 <section id="architecture">
   <h2>Architecture</h2>
-  <p class="lede">Node.js 24 with no third-party dependencies: the built-in <code>node:http</code>, <code>node:sqlite</code> and <code>node:test</code> modules, and global <code>fetch</code>. One SQLite database holds the records and the append-only audit trail. Integrations are isolated behind client modules, each with timeouts and capped retries.</p>
-  <div class="diagram" role="img" aria-label="Architecture diagram: browser pages talk to the Node server, which uses a SQLite database. A GIS sync job shares the database and talks to ArcGIS. The server talks to Tyler. The Command Center is a static site reading the .colaberry files.">
-    <svg viewBox="0 0 980 430" xmlns="http://www.w3.org/2000/svg">
-      <!-- browser -->
-      <rect class="box" x="20" y="30" width="200" height="120" rx="8"/>
-      <text x="120" y="56" text-anchor="middle" font-weight="600" font-size="14">Browser</text>
-      <text x="120" y="80" text-anchor="middle" font-size="12">/system  System Dashboard</text>
-      <text x="120" y="99" text-anchor="middle" font-size="12">/budget  Budget tracking</text>
-      <text x="120" y="124" text-anchor="middle" class="small">development sign-in headers</text>
-      <text x="120" y="139" text-anchor="middle" class="small">(Active Directory: STORY-012)</text>
-
-      <!-- server -->
-      <rect class="box-brand" x="300" y="20" width="300" height="200" rx="8"/>
-      <text x="450" y="46" text-anchor="middle" font-weight="600" font-size="14">Node server · server/app.js</text>
-      <text x="450" y="70" text-anchor="middle" font-size="12">/api/health · /api/assets · /api/audit · /api/budget</text>
-      <text x="450" y="98" text-anchor="middle" font-size="12">assets.js: create / update, idempotent</text>
-      <text x="450" y="118" text-anchor="middle" font-size="12">health.js: database + audit checks</text>
-      <text x="450" y="138" text-anchor="middle" font-size="12">audit.js: record() or throw</text>
-      <text x="450" y="168" text-anchor="middle" font-size="12" font-weight="600">npm run deploy · server/deploy.js</text>
-      <text x="450" y="186" text-anchor="middle" class="small">open db → listen → health → core check → system.deploy</text>
-
-      <!-- db -->
-      <rect class="box" x="300" y="290" width="300" height="120" rx="8"/>
-      <text x="450" y="316" text-anchor="middle" font-weight="600" font-size="14">SQLite · data/app.db</text>
-      <text x="450" y="340" text-anchor="middle" font-size="12">audit_event (append-only by trigger)</text>
-      <text x="450" y="360" text-anchor="middle" font-size="12">asset · asset_gis · sync_state</text>
-      <text x="450" y="386" text-anchor="middle" class="small">5 s lock timeout, shared by server and sync job</text>
-
-      <!-- sync job -->
-      <rect class="box-brand" x="20" y="290" width="200" height="120" rx="8"/>
-      <text x="120" y="316" text-anchor="middle" font-weight="600" font-size="14">GIS Sync Job</text>
-      <text x="120" y="340" text-anchor="middle" font-size="12">npm run gis-sync [--watch]</text>
-      <text x="120" y="360" text-anchor="middle" font-size="12">server/gis-sync.js</text>
-      <text x="120" y="386" text-anchor="middle" class="small">pull, then push, all audited</text>
-
-      <!-- arcgis -->
-      <rect class="box-sim" x="680" y="250" width="280" height="90" rx="8"/>
-      <text x="820" y="276" text-anchor="middle" font-weight="600" font-size="14">ArcGIS feature layer</text>
-      <text x="820" y="298" text-anchor="middle" font-size="12">ESRI REST: generateToken, query, applyEdits</text>
-      <text x="820" y="320" text-anchor="middle" font-size="12" fill="currentColor">SIMULATED stand-in · port 4200</text>
-
-      <!-- tyler -->
-      <rect class="box-sim" x="680" y="60" width="280" height="80" rx="8"/>
-      <text x="820" y="88" text-anchor="middle" font-weight="600" font-size="14">Tyler budget API</text>
-      <text x="820" y="112" text-anchor="middle" font-size="12">GET /budget?fiscal_year=</text>
-      <text x="820" y="130" text-anchor="middle" font-size="12">SIMULATED stand-in · port 4100</text>
-
-      <!-- command center -->
-      <rect class="box" x="680" y="365" width="280" height="55" rx="8"/>
-      <text x="820" y="388" text-anchor="middle" font-weight="600" font-size="13">Command Center (static, GitHub Pages)</text>
-      <text x="820" y="406" text-anchor="middle" class="small">reads .colaberry/plan · progress · manifest</text>
-
-      <!-- lines -->
-      <path class="line" d="M220 90 H300" marker-end="url(#arrow)"/>
-      <path class="line" d="M450 220 V290" marker-end="url(#arrow)"/>
-      <path class="line" d="M220 350 H300" marker-end="url(#arrow)"/>
-      <path class="line" d="M120 410 V420 H660 V295 H680" marker-end="url(#arrow)"/>
-      <path class="line" d="M600 100 H680" marker-end="url(#arrow)"/>
-      <text x="640" y="92" text-anchor="middle" class="small">client.js</text>
-      <text x="400" y="434" class="small"></text>
-      <defs>
-        <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-          <path d="M0 0 L10 5 L0 10 z" fill="currentColor" opacity="0.6"/>
-        </marker>
-      </defs>
+  <p class="lede">One Node.js 24 server and one SQLite database file on a City machine, with no third-party packages. Staff use pages in a browser; residents use a public portal with no sign-in. Every outside system is reached with a timeout and capped retries.</p>
+  <div class="diagram">
+    <svg viewBox="0 0 960 400" role="img" aria-label="Architecture: browsers talk to one server, which uses one database and reaches ArcGIS, Tyler, Caselle and mail; background jobs share the database">
+      <defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="currentColor" class="small"/></marker></defs>
+      <rect x="20" y="40" width="200" height="70" rx="8" class="box"/>
+      <text x="120" y="68" text-anchor="middle" font-weight="600">Staff browsers</text>
+      <text x="120" y="88" text-anchor="middle" class="small">/system /assets /permits /history</text>
+      <text x="120" y="102" text-anchor="middle" class="small">/budget /testing · sign-in + 2FA</text>
+      <rect x="20" y="140" width="200" height="60" rx="8" class="box"/>
+      <text x="120" y="166" text-anchor="middle" font-weight="600">Residents</text>
+      <text x="120" y="184" text-anchor="middle" class="small">/portal · private link, no account</text>
+      <rect x="300" y="40" width="320" height="200" rx="10" class="box-brand"/>
+      <text x="460" y="66" text-anchor="middle" font-weight="600">Server (node:http)</text>
+      <text x="460" y="90" text-anchor="middle" class="small">sessions · roles · cross-site checks · security headers</text>
+      <text x="460" y="112" text-anchor="middle" class="small">assets · lifecycle · condition · maintenance</text>
+      <text x="460" y="132" text-anchor="middle" class="small">permits · portal · inspections · notifications</text>
+      <text x="460" y="152" text-anchor="middle" class="small">billing · budget · Cityworks history (read-only)</text>
+      <text x="460" y="172" text-anchor="middle" class="small">acceptance results · test reports</text>
+      <text x="460" y="200" text-anchor="middle" font-weight="600">Audit trail: write-or-refuse</text>
+      <text x="460" y="220" text-anchor="middle" class="small">nothing happens unlogged</text>
+      <rect x="300" y="290" width="320" height="80" rx="10" class="box"/>
+      <text x="460" y="318" text-anchor="middle" font-weight="600">SQLite database (data/app.db)</text>
+      <text x="460" y="338" text-anchor="middle" class="small">append-only audit · read-only Cityworks tables</text>
+      <text x="460" y="356" text-anchor="middle" class="small">attachments/ stored by SHA-256</text>
+      <rect x="700" y="30" width="240" height="44" rx="8" class="box-sim"/>
+      <text x="820" y="57" text-anchor="middle">ArcGIS Enterprise · <tspan class="small">SIMULATED</tspan></text>
+      <rect x="700" y="86" width="240" height="44" rx="8" class="box-sim"/>
+      <text x="820" y="113" text-anchor="middle">Tyler budget · <tspan class="small">SIMULATED</tspan></text>
+      <rect x="700" y="142" width="240" height="44" rx="8" class="box-sim"/>
+      <text x="820" y="169" text-anchor="middle">Caselle billing · <tspan class="small">SIMULATED</tspan></text>
+      <rect x="700" y="198" width="240" height="44" rx="8" class="box-sim"/>
+      <text x="820" y="225" text-anchor="middle">Mail to residents · <tspan class="small">SIMULATED</tspan></text>
+      <rect x="700" y="290" width="240" height="80" rx="8" class="box"/>
+      <text x="820" y="314" text-anchor="middle" font-weight="600">Jobs (npm run …)</text>
+      <text x="820" y="334" text-anchor="middle" class="small">deploy · gis-sync · caselle · migrate</text>
+      <text x="820" y="352" text-anchor="middle" class="small">auth-admin · test-report</text>
+      <line x1="220" y1="75" x2="300" y2="100" class="line"/>
+      <line x1="220" y1="170" x2="300" y2="170" class="line"/>
+      <line x1="460" y1="240" x2="460" y2="290" class="line"/>
+      <line x1="620" y1="80" x2="700" y2="52" class="line"/>
+      <line x1="620" y1="110" x2="700" y2="108" class="line"/>
+      <line x1="620" y1="150" x2="700" y2="164" class="line"/>
+      <line x1="620" y1="190" x2="700" y2="220" class="line"/>
+      <line x1="700" y1="330" x2="620" y2="330" class="line"/>
     </svg>
   </div>
   <h3>Engineering rules this build follows</h3>
   <ul class="tight">
-    <li><strong>Walking skeleton first:</strong> the thinnest end-to-end path, including the audit trail, came before any features.</li>
-    <li><strong>Every external call has an explicit timeout and capped retries.</strong> Only failures that may clear on their own are retried: no answer, timeout, HTTP 5xx and 429.</li>
-    <li><strong>Every side effect is idempotent.</strong> A repeated asset create, a repeated update and a repeated sync all write nothing new, and GIS edits are never blindly retried.</li>
-    <li><strong>No swallowed errors.</strong> Failures carry a <code>kind</code>, surface to the caller and are audited where possible.</li>
-    <li><strong>No secrets in the repository.</strong> Credentials come from the environment or a git-ignored <code>.env</code>. The only password in the code belongs to the SIMULATED stand-in.</li>
+    <li><strong>Audit trail first.</strong> A change and its audit record are saved in one transaction. If the audit record can't be written, the action doesn't happen.</li>
+    <li><strong>Every side effect is idempotent.</strong> Repeated submissions, retried messages and re-run migrations never duplicate anything.</li>
+    <li><strong>Every external call has a timeout and capped retries.</strong> Only failures that may clear on their own are retried.</li>
+    <li><strong>No error is swallowed.</strong> Failures are explained to the person, recorded, and sent to the server log.</li>
+    <li><strong>Simulated means labelled.</strong> Data from a stand-in says SIMULATED on screen and in the data.</li>
   </ul>
 </section>
 
 <!-- ───────────────────────── REQUIREMENTS ───────────────────────── -->
 <section id="requirements">
   <h2>Requirements</h2>
-  <p class="lede">From <a href="https://github.com/peacecrowne-oss/Saratoga-Springs-Municipal/blob/main/docs/REQUIREMENTS.md">docs/REQUIREMENTS.md</a> and <code>.colaberry/plan.json</code>, plan version 4.</p>
+  <p class="lede">From <a href="https://github.com/peacecrowne-oss/Saratoga-Springs-Municipal/blob/main/docs/REQUIREMENTS.md">docs/REQUIREMENTS.md</a> (plan version 4).</p>
   <div class="table-scroll"><table>
-    <thead><tr><th>ID</th><th>Kind</th><th>Area</th><th>Requirement</th><th>Stories</th><th>Coverage today</th></tr></thead>
+    <thead><tr><th>Id</th><th>Kind</th><th>Requirement</th><th>Stories</th><th>Where it stands</th></tr></thead>
     <tbody>
-      <tr><td class="nowrap mono">REQ-001</td><td>Functional</td><td>Asset Management</td><td>Replace the current Cityworks system for asset management, supporting about 80 asset-management users.</td><td class="nowrap">STORY-004</td><td><span class="badge b-warn">Foundation</span> Asset records exist; lifecycle not yet built</td></tr>
-      <tr><td class="nowrap mono">REQ-002</td><td>Constraint</td><td>Deployment</td><td>Deploy on-premises, with an option for near-real-time database replication to City-managed servers.</td><td class="nowrap">STORY-001, 011</td><td><span class="badge b-ok">On-premises deploy done</span> Replication not built</td></tr>
-      <tr><td class="nowrap mono">REQ-004</td><td>Functional</td><td>GIS Integration</td><td>Fully integrate with ESRI ArcGIS Enterprise 11.3 through ESRI REST endpoint service layers, maintaining GIS field values.</td><td class="nowrap">STORY-002, 005</td><td><span class="badge b-sim">Built on stand-in</span> Two-way sync, not yet run against real 11.3</td></tr>
-      <tr><td class="nowrap mono">REQ-007</td><td>Functional</td><td>Permitting and Licensing</td><td>Support permitting: Code Enforcement, Planning, Building, Business Licensing, ACE Court, reimbursement agreements, public-improvement/engineering/utility permits.</td><td class="nowrap">STORY-006, 007</td><td><span class="badge b-pending">Not started</span></td></tr>
-      <tr><td class="nowrap mono">REQ-010</td><td>Safety</td><td>Authentication and Security</td><td>Integrate with the City's Windows Active Directory for single sign-on and two-factor authentication; document PII handling.</td><td class="nowrap">STORY-001, 012</td><td><span class="badge b-warn">Audit trail only</span> Sign-in is a development stand-in</td></tr>
-      <tr><td class="nowrap mono">REQ-011</td><td>Functional</td><td>Other Integrations</td><td>Integrate with Caselle, Granicus/311, ComplianceGO, Bluebeam Revu, Utilisync and XpressBillPay.</td><td class="nowrap">STORY-010, 011</td><td><span class="badge b-pending">Not started</span></td></tr>
-      <tr><td class="nowrap mono">REQ-012</td><td>Functional</td><td>Data Migration</td><td>Migrate 10+ years of Cityworks data (permits, licenses, service requests, inspections, work orders), preserving GIS relationships, ~200,000 attachments, fees, people and workflows.</td><td class="nowrap">STORY-013</td><td><span class="badge b-pending">Not started</span></td></tr>
+      <tr><td class="nowrap mono">REQ-001</td><td>Functional</td><td>Replace Cityworks for asset management, for about 80 users.</td><td class="nowrap">STORY-004</td><td><span class="badge b-ok">Built</span> Asset lifecycle, condition, maintenance, audit</td></tr>
+      <tr><td class="nowrap mono">REQ-002</td><td>Constraint</td><td>Deploy on-premises, with an option for near-real-time database replication to City-managed servers.</td><td class="nowrap">STORY-001, 011</td><td><span class="badge b-ok">On-premises deploy</span> <span class="badge b-warn">Replication not built</span></td></tr>
+      <tr><td class="nowrap mono">REQ-004</td><td>Functional</td><td>Fully integrate with ESRI ArcGIS Enterprise 11.3 through REST service layers.</td><td class="nowrap">STORY-002, 005</td><td><span class="badge b-sim">Built on stand-in</span> Two-way sync, accuracy checks; not yet run against real 11.3</td></tr>
+      <tr><td class="nowrap mono">REQ-007</td><td>Functional</td><td>Permitting: Code Enforcement, Planning, Building, Business Licensing, ACE Court, reimbursement agreements, engineering/utility permits.</td><td class="nowrap">STORY-006, 007</td><td><span class="badge b-warn">Partly built</span> Code enforcement and the public portal only</td></tr>
+      <tr><td class="nowrap mono">REQ-010</td><td>Safety</td><td>Windows Active Directory single sign-on and two-factor authentication; document PII handling.</td><td class="nowrap">STORY-001, 012</td><td><span class="badge b-warn">Partly built</span> Password + authenticator code, PII documented; no Active Directory yet</td></tr>
+      <tr><td class="nowrap mono">REQ-011</td><td>Functional</td><td>Integrate with Caselle, Granicus/311, ComplianceGO, Bluebeam Revu, Utilisync, XpressBillPay.</td><td class="nowrap">STORY-010, 011</td><td><span class="badge b-sim">Caselle on stand-in</span> The other five not built</td></tr>
+      <tr><td class="nowrap mono">REQ-012</td><td>Functional</td><td>Migrate 10+ years of Cityworks data with GIS relationships, ~200,000 attachments, fees, people and workflows; read-only history; cutover by department.</td><td class="nowrap">STORY-013</td><td><span class="badge b-sim">Built, proven on simulated export</span> Workflows not migrated</td></tr>
     </tbody>
   </table></div>
 </section>
@@ -231,159 +211,154 @@
 <!-- ───────────────────────── ROADMAP ───────────────────────── -->
 <section id="roadmap">
   <h2>Releases and stories</h2>
-  <p class="lede">From <a href="https://github.com/peacecrowne-oss/Saratoga-Springs-Municipal/blob/main/docs/STORIES.md">docs/STORIES.md</a>. Status comes from <code>.colaberry/progress.json</code> (<code>stories[].verification.state</code>), which the platform writes when it verifies a pushed commit.</p>
   <div class="table-scroll"><table>
-    <thead><tr><th>Release</th><th>Story</th><th>Owner</th><th>Fulfils</th><th>Status</th><th>Commit</th></tr></thead>
+    <thead><tr><th>Release</th><th>Story</th><th>For</th><th>Status</th><th>Commit</th></tr></thead>
     <tbody>
-      <tr><td class="muted">Setup</td><td><strong>STORY-000</strong> Build the Command Center</td><td>—</td><td>—</td><td><span class="badge b-ok">Verified 5/5 · 57 pts</span></td><td class="mono"><a href="https://github.com/peacecrowne-oss/Saratoga-Springs-Municipal/commit/b3368f60cefbaa43d5e230516ba74cb954cca010">b3368f6</a></td></tr>
-      <tr><td rowspan="2"><strong>r0</strong> Initial Setup and Core Integration</td><td><strong>STORY-001</strong> Deploy Initial System with Core Functionalities</td><td>IT Administrator</td><td>REQ-002, REQ-010</td><td><span class="badge b-ok">Verified 3/3 · 73 pts</span></td><td class="mono"><a href="https://github.com/peacecrowne-oss/Saratoga-Springs-Municipal/commit/d6e80c0c3962f61c436b1ade86679f944ae20864">d6e80c0</a></td></tr>
-      <tr><td><strong>STORY-002</strong> Integrate with ESRI ArcGIS Enterprise</td><td>GIS Analyst</td><td>REQ-004</td><td><span class="badge b-ok">Verified 3/3 · 73 pts</span></td><td class="mono"><a href="https://github.com/peacecrowne-oss/Saratoga-Springs-Municipal/commit/7e0e2b545e7bef5fa02f21fb61b43e846ba256b4">7e0e2b5</a></td></tr>
-      <tr><td rowspan="3"><strong>r1</strong> Asset Management and GIS Integration</td><td>STORY-004 Implement Asset Lifecycle Management</td><td>Asset Manager</td><td>REQ-001</td><td><span class="badge b-pending">Not started</span></td><td></td></tr>
-      <tr><td>STORY-005 Synchronize Asset Data with GIS</td><td>GIS Analyst</td><td>REQ-004</td><td><span class="badge b-pending">Not started</span></td><td></td></tr>
-      <tr><td>STORY-013 Migrate Cityworks Data with GIS Relationships Preserved</td><td>IT Administrator</td><td>REQ-012</td><td><span class="badge b-pending">Not started</span></td><td></td></tr>
-      <tr><td rowspan="2"><strong>r2</strong> Permitting and Licensing Module</td><td>STORY-006 Develop Permitting Process for Code Enforcement</td><td>Code Enforcement Officer</td><td>REQ-007</td><td><span class="badge b-pending">Not started</span></td><td></td></tr>
-      <tr><td>STORY-007 Public Portal for Permit Applications</td><td>Resident</td><td>REQ-007</td><td><span class="badge b-pending">Not started</span></td><td></td></tr>
-      <tr><td><strong>r3</strong> Security and Authentication Enhancements</td><td>STORY-012 Enhance Security Protocols for User Authentication</td><td>System Administrator</td><td>REQ-010</td><td><span class="badge b-pending">Not started</span></td><td></td></tr>
-      <tr><td rowspan="2"><strong>r4</strong> System Integrations and Final Deployment</td><td>STORY-010 Integrate with Caselle for Billing</td><td>Billing Manager</td><td>REQ-011</td><td><span class="badge b-pending">Not started</span></td><td></td></tr>
-      <tr><td>STORY-011 Conduct Final System Testing and User Acceptance</td><td>Project Manager</td><td>REQ-002, REQ-011</td><td><span class="badge b-pending">Not started</span></td><td></td></tr>
+      <tr><td class="muted">Setup</td><td><strong>STORY-000</strong> Build the Command Center</td><td>Builder</td><td><span class="badge b-ok">Verified 5/5 · 57 pts</span></td><td class="mono">b3368f6</td></tr>
+      <tr><td rowspan="2"><strong>r0</strong> Initial setup</td><td><strong>STORY-001</strong> Deploy initial system with core functionalities</td><td>IT Administrator</td><td><span class="badge b-ok">Verified 3/3 · 73 pts</span></td><td class="mono">d6e80c0</td></tr>
+      <tr><td><strong>STORY-002</strong> Integrate with ESRI ArcGIS Enterprise</td><td>GIS Analyst</td><td><span class="badge b-ok">Verified 3/3 · 73 pts</span></td><td class="mono">7e0e2b5</td></tr>
+      <tr><td rowspan="3"><strong>r1</strong> Asset management and GIS</td><td><strong>STORY-004</strong> Asset lifecycle management</td><td>Asset Manager</td><td><span class="badge b-ok">Verified 3/3 · 73 pts</span></td><td class="mono">ae04036</td></tr>
+      <tr><td><strong>STORY-005</strong> Synchronize asset data with GIS</td><td>GIS Analyst</td><td><span class="badge b-ok">Verified 3/3 · 73 pts</span></td><td class="mono">25089d4</td></tr>
+      <tr><td><strong>STORY-013</strong> Migrate Cityworks data with GIS relationships</td><td>IT Administrator</td><td><span class="badge b-ok">Verified 4/4 · 73 pts</span></td><td class="mono">648a830</td></tr>
+      <tr><td rowspan="2"><strong>r2</strong> Permitting and licensing</td><td><strong>STORY-006</strong> Permitting process for code enforcement</td><td>Code Enforcement Officer</td><td><span class="badge b-ok">Verified 3/3 · 73 pts</span></td><td class="mono">5421aa2</td></tr>
+      <tr><td><strong>STORY-007</strong> Public portal for permit applications</td><td>Resident</td><td><span class="badge b-ok">Verified 3/3 · 73 pts</span></td><td class="mono">a6634f9</td></tr>
+      <tr><td><strong>r3</strong> Security</td><td><strong>STORY-012</strong> Security protocols for user authentication</td><td>System Administrator</td><td><span class="badge b-ok">Verified 3/3 · 73 pts</span></td><td class="mono">d8fce4f</td></tr>
+      <tr><td rowspan="2"><strong>r4</strong> Integrations and final deployment</td><td><strong>STORY-010</strong> Integrate with Caselle for billing</td><td>Billing Manager</td><td><span class="badge b-ok">Verified 3/3 · 73 pts</span></td><td class="mono">11e4e81</td></tr>
+      <tr><td><strong>STORY-011</strong> Final system testing and user acceptance</td><td>Project Manager</td><td><span class="badge b-warn">Submitted 2/3</span> acceptance testing under way</td><td class="mono">4b13b12</td></tr>
     </tbody>
   </table></div>
-  <p class="muted" style="font-size:13px">Release demos from the plan: r0 shows the end-to-end data flow from asset management to GIS, with Active Directory authentication. r1 shows asset lifecycle management with GIS sync. r2 takes a permit from submission to approval through the public portal. r3 shows two-factor authentication and PII handling. r4 shows all external integrations and the final deployment. Story owners are roles, not software agents: the plan defines no agents, so none are presented as such.</p>
 </section>
 
-<!-- ───────────────────────── BUILT ───────────────────────── -->
+<!-- ───────────────────────── WHAT'S BUILT ───────────────────────── -->
 <section id="built">
   <h2>What's built</h2>
-  <p class="lede">Each story's acceptance criteria, how they were proven, and the failure paths the story requires.</p>
+  <p class="lede">Each story, with its acceptance criteria and the failure paths it handles. A stakeholder version with screenshots is in the Word briefing (not in the repository).</p>
 
   <div class="story">
     <h3>STORY-000 · Command Center <span class="badge b-ok">Verified · 57 pts</span></h3>
-    <p>A 9-tab static site at the repository root (<a href="https://peacecrowne-oss.github.io/Saratoga-Springs-Municipal/">live on GitHub Pages</a>). It reads the plan and progress at runtime from <code>.colaberry/plan.json</code>, <code>progress.json</code> and <code>manifest.json</code>, so it is never hand-copied.</p>
-    <ul class="tight">
-      <li>Tabs: Overview, Outcomes, Users, Guardrails, Systems, Project (Gantt of dated releases), Agents, Knowledge (keyword chat over the project's notes) and Data Model.</li>
-      <li>A Sample/Real switch, with sample data visibly labelled. A "Data as of" stamp on every tab, with a warning when the data is more than 7 days old. Every card drills down one level.</li>
-      <li>Nothing invented: unchecked systems show grey as "not checked from here", agents show "no runs recorded", and a story with no verification shows "Not checked yet", never 0.</li>
-    </ul>
-    <p class="muted" style="font-size:13px">Proven by <code>tests/command-center.test.mjs</code>, which crawls every tab and link with real data, sample data and no data, and checks that deleting a story removes it from the page.</p>
+    <p>The project dashboard at <a href="https://peacecrowne-oss.github.io/Saratoga-Springs-Municipal/">GitHub Pages</a>, reading <code>.colaberry/plan.json</code>, <code>progress.json</code> and <code>manifest.json</code> by their data contract, so the numbers it shows are the real ones.</p>
   </div>
 
   <div class="story">
-    <h3>STORY-001 · Deploy Initial System with Core Functionalities <span class="badge b-ok">Verified · 73 pts</span></h3>
-    <ul class="crit">
-      <li>Given the system is ready for deployment, when the deployment process is initiated, then the system should be operational with core functionalities.</li>
-      <li>Given the system is deployed, when a core functionality is accessed, then it should perform as expected.</li>
-      <li>Trust: Given the deployment process, when it completes, then an audit log entry is created with deployment details.</li>
-    </ul>
-    <p><strong>"Core functionalities"</strong>, as agreed with the product owner: a health check, plus asset records (create and read, with each create audited and idempotent by asset tag). Updating assets was added later, in STORY-002.</p>
-    <p><strong>How deployment works</strong> (<code>npm run deploy</code>, <a href="https://github.com/peacecrowne-oss/Saratoga-Springs-Municipal/blob/main/server/deploy.js">server/deploy.js</a>):</p>
-    <pre><code>1. open the database and create its tables   → core_init_failed
-2. listen on host:port                         → network
-3. GET /api/health until it answers ok         → unreachable / unhealthy
-4. GET /api/assets as the deployer             → core_check_failed
-5. write a system.deploy audit event           → audit_failed
-   (version, commit, host, database, every check, duration)</code></pre>
-    <p>A deployment does not count until step 5 is written. Any failure after step 1 stops the server and is audited as <code>system.deploy_failed</code>.</p>
-    <h3 style="margin-top:12px">Failure paths handled</h3>
-    <div class="table-scroll"><table>
-      <thead><tr><th>Story's failure path</th><th>What happens</th></tr></thead>
-      <tbody>
-        <tr><td>Deployment fails due to network issues</td><td>Port already taken: <code>DEPLOYMENT FAILED (network): EADDRINUSE</code>. A health check that never answers is retried 3 times and then fails. Both are audited.</td></tr>
-        <tr><td>Core functionality does not initialise</td><td>The database won't open, so nothing starts. The message says plainly that no audit entry could be written.</td></tr>
-        <tr><td>Audit log entry is not created</td><td>The server is stopped and the deployment is reported as failed: "a deployment that is not on the record does not count".</td></tr>
-      </tbody>
-    </table></div>
-    <p class="muted" style="font-size:13px">Real run: <code>Deployed 0.1.0 (f8b397a…) in 275 ms · Checks: database ok, listen ok, health ok, assets ok · Audit entry bcce3ff7… (system.deploy)</code>.</p>
+    <h3>STORY-001 · Deploy the initial system <span class="badge b-ok">Verified · 73 pts</span></h3>
+    <p><code>npm run deploy</code> proves the system works in five steps: open the database, listen, pass the health check, read the asset records as a signed-in service, and write a <code>system.deploy</code> audit entry. Any failure after step 1 is audited as <code>system.deploy_failed</code>, and the failed step is named. The server refuses to listen beyond this machine without a TLS proxy.</p>
   </div>
 
   <div class="story">
-    <h3>STORY-002 · Integrate with ESRI ArcGIS Enterprise <span class="badge b-ok">Verified · 73 pts</span> <span class="badge b-sim">SIMULATED ArcGIS</span></h3>
-    <ul class="crit">
-      <li>Given the system is connected to ESRI ArcGIS, when asset data is updated, then GIS layers should reflect these updates.</li>
-      <li>Given a GIS field value is changed, when I check the system, then it should show the updated value.</li>
-      <li>Trust: Ensure all GIS transactions are logged for audit.</li>
-    </ul>
-    <p><strong>A headless GIS Sync Job</strong> (<code>npm run gis-sync</code>, or <code>--watch</code> every <code>GIS_SYNC_INTERVAL_S</code> seconds; <a href="https://github.com/peacecrowne-oss/Saratoga-Springs-Municipal/blob/main/server/gis-sync.js">server/gis-sync.js</a>). Each run:</p>
-    <pre><code>1. check the layer has every field the sync needs   → schema_mismatch
-2. pull features edited since the last run, page by page
-   · store GIS-owned fields + geometry on the asset   → gis.pull
-   · GIS edit to a field we own                       → gis.mismatch (our value pushed back)
-   · feature whose tag matches no asset               → gis.mismatch (unknown_asset)
-3. push every asset changed since its last push       → gis.push / gis.push_failed
-   · an unlinked asset is looked up by tag first, so nothing duplicates
-4. summary                                            → gis.sync_run  (or gis.sync_failed)</code></pre>
-    <div class="two">
-      <div>
-        <h3>Field ownership (agreed)</h3>
-        <div class="table-scroll"><table>
-          <thead><tr><th>Owned by our system → pushed</th><th>Owned by GIS → pulled</th></tr></thead>
-          <tbody><tr><td class="mono">ASSET_TAG, NAME, ASSET_TYPE, STATUS, LOCATION_DESC</td><td>Geometry and every other attribute (for example <span class="mono">MATERIAL, DIAMETER_IN, INSTALL_YEAR</span>)</td></tr></tbody>
-        </table></div>
-      </div>
-      <div>
-        <h3>Failure paths handled</h3>
-        <div class="table-scroll"><table>
-          <thead><tr><th>Story's failure path</th><th>What happens</th></tr></thead>
-          <tbody>
-            <tr><td>REST endpoint authentication failure</td><td>Bad sign-in or rejected token: the run stops, nothing changes, it exits 1 and is audited. An expired token is refreshed once.</td></tr>
-            <tr><td>Data mismatch between system and GIS</td><td>Owned-field edits, unknown features and missing layer fields are all detected and audited.</td></tr>
-            <tr><td>Network latency issues</td><td>Timeouts and capped retries. <code>applyEdits</code> is never retried, so it can't duplicate; the next run catches up.</td></tr>
-          </tbody>
-        </table></div>
-      </div>
-    </div>
-    <h3>Demo run (real processes, simulated ArcGIS)</h3>
-<pre><code>02:27:08  gis.push         add object 1
-02:27:09  gis.push         update object 1          ← asset set to "maintenance" in our system
-02:27:11  gis.pull         object 1 by gis.analyst: MATERIAL=Ductile iron, DIAMETER_IN=6
-02:27:12  gis.mismatch     NAME: system 'Hydrant at Broadway and Main' vs GIS 'Renamed in GIS'
-02:27:12  gis.push         update object 1 (overwrote GIS NAME)
-02:27:14  gis.sync_failed  auth: ArcGIS would not issue a token … Invalid username or password.</code></pre>
+    <h3>STORY-002 · Integrate with ESRI ArcGIS <span class="badge b-ok">Verified · 73 pts</span> <span class="badge b-sim">SIMULATED ArcGIS</span></h3>
+    <p>The ESRI REST client (generateToken, paged query, applyEdits) and <code>npm run gis-sync</code>. Fields the system owns are pushed; fields and geometry owned by GIS are pulled; disagreements are flagged as mismatches. Handles outages, timeouts, refused credentials (with one token refresh), schema changes and rejected edits.</p>
   </div>
 
   <div class="story">
-    <h3>Groundwork, claiming no story · Tyler budget integration <span class="badge b-sim">SIMULATED Tyler</span></h3>
-    <p>This was built for a story in an earlier version of the plan, which the platform later replaced. It is kept because it works and is tested: a budget page at <code>/budget</code> for financial managers, fed by a Tyler client (<a href="https://github.com/peacecrowne-oss/Saratoga-Springs-Municipal/blob/main/server/integrations/tyler/client.js">server/integrations/tyler/client.js</a>) with timeouts, capped retries and data validation. Every view, refusal and failure is audited, and if the audit write fails the budget is withheld. It matches no story in plan v4.</p>
+    <h3>STORY-004 · Asset lifecycle management <span class="badge b-ok">Verified · 73 pts</span></h3>
+    <p>The Asset Management page: inventory search and filters; statuses planned → active ↔ maintenance → retired (retired is final); condition readings kept as history, where the latest observation counts; maintenance tasks; and discrepancy flags such as "critical but still active", which are never auto-fixed. It refuses impossible moves, stale edits and future-dated readings, and names every invalid field.</p>
   </div>
+
+  <div class="story">
+    <h3>STORY-005 · Synchronize asset data with GIS <span class="badge b-ok">Verified · 73 pts</span> <span class="badge b-sim">SIMULATED ArcGIS</span></h3>
+    <p>Every pushed feature is read back and checked, and spatial problems are recorded with a verification time. <code>--reconcile</code> compares the whole layer. The sync log can be reviewed with <code>npm run gis-log</code> (add <code>-- --errors</code> for failures only) and through <code>/api/gis/log</code>.</p>
+  </div>
+
+  <div class="story">
+    <h3>STORY-006 · Code enforcement permits <span class="badge b-ok">Verified · 73 pts</span></h3>
+    <p>The Permitting page and two new roles, permit clerk and code enforcement officer. Numbers take the form CE-YYYY-NNNN. Approval needs a reason and both compliance checks (code section verified, site inspected). Nobody decides their own application, decisions are final, and a decision that can't be audited doesn't happen. Applicants' personal details stay out of the audit trail and the queue.</p>
+  </div>
+
+  <div class="story">
+    <h3>STORY-007 · Public portal <span class="badge b-ok">Verified · 73 pts</span> <span class="badge b-sim">SIMULATED email</span></h3>
+    <p>Residents apply at <code>/portal</code> without an account and receive a private link, of which only the hash is stored. Through the link they book or move the site inspection: a weekday, from tomorrow, up to 60 days ahead, with 8 inspections a day. Confirmations are queued with the action, sent with a timeout and capped retries, retried in the background, and never sent twice. Wrong links and floods from one address are blocked and logged.</p>
+  </div>
+
+  <div class="story">
+    <h3>STORY-012 · Secure sign-in <span class="badge b-ok">Verified · 73 pts</span></h3>
+    <p>A password (scrypt hash) and then a 6-digit authenticator code (TOTP). Sessions are HttpOnly SameSite=Strict cookies that end after 30 minutes idle or 8 hours. Lockouts apply per user and address, per user, and per address. A session used from another address or browser is ended as a suspected hijack. Every attempt is recorded before the answer goes out. Accounts are managed with <code>npm run auth-admin</code>. PII handling is in <a href="https://github.com/peacecrowne-oss/Saratoga-Springs-Municipal/blob/main/docs/SECURITY.md">docs/SECURITY.md</a>.</p>
+  </div>
+
+  <div class="story">
+    <h3>STORY-010 · Caselle billing <span class="badge b-ok">Verified · 73 pts</span> <span class="badge b-sim">SIMULATED Caselle</span></h3>
+    <p><code>GET /api/billing/accounts/:number</code> for billing managers, and the headless job <code>npm run caselle -- account &lt;n&gt;</code>. Money is whole cents, and a balance must equal what the open bills owe or the data is refused. A credentials error is refused once and not retried. Every request is logged with the user and the time before any data goes out.</p>
+  </div>
+
+  <div class="story">
+    <h3>STORY-013 · Cityworks migration <span class="badge b-ok">Verified · 73 pts</span> <span class="badge b-sim">SIMULATED export</span></h3>
+    <p><code>npm run migrate -- &lt;export&gt;</code> brings in permits, licences, service requests, inspections and work orders, with fees, people, GIS links and attachments, and writes a reconciliation report. The <code>/history</code> page shows the records as read-only. See <a href="#migration">Migration</a>.</p>
+  </div>
+
+  <div class="story">
+    <h3>STORY-011 · Final testing and acceptance <span class="badge b-warn">Submitted · 2 of 3</span></h3>
+    <p>An end-to-end smoke test (13 checks: a real deployment, every role signed in with real codes, every module), the Testing dashboard at <code>/testing</code> with 14 acceptance scenarios, and <code>npm run test-report</code>, which writes <a href="https://github.com/peacecrowne-oss/Saratoga-Springs-Municipal/blob/main/docs/TEST-REPORT.md">docs/TEST-REPORT.md</a>. The report is COMPLETE only when every section has real content. Its verdict is READY only when all tests pass and acceptance holds: every scenario run, all passing, no critical issue open. Acceptance currently stands at 5 of 14 scenarios, all passing.</p>
+  </div>
+
+  <div class="story">
+    <h3>Groundwork, claiming no story · Tyler budget <span class="badge b-sim">SIMULATED Tyler</span></h3>
+    <p>The Budget page (<code>/budget</code>) for financial managers, built early as groundwork. Plan version 4 has no requirement for it, so whether to keep it is the City's decision.</p>
+  </div>
+
+  <h3>Interface additions</h3>
+  <p>Staff dashboards have a City-blue heading bar, a calm background, a Back button in the heading, and a "Back to the list" button on asset, permit and Cityworks record panels.</p>
 </section>
 
-<!-- ───────────────────────── TRUST ───────────────────────── -->
-<section id="trust">
-  <h2>Audit trail</h2>
-  <p class="lede">The trust guarantee this system makes: nothing happens unlogged. <code>audit_event</code> is append-only, enforced by two database triggers that abort any UPDATE or DELETE. <code>audit.record()</code> either writes the event or throws <code>AuditWriteError</code>, so no code path can carry on after an action went unlogged. Changes and their audit events are written in a single transaction.</p>
+<!-- ───────────────────────── MIGRATION ───────────────────────── -->
+<section id="migration">
+  <h2>Cityworks migration</h2>
+  <p class="lede">An export is a folder: <code>cityworks.db</code> (the SQL export in SQLite), <code>manifest.json</code> (row counts and version), <code>attachments/</code>, and <code>gis-features.json</code> (an ArcGIS feature snapshot).</p>
+  <ul class="tight">
+    <li><strong>Preflight:</strong> the run is refused, writing nothing, if a table is missing, if the data doesn't match the manifest, if the schema has drifted (no known name for a required column), or if the attachments exceed the quota, the free disk space or the per-file limit.</li>
+    <li><strong>Files:</strong> attachments are copied into storage named by SHA-256, verified after copying, stored once and skipped on a rerun.</li>
+    <li><strong>Records:</strong> written in one transaction. The historical tables open for writing only inside it; database triggers refuse every other change.</li>
+    <li><strong>Reconcile:</strong> counts are compared independently, every stored file is re-hashed, and every GIS link is checked against the snapshot. A link that is missing, ambiguous, in an unknown layer, or to an unknown record is listed for a person, who resolves it through <code>--resolutions</code>.</li>
+    <li><strong>Verdict:</strong> TRUSTED only when every count matches, no link is orphaned and nothing is unresolved.</li>
+  </ul>
+  <div class="note"><strong>Scale test:</strong> 200,000 simulated attachments and 2,000 records came out TRUSTED. All files were stored and hash-verified, with 0 orphaned links. The first run took 34 minutes on a Windows laptop; a rerun took 3 minutes and copied nothing.</div>
+  <p>The by-department cutover plan is in <a href="https://github.com/peacecrowne-oss/Saratoga-Springs-Municipal/blob/main/docs/CUTOVER.md">docs/CUTOVER.md</a>. Recommended option: full history, read-only, with each department closing out its open items before cutover, rehearsed on two dry runs. If departments need more time, phase it by department.</p>
+</section>
+
+<!-- ───────────────────────── SECURITY ───────────────────────── -->
+<section id="security">
+  <h2>Security and roles</h2>
   <div class="table-scroll"><table>
-    <thead><tr><th>Action</th><th>Entity</th><th>Written when</th><th>Story</th></tr></thead>
+    <thead><tr><th>Role</th><th>Can</th></tr></thead>
     <tbody>
-      <tr><td class="mono">system.deploy</td><td>system</td><td>A deployment passed every check (with version, commit, host, database, checks, duration)</td><td>001</td></tr>
-      <tr><td class="mono">system.deploy_failed</td><td>system</td><td>A deployment failed after the database opened (with kind and message)</td><td>001</td></tr>
-      <tr><td class="mono">asset.create</td><td>asset</td><td>An asset was created</td><td>001</td></tr>
-      <tr><td class="mono">asset.update</td><td>asset</td><td>An asset changed (before and after)</td><td>002</td></tr>
-      <tr><td class="mono">gis.push / gis.push_failed</td><td>asset</td><td>An asset was written to the GIS layer, or the layer rejected it</td><td>002</td></tr>
-      <tr><td class="mono">gis.pull</td><td>asset</td><td>GIS-owned fields or geometry changed (before and after, plus the GIS editor)</td><td>002</td></tr>
-      <tr><td class="mono">gis.mismatch</td><td>asset / gis_feature</td><td>A GIS edit touched a field we own, or a feature matches no asset</td><td>002</td></tr>
-      <tr><td class="mono">gis.sync_run / gis.sync_failed</td><td>gis_sync</td><td>Every sync run, with counts, or with the reason it stopped</td><td>002</td></tr>
-      <tr><td class="mono">budget.view / view_denied / view_failed</td><td>budget</td><td>Every budget view, refusal or Tyler failure</td><td>groundwork</td></tr>
+      <tr><td class="mono">it_administrator</td><td>System health, deployments, assets, GIS sync, Cityworks history, migration report, every audit log. No access to permit applicants or billing.</td></tr>
+      <tr><td class="mono">system_administrator</td><td>Every sign-in attempt and security alert.</td></tr>
+      <tr><td class="mono">asset_manager</td><td>Assets: add, lifecycle, condition, maintenance.</td></tr>
+      <tr><td class="mono">gis_analyst</td><td>Assets (read), GIS sync and log, migration report.</td></tr>
+      <tr><td class="mono">financial_manager</td><td>Budget (Tyler).</td></tr>
+      <tr><td class="mono">billing_manager</td><td>Billing requests (Caselle).</td></tr>
+      <tr><td class="mono">permit_clerk</td><td>Submit permits, view the queue, Cityworks history.</td></tr>
+      <tr><td class="mono">code_enforcement_officer</td><td>Decide permits, Cityworks history.</td></tr>
+      <tr><td class="mono">(resident)</td><td>Public portal through a private link; no account.</td></tr>
     </tbody>
   </table></div>
-  <p class="muted" style="font-size:13px">Who may read which events (<code>GET /api/audit?entity_type=</code>): financial_manager → budget; asset_manager → asset; gis_analyst → gis_sync, asset, gis_feature; it_administrator → all of these, plus system.</p>
+  <p>Residents' IP addresses are visible to administrators only. Personal details never enter the audit trail, which can't be erased. Migrated attachments always download rather than open in the browser.</p>
+</section>
+
+<!-- ───────────────────────── AUDIT ───────────────────────── -->
+<section id="trust">
+  <h2>Audit trail</h2>
+  <p class="lede"><code>audit_event</code> records who did what to which record, when, and the record before and after. Database triggers refuse any update or deletion. <code>record()</code> writes the event or throws, so a caller can't carry on unlogged.</p>
+  <p>Audited actions include deployments; sign-in attempts, alerts and session events; asset changes and refusals; GIS pushes, pulls, mismatches and failures; permit submissions, views, decisions and refusals; portal views, bookings, refusals and blocks; notifications sent, failed and given up; billing lookups, failures and denials; Cityworks views, downloads and refused writes; migration runs and refusals; acceptance results; and test reports.</p>
 </section>
 
 <!-- ───────────────────────── API ───────────────────────── -->
 <section id="api">
   <h2>HTTP API</h2>
-  <p class="lede"><a href="https://github.com/peacecrowne-oss/Saratoga-Springs-Municipal/blob/main/server/app.js">server/app.js</a>. Errors are always <code>{ error: { kind, message } }</code>. The caller is identified by the development headers <code>x-user-id</code> and <code>x-user-role</code> until Active Directory sign-in arrives with STORY-012.</p>
+  <p class="lede"><a href="https://github.com/peacecrowne-oss/Saratoga-Springs-Municipal/blob/main/server/app.js">server/app.js</a>. Errors are always <code>{ error: { kind, message } }</code>. The caller is identified by the session cookie set at sign-in. Writes must be JSON from the same origin.</p>
   <div class="table-scroll"><table>
-    <thead><tr><th>Method</th><th>Path</th><th>Who</th><th>Does</th></tr></thead>
+    <thead><tr><th>Route</th><th>What it does</th></tr></thead>
     <tbody>
-      <tr><td class="mono">GET</td><td class="mono">/</td><td>anyone</td><td>Redirects to <code>/system</code></td></tr>
-      <tr><td class="mono">GET</td><td class="mono">/system</td><td>anyone</td><td>System Dashboard: health, deployments, assets with their GIS view</td></tr>
-      <tr><td class="mono">GET</td><td class="mono">/budget</td><td>anyone</td><td>Budget tracking page (data needs financial_manager)</td></tr>
-      <tr><td class="mono">GET</td><td class="mono">/api/health</td><td>anyone</td><td>Database and audit-protection checks; 200 or 503, with the version</td></tr>
-      <tr><td class="mono">GET</td><td class="mono">/api/assets</td><td>asset_manager, it_administrator, gis_analyst</td><td>Asset list, each with <code>gis</code> (object id, layer, GIS fields, geometry, sync status)</td></tr>
-      <tr><td class="mono">GET</td><td class="mono">/api/assets/:id</td><td>same</td><td>One asset</td></tr>
-      <tr><td class="mono">POST</td><td class="mono">/api/assets</td><td>asset_manager, it_administrator</td><td>Create: 201 if new; 200 if the same tag already exists with the same details; 409 if it exists with different details; 400 naming each bad field</td></tr>
-      <tr><td class="mono">PATCH</td><td class="mono">/api/assets/:id</td><td>asset_manager, it_administrator</td><td>Change name, asset_type, status or location; the tag cannot be changed; a repeated update is a no-op</td></tr>
-      <tr><td class="mono">GET</td><td class="mono">/api/audit</td><td>by role (see above)</td><td>The 20 most recent events of one entity type</td></tr>
-      <tr><td class="mono">GET</td><td class="mono">/api/budget</td><td>financial_manager</td><td>Tyler budget lines; 502 <code>connected:false</code> when Tyler fails</td></tr>
+      <tr><td class="mono">POST /api/auth/login · /mfa · /logout · GET /me · /attempts</td><td>Sign-in, two steps; who is signed in; sign-in attempts for administrators</td></tr>
+      <tr><td class="mono">GET /api/health</td><td>Database and audit trail checks</td></tr>
+      <tr><td class="mono">GET/POST /api/assets · GET/PATCH /api/assets/:id</td><td>Inventory, create, view, update (audited)</td></tr>
+      <tr><td class="mono">POST /api/assets/:id/conditions · /maintenance · PATCH …/maintenance/:taskId · GET /api/maintenance</td><td>Condition readings and maintenance</td></tr>
+      <tr><td class="mono">GET /api/gis/status · /api/gis/log</td><td>GIS sync state and history</td></tr>
+      <tr><td class="mono">GET/POST /api/permits · GET /api/permits/:id · POST …/decision · GET …/history</td><td>Permit queue, submit, view (audited), decide, history</td></tr>
+      <tr><td class="mono">POST /api/portal/applications · GET /api/portal/application · POST /api/portal/inspection</td><td>Public portal; the private link travels in <code>x-portal-token</code></td></tr>
+      <tr><td class="mono">GET /api/billing/accounts/:number</td><td>Caselle billing request</td></tr>
+      <tr><td class="mono">GET /api/budget</td><td>Tyler budget lines</td></tr>
+      <tr><td class="mono">GET /api/legacy/records · /records/:id · …/attachments/:attId · /migration</td><td>Cityworks history, read-only; any other method is refused and audited</td></tr>
+      <tr><td class="mono">GET/POST /api/testing/uat · GET /api/testing/report</td><td>Acceptance results and the latest test report</td></tr>
+      <tr><td class="mono">GET /api/audit?entity_type=</td><td>Recent audit events in the caller's scope</td></tr>
     </tbody>
   </table></div>
 </section>
@@ -391,55 +366,34 @@
 <!-- ───────────────────────── DATA ───────────────────────── -->
 <section id="data">
   <h2>Data model</h2>
-  <p class="lede">Built tables (<a href="https://github.com/peacecrowne-oss/Saratoga-Springs-Municipal/blob/main/server/db.js">server/db.js</a>). The Command Center's Data Model tab also shows a <em>proposed</em> 23-table model (<code>model/data-model.json</code>), drafted from an earlier plan and not yet revisited for plan v4.</p>
-  <div class="two">
-    <div class="table-scroll"><table>
-      <thead><tr><th colspan="2">audit_event <span class="muted">· append-only</span></th></tr></thead>
-      <tbody>
-        <tr><td class="mono">id</td><td>UUID</td></tr><tr><td class="mono">actor_id</td><td>who</td></tr>
-        <tr><td class="mono">action</td><td>for example <code>gis.push</code></td></tr><tr><td class="mono">entity_type, entity_id</td><td>what</td></tr>
-        <tr><td class="mono">before, after</td><td>JSON</td></tr><tr><td class="mono">occurred_at</td><td>ISO time</td></tr>
-      </tbody>
-    </table></div>
-    <div class="table-scroll"><table>
-      <thead><tr><th colspan="2">asset</th></tr></thead>
-      <tbody>
-        <tr><td class="mono">id</td><td>UUID</td></tr><tr><td class="mono">asset_tag</td><td>the City's label, unique</td></tr>
-        <tr><td class="mono">name, asset_type, location</td><td>text</td></tr>
-        <tr><td class="mono">status</td><td>planned · active · maintenance · retired</td></tr>
-        <tr><td class="mono">created_at, updated_at</td><td>ISO time</td></tr>
-      </tbody>
-    </table></div>
-    <div class="table-scroll"><table>
-      <thead><tr><th colspan="2">asset_gis <span class="muted">· one per asset</span></th></tr></thead>
-      <tbody>
-        <tr><td class="mono">asset_id</td><td>→ asset</td></tr><tr><td class="mono">object_id, layer</td><td>the feature in ArcGIS</td></tr>
-        <tr><td class="mono">attributes, geometry</td><td>GIS-owned values, JSON</td></tr>
-        <tr><td class="mono">gis_edited_at, gis_edited_by</td><td>GIS editor tracking</td></tr>
-        <tr><td class="mono">pushed_values, pushed_at</td><td>what we last wrote</td></tr>
-        <tr><td class="mono">status, mismatch, last_error</td><td>synced · mismatch · error</td></tr>
-      </tbody>
-    </table></div>
-    <div class="table-scroll"><table>
-      <thead><tr><th colspan="2">sync_state</th></tr></thead>
-      <tbody>
-        <tr><td class="mono">key, value</td><td>for example the pull watermark <code>gis.pull.last_edited_at</code></td></tr>
-      </tbody>
-    </table></div>
-  </div>
+  <p class="lede">Defined in <a href="https://github.com/peacecrowne-oss/Saratoga-Springs-Municipal/blob/main/server/db.js">server/db.js</a> and created on every start, with no migrations to run.</p>
+  <div class="table-scroll"><table>
+    <thead><tr><th>Table</th><th>Holds</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">audit_event</td><td>The append-only audit trail</td></tr>
+      <tr><td class="mono">asset · asset_condition · maintenance_task · asset_gis</td><td>Assets, condition history (append-only), maintenance, each asset's GIS link</td></tr>
+      <tr><td class="mono">permit · permit_access · inspection · notification</td><td>Permits, portal link hashes, inspection bookings, messages to residents</td></tr>
+      <tr><td class="mono">auth_user · auth_challenge · auth_session</td><td>Accounts (scrypt hashes, encrypted TOTP secrets), sign-in challenges, sessions (hashes only)</td></tr>
+      <tr><td class="mono">legacy_record · legacy_gis_link · legacy_gis_issue · legacy_attachment · migration_run</td><td>Read-only Cityworks history and migration reports</td></tr>
+      <tr><td class="mono">uat_result · test_report</td><td>Acceptance results (append-only) and generated test reports</td></tr>
+      <tr><td class="mono">sync_state</td><td>Job bookmarks and the migration's write flag</td></tr>
+    </tbody>
+  </table></div>
 </section>
 
 <!-- ───────────────────────── INTEGRATIONS ───────────────────────── -->
 <section id="integrations">
   <h2>Integrations and stand-ins</h2>
-  <div class="note sim">Both stand-ins exist only because the City's real systems are not reachable from this project. Their data is labelled <strong>SIMULATED</strong> everywhere it appears: the layer name, department names, response flags and banners. To use a real system, change the environment settings; the code stays the same.</div>
   <div class="table-scroll"><table>
-    <thead><tr><th>System</th><th>Client</th><th>Stand-in</th><th>Protocol</th><th>Stand-in modes</th></tr></thead>
+    <thead><tr><th>System</th><th>Client</th><th>SIMULATED stand-in</th><th>Modes</th></tr></thead>
     <tbody>
-      <tr><td>ESRI ArcGIS Enterprise 11.3</td><td class="mono">server/integrations/arcgis/client.js</td><td class="mono">tools/arcgis-standin/server.js<br>port 4200</td><td>ESRI REST: generateToken, layer metadata with editor tracking, paged query, applyEdits; errors as HTTP 200 with codes 498/499</td><td>ok, down (503), slow (never answers), auth (rejects sign-in), schema (missing field); <code>POST /_edit</code> simulates an analyst's edit</td></tr>
-      <tr><td>Tyler Technologies (budget)</td><td class="mono">server/integrations/tyler/client.js</td><td class="mono">tools/tyler-standin/server.js<br>port 4100</td><td><code>GET /budget?fiscal_year=</code>, an interface defined in the client (no Tyler documentation available)</td><td>ok, down, slow, bad (malformed data)</td></tr>
-      <tr><td>Windows Active Directory</td><td colspan="4"><span class="badge b-pending">Not built</span> STORY-012. Until then, development sign-in headers stand in, and every page says so.</td></tr>
-      <tr><td>Caselle, Granicus/311, ComplianceGO, Bluebeam, Utilisync, XpressBillPay</td><td colspan="4"><span class="badge b-pending">Not built</span> STORY-010 and STORY-011.</td></tr>
+      <tr><td>ESRI ArcGIS Enterprise 11.3</td><td class="mono">server/integrations/arcgis/client.js</td><td class="mono">npm run arcgis-standin · port 4200</td><td>ok, down, slow, auth, schema, lossy; <code>/_edit</code>, <code>/_delete</code></td></tr>
+      <tr><td>Tyler budget</td><td class="mono">server/integrations/tyler/client.js</td><td class="mono">npm run standin · port 4100</td><td>ok, down, slow, bad</td></tr>
+      <tr><td>Caselle billing</td><td class="mono">server/integrations/caselle/client.js</td><td class="mono">npm run caselle-standin · port 4300</td><td>ok, down, slow, bad, mismatch; key <code>simulated-key</code></td></tr>
+      <tr><td>Mail to residents</td><td class="mono">server/notify.js</td><td>Built-in simulated transport</td><td>Messages are shown on the portal</td></tr>
+      <tr><td>Cityworks export</td><td class="mono">server/migration.js</td><td class="mono">npm run sample-export</td><td>Fault injection for every failure path</td></tr>
+      <tr><td>Active Directory</td><td colspan="3"><span class="badge b-pending">Not built</span> <code>verifyPassword()</code> in server/auth.js is the place it would plug in</td></tr>
+      <tr><td>Granicus/311, ComplianceGO, Bluebeam, Utilisync, XpressBillPay</td><td colspan="3"><span class="badge b-pending">Not built</span></td></tr>
     </tbody>
   </table></div>
 </section>
@@ -447,256 +401,107 @@
 <!-- ───────────────────────── TESTS ───────────────────────── -->
 <section id="tests">
   <h2>Tests</h2>
-  <p class="lede"><code>npm test</code> runs 63 tests with Node's built-in runner, and all pass. The integration tests run the real clients against the stand-ins over real HTTP, and the deploy tests start the real server on a real port with a real database file.</p>
+  <p class="lede">190 automated tests, all passing, run with <code>npm test</code> (Node's built-in runner, real HTTP and real databases). For each story, its rules were also broken on purpose to prove a test catches each one.</p>
   <div class="table-scroll"><table>
     <thead><tr><th>File</th><th>Tests</th><th>Covers</th></tr></thead>
     <tbody>
-      <tr><td class="mono">server/gis-sync.test.js</td><td>12</td><td>STORY-002 criteria 1–3, our own edits coming back, mismatches, unknown features, idempotency, paging, auth, latency, schema, a rejected edit</td></tr>
-      <tr><td class="mono">server/integrations/arcgis/client.test.js</td><td>8</td><td>Sign-in, token refresh, auth failure, timeout with capped retries, outage, applyEdits never retried, quoting</td></tr>
-      <tr><td class="mono">server/deploy.test.js</td><td>6</td><td>STORY-001 criteria 1–3 end to end, port taken, health unreachable, database won't open, audit write fails</td></tr>
-      <tr><td class="mono">server/assets.test.js</td><td>8</td><td>Create, update, idempotency, conflicts, validation, audit-failure rollback, health</td></tr>
-      <tr><td class="mono">server/audit.test.js</td><td>6</td><td>Append-only triggers, write-or-throw</td></tr>
-      <tr><td class="mono">server/app.test.js</td><td>7</td><td>Budget routes, roles, audit-unavailable withholding</td></tr>
-      <tr><td class="mono">server/integrations/tyler/client.test.js</td><td>9</td><td>Validation, retries, timeouts, refusal</td></tr>
-      <tr><td class="mono">tools/tyler-standin/server.test.js</td><td>6</td><td>Every stand-in mode against the real client</td></tr>
-      <tr><td class="mono">tests/command-center.test.mjs</td><td>1</td><td>Crawls every Command Center tab and link with real, sample and missing data</td></tr>
+      <tr><td class="mono">server/auth.test.js</td><td>27</td><td>STORY-012: two factors, lockouts, hijack, expiry, real deployment</td></tr>
+      <tr><td class="mono">server/gis-accuracy.test.js</td><td>19</td><td>STORY-005: read-back, spatial problems, sync log</td></tr>
+      <tr><td class="mono">server/asset-care.test.js</td><td>18</td><td>STORY-004: lifecycle, condition, maintenance, discrepancies</td></tr>
+      <tr><td class="mono">server/portal.test.js</td><td>15</td><td>STORY-007: portal, inspections, notifications, abuse limits</td></tr>
+      <tr><td class="mono">server/permits.test.js</td><td>13</td><td>STORY-006: decisions, compliance, privacy, real sign-in</td></tr>
+      <tr><td class="mono">server/migration.test.js</td><td>13</td><td>STORY-013: import, attachments, read-only, verdict, refusals</td></tr>
+      <tr><td class="mono">server/gis-sync.test.js</td><td>12</td><td>STORY-002: two-way sync and its failure paths</td></tr>
+      <tr><td class="mono">server/billing.test.js</td><td>11</td><td>STORY-010: Caselle accuracy, outages, credentials, data format, access</td></tr>
+      <tr><td class="mono">server/testing.test.js</td><td>11</td><td>STORY-011: smoke test, acceptance rules, report completeness and verdict</td></tr>
+      <tr><td class="mono">server/integrations/tyler/client.test.js</td><td>9</td><td>Tyler client</td></tr>
+      <tr><td class="mono">server/assets.test.js</td><td>8</td><td>Asset records</td></tr>
+      <tr><td class="mono">server/integrations/arcgis/client.test.js</td><td>8</td><td>ArcGIS client</td></tr>
+      <tr><td class="mono">server/app.test.js</td><td>7</td><td>Routes and roles</td></tr>
+      <tr><td class="mono">server/audit.test.js · server/deploy.test.js</td><td>6 · 6</td><td>Audit trail; STORY-001 deployment</td></tr>
+      <tr><td class="mono">tools/tyler-standin/server.test.js · tests/command-center.test.mjs</td><td>6 · 1</td><td>Tyler stand-in; STORY-000</td></tr>
     </tbody>
   </table></div>
-  <details>
-    <summary>Every test by name (62 server and tool tests, plus the Command Center crawl)</summary>
-    <div>
-      <h3>server/gis-sync.test.js</h3>
-      <ul class="tight">
-        <li>criterion 1: asset data updated in the system is reflected in the GIS layer</li>
-        <li>criterion 2: a GIS field value changed in ArcGIS shows in the system</li>
-        <li>criterion 3: every GIS transaction is in the audit trail</li>
-        <li>our own edits coming back from GIS are not logged as pulls</li>
-        <li>data mismatch: a GIS edit to a field the system owns is flagged, audited, and our value is pushed back</li>
-        <li>data mismatch: a GIS feature whose tag matches no asset is reported once</li>
-        <li>idempotent: syncing again with nothing changed writes nothing and never duplicates a feature</li>
-        <li>pulls page by page when the layer limits how many features one answer holds</li>
-        <li>authentication failure: the run stops, nothing changes, and the failure is audited</li>
-        <li>network latency: a layer that stops answering times out, and the next run catches up</li>
-        <li>the layer is missing a field the system owns: the run refuses to start</li>
-        <li>a single rejected edit is recorded on that asset and does not stop the others</li>
-      </ul>
-      <h3>server/integrations/arcgis/client.test.js</h3>
-      <ul class="tight">
-        <li>signs in, describes the layer, adds a feature and queries it back</li>
-        <li>authentication failure: a wrong password is reported as auth, not retried forever</li>
-        <li>an expired token is refreshed once and the call succeeds</li>
-        <li>a token that keeps being rejected is an auth failure</li>
-        <li>network latency: a layer that never answers times out after the capped retries</li>
-        <li>an outage is reported as unreachable; applyEdits is never retried, so it cannot duplicate</li>
-        <li>not configured is reported plainly</li>
-        <li>where-clause helpers quote safely</li>
-      </ul>
-      <h3>server/deploy.test.js</h3>
-      <ul class="tight">
-        <li>deploying brings the system up with its core functions and audits the deployment</li>
-        <li>once deployed, a core function works: an asset can be created, read back and is audited</li>
-        <li>network failure: the port is taken, so the deployment fails, is audited as failed, and nothing is left running</li>
-        <li>network failure: the health check never answers, so it is retried a capped number of times and the deployment fails</li>
-        <li>core functionality does not initialize: the database cannot be opened, so nothing starts</li>
-        <li>audit entry is not created: the deployment is stopped and reported as failed</li>
-      </ul>
-      <h3>server/assets.test.js</h3>
-      <ul class="tight">
-        <li>creating an asset stores it and audits who created it</li>
-        <li>creating the same asset twice returns the first one and writes nothing more</li>
-        <li>the same tag with different details is a conflict</li>
-        <li>an invalid asset names every field that is wrong</li>
-        <li>if the audit write fails, the asset is not stored</li>
-        <li>updating an asset changes only what was sent, audits before and after, and a repeat is a no-op</li>
-        <li>an update cannot change the asset tag or set a bad status, and an unknown asset is null</li>
-        <li>health is ok on a fresh database and unhealthy when the audit trail loses its protection</li>
-      </ul>
-      <h3>server/audit.test.js</h3>
-      <ul class="tight">
-        <li>records an event with its actor, action and timestamp</li>
-        <li>lists only the events for the entity asked about</li>
-        <li>refuses to edit an audit event</li>
-        <li>refuses to delete an audit event</li>
-        <li>throws when the event cannot be written, rather than failing quietly</li>
-        <li>rejects an event with no actor</li>
-      </ul>
-      <h3>server/app.test.js</h3>
-      <ul class="tight">
-        <li>connected: a financial manager sees the budget, and the view is audited</li>
-        <li>disconnected: the dashboard gets an error naming the integration problem, and the failure is audited</li>
-        <li>a role without budget access is refused, and the refusal is audited</li>
-        <li>a request with no user is refused</li>
-        <li>if the audit trail cannot be written, the budget is withheld</li>
-        <li>the audit trail is readable by a financial manager only</li>
-        <li>serves the dashboard page</li>
-      </ul>
-      <h3>server/integrations/tyler/client.test.js</h3>
-      <ul class="tight">
-        <li>returns validated budget lines</li>
-        <li>asks for the requested fiscal year</li>
-        <li>retries once after a server error, then succeeds</li>
-        <li>times out when Tyler never answers, after the capped retries</li>
-        <li>reports Tyler as unreachable when nothing is listening</li>
-        <li>does not retry when Tyler refuses the credentials</li>
-        <li>rejects budget data with missing or wrong fields, naming the problem</li>
-        <li>rejects a response that is not JSON</li>
-        <li>says so when the integration is not configured</li>
-      </ul>
-      <h3>tools/tyler-standin/server.test.js</h3>
-      <ul class="tight">
-        <li>ok: the client accepts its budget, marked as simulated</li>
-        <li>down: the client reports Tyler as unreachable</li>
-        <li>slow: the client times out</li>
-        <li>bad: the client rejects the data</li>
-        <li>mode can be switched while running</li>
-        <li>refuses an unknown mode</li>
-      </ul>
-    </div>
-  </details>
 </section>
 
 <!-- ───────────────────────── RUN ───────────────────────── -->
 <section id="run">
   <h2>How to run it</h2>
-  <p class="lede">Needs Node.js 24 or later. There is nothing to install: no <code>npm install</code>, because there are no dependencies.</p>
-<pre><code># tests
-npm test
+  <p>Node.js 24 is the only requirement; there's nothing to install.</p>
+<pre><code>npm run auth-admin -- add-user &lt;name&gt; --role it_administrator   # shows a password and authenticator key once
+npm run standin            # SIMULATED Tyler (port 4100)
+npm run caselle-standin    # SIMULATED Caselle (port 4300)
+npm run arcgis-standin     # SIMULATED ArcGIS (port 4200)
+npm run deploy             # the system, at http://127.0.0.1:3000/login
 
-# deploy and run the system (then open http://127.0.0.1:3000/system)
-npm run deploy
-
-# SIMULATED ArcGIS, in another terminal; it prints the four ARCGIS_* settings to use
-npm run arcgis-standin
-
-# GIS sync, once (exits 1 on failure) or continuously
-npm run gis-sync
-npm run gis-sync -- --watch
-
-# SIMULATED Tyler, for the budget page
-npm run standin</code></pre>
+npm run sample-export -- data/sample-export && npm run migrate -- data/sample-export
+npm run gis-sync           # needs ARCGIS_LAYER_URL etc.; the stand-in prints them
+npm run caselle -- account SIM-1001
+npm test                   # all automated tests
+npm run test-report        # suite + smoke test + acceptance → docs/TEST-REPORT.md</code></pre>
   <h3>Settings</h3>
-  <p class="muted" style="margin-top:0">Read from the environment, or from a local <code>.env</code> file that git ignores and that is never committed.</p>
-  <div class="table-scroll"><table>
-    <thead><tr><th>Variable</th><th>Default</th><th>Used by</th></tr></thead>
-    <tbody>
-      <tr><td class="mono">HOST, PORT</td><td>127.0.0.1, 3000</td><td>deploy</td></tr>
-      <tr><td class="mono">DB_PATH</td><td>data/app.db</td><td>deploy, gis-sync</td></tr>
-      <tr><td class="mono">DEPLOY_ACTOR, DEPLOY_COMMIT</td><td>OS user@host, <code>git rev-parse HEAD</code></td><td>deploy audit entry</td></tr>
-      <tr><td class="mono">ARCGIS_LAYER_URL, ARCGIS_TOKEN_URL</td><td>none</td><td>gis-sync</td></tr>
-      <tr><td class="mono">ARCGIS_USERNAME, ARCGIS_PASSWORD</td><td>none</td><td>gis-sync (keep in <code>.env</code>)</td></tr>
-      <tr><td class="mono">GIS_SYNC_INTERVAL_S</td><td>300</td><td>gis-sync --watch</td></tr>
-      <tr><td class="mono">TYLER_BASE_URL, TYLER_API_KEY</td><td>none</td><td>budget page</td></tr>
-    </tbody>
-  </table></div>
+  <p>These come from the environment or a local <code>.env</code> that is never committed: <code>HOST</code>, <code>PORT</code>, <code>DB_PATH</code>, <code>TRUST_PROXY</code>, <code>AUTH_SECRET_KEY</code>, <code>PUBLIC_BASE_URL</code>, <code>TYLER_BASE_URL</code>, <code>CASELLE_BASE_URL</code>, <code>CASELLE_API_KEY</code>, <code>ARCGIS_LAYER_URL</code>, <code>ARCGIS_TOKEN_URL</code>, <code>ARCGIS_USERNAME</code>, <code>ARCGIS_PASSWORD</code>, <code>ATTACHMENTS_DIR</code> and <code>MIGRATION_MAX_ATTACHMENT_BYTES</code>.</p>
 </section>
 
 <!-- ───────────────────────── ARTEFACTS ───────────────────────── -->
 <section id="artefacts">
   <h2>Artefacts</h2>
-  <p class="lede">Every file in the <a href="https://github.com/peacecrowne-oss/Saratoga-Springs-Municipal">repository</a>, grouped by purpose. File names link to GitHub.</p>
-  <details open>
-    <summary>Plan and platform files</summary>
-    <div><div class="table-scroll"><table><tbody>
-      <tr><td class="mono"><a href="https://github.com/peacecrowne-oss/Saratoga-Springs-Municipal/blob/main/docs/REQUIREMENTS.md">docs/REQUIREMENTS.md</a></td><td>What the system must do (7 requirements)</td></tr>
-      <tr><td class="mono"><a href="https://github.com/peacecrowne-oss/Saratoga-Springs-Municipal/blob/main/docs/STORIES.md">docs/STORIES.md</a></td><td>The work, by release</td></tr>
-      <tr><td class="mono"><a href="https://github.com/peacecrowne-oss/Saratoga-Springs-Municipal/tree/main/docs/stories">docs/stories/STORY-nnn.md</a></td><td>One file per story, with criteria and failure paths: 000, 001, 002, 004–007 and 010–013. STORY-003, 008 and 009 are also in the folder, but they are leftovers from an earlier plan and are not part of plan v4</td></tr>
-      <tr><td class="mono"><a href="https://github.com/peacecrowne-oss/Saratoga-Springs-Municipal/blob/main/docs/TRACEABILITY.md">docs/TRACEABILITY.md</a></td><td>Which story covers which requirement</td></tr>
-      <tr><td class="mono"><a href="https://github.com/peacecrowne-oss/Saratoga-Springs-Municipal/blob/main/docs/DATA_CONTRACT.md">docs/DATA_CONTRACT.md</a></td><td>Field-by-field spec of the three <code>.colaberry</code> files</td></tr>
-      <tr><td class="mono">.colaberry/plan.json</td><td>Requirements, stories and releases (the plan only; written by the platform)</td></tr>
-      <tr><td class="mono">.colaberry/progress.json</td><td>Criteria passed, files touched, tests added and notes (ours); verification state (the platform's)</td></tr>
-      <tr><td class="mono">.colaberry/manifest.json</td><td>When the data was last refreshed, with file hashes</td></tr>
-      <tr><td class="mono">.colaberry/profile.json, connect.txt</td><td>Platform profile and repository pairing</td></tr>
-      <tr><td class="mono">.colaberry/enrichment/STORY-000.json</td><td>Story completion enrichment</td></tr>
-      <tr><td class="mono"><a href="https://github.com/peacecrowne-oss/Saratoga-Springs-Municipal/blob/main/CLAUDE.md">CLAUDE.md</a></td><td>Build conventions and definition of done</td></tr>
-    </tbody></table></div></div>
-  </details>
-  <details>
-    <summary>Command Center (STORY-000)</summary>
-    <div><div class="table-scroll"><table><tbody>
-      <tr><td class="mono">index.html</td><td>Entry page, served by GitHub Pages</td></tr>
-      <tr><td class="mono">assets/app.js, data.js, ui.js</td><td>Loader, data contract join (plan ⋈ progress on story id), UI helpers</td></tr>
-      <tr><td class="mono">assets/sample.js</td><td>Labelled sample dataset for the Sample switch</td></tr>
-      <tr><td class="mono">assets/theme.css, styles.css</td><td>Colour tokens (light and dark), layout</td></tr>
-      <tr><td class="mono">assets/tabs/*.js</td><td>overview, outcomes, users, guardrails, systems, project, agents, knowledge, data-model</td></tr>
-      <tr><td class="mono">knowledge/notes.json</td><td>Decisions and notes for the Knowledge tab</td></tr>
-      <tr><td class="mono">model/data-model.json</td><td>Proposed 23-table data model (from an earlier plan)</td></tr>
-      <tr><td class="mono">.nojekyll</td><td>Lets GitHub Pages serve <code>.colaberry/</code></td></tr>
-      <tr><td class="mono">tests/command-center.test.mjs</td><td>Crawls every tab and link</td></tr>
-    </tbody></table></div></div>
-  </details>
-  <details>
-    <summary>Server and jobs (STORY-001, STORY-002)</summary>
-    <div><div class="table-scroll"><table><tbody>
-      <tr><td class="mono">server/main.js</td><td><code>npm run deploy</code> / <code>npm start</code>: deploys and runs; exits non-zero naming the failed step</td></tr>
-      <tr><td class="mono">server/deploy.js</td><td>The five-step deployment with its audit entry</td></tr>
-      <tr><td class="mono">server/app.js</td><td>HTTP routes, roles, error mapping</td></tr>
-      <tr><td class="mono">server/db.js</td><td>Schema, append-only triggers, transaction helper</td></tr>
-      <tr><td class="mono">server/audit.js</td><td>Audit trail: record or throw</td></tr>
-      <tr><td class="mono">server/assets.js</td><td>Asset records with their GIS view</td></tr>
-      <tr><td class="mono">server/health.js</td><td>Health checks</td></tr>
-      <tr><td class="mono">server/gis-sync.js</td><td>GIS Sync Job logic</td></tr>
-      <tr><td class="mono">server/gis-sync-main.js</td><td><code>npm run gis-sync [--watch]</code></td></tr>
-      <tr><td class="mono">server/integrations/arcgis/client.js</td><td>ESRI REST client</td></tr>
-      <tr><td class="mono">server/integrations/tyler/client.js</td><td>Tyler budget client</td></tr>
-      <tr><td class="mono">app/system.html, system.js</td><td>System Dashboard</td></tr>
-      <tr><td class="mono">app/budget.html, budget.js</td><td>Budget tracking page</td></tr>
-      <tr><td class="mono">tools/arcgis-standin/server.js</td><td>SIMULATED ArcGIS feature layer</td></tr>
-      <tr><td class="mono">tools/tyler-standin/server.js</td><td>SIMULATED Tyler budget server</td></tr>
-      <tr><td class="mono">package.json</td><td>Scripts; no dependencies; Node ≥ 24</td></tr>
-      <tr><td class="mono">.gitignore</td><td>Keeps <code>.env</code>, <code>data/</code>, <code>tmp/</code> and <code>node_modules/</code> out of git</td></tr>
-      <tr><td class="mono">*.test.js</td><td>See <a href="#tests">Tests</a></td></tr>
-    </tbody></table></div></div>
-  </details>
-  <details>
-    <summary>Outside the repository</summary>
-    <div><ul class="tight">
-      <li><strong>GitHub Pages:</strong> <a href="https://peacecrowne-oss.github.io/Saratoga-Springs-Municipal/">peacecrowne-oss.github.io/Saratoga-Springs-Municipal</a> (the Command Center).</li>
-      <li><strong>Colaberry push webhook:</strong> sends push events to the platform, which verifies pushed commits.</li>
-      <li><strong>Collaborator:</strong> <code>ColaberryIntern</code> has write access, so the platform can sync the plan files.</li>
-      <li><strong>Local only:</strong> <code>data/app.db</code> holds the demo deployment, the asset <code>HYD-0001</code> and the audit trail. Git ignores it.</li>
-    </ul></div>
-  </details>
+  <div class="table-scroll"><table>
+    <thead><tr><th>Path</th><th>What it is</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">docs/REQUIREMENTS.md · STORIES.md · stories/ · TRACEABILITY.md</td><td>The plan. STORY-003, 008 and 009 in <code>stories/</code> are leftovers from an earlier plan.</td></tr>
+      <tr><td class="mono">docs/SECURITY.md</td><td>Sign-in design, protections, PII held, decisions for the City</td></tr>
+      <tr><td class="mono">docs/CUTOVER.md</td><td>Cityworks cutover plan by department</td></tr>
+      <tr><td class="mono">docs/TEST-REPORT.md</td><td>The latest final test report</td></tr>
+      <tr><td class="mono">docs/VIDEOS AND INFOGRAPHICS/</td><td>Project briefing and architecture infographics</td></tr>
+      <tr><td class="mono">.colaberry/plan.json · progress.json · manifest.json</td><td>What the Command Center and the platform read</td></tr>
+      <tr><td class="mono">index.html · tests/command-center.test.mjs</td><td>The Command Center</td></tr>
+      <tr><td class="mono">server/</td><td>Server, jobs, integrations and tests</td></tr>
+      <tr><td class="mono">app/</td><td>The pages: login, system, assets, permits, portal, history, budget, testing</td></tr>
+      <tr><td class="mono">tools/</td><td>SIMULATED stand-ins, the sample Cityworks export, the test reporter</td></tr>
+    </tbody>
+  </table></div>
 </section>
 
 <!-- ───────────────────────── HISTORY ───────────────────────── -->
 <section id="history">
   <h2>Commit history</h2>
-  <p class="lede">Oldest first. <code>chore(colaberry)</code> commits are platform syncs of the plan.</p>
   <div class="table-scroll"><table>
-    <thead><tr><th>Commit</th><th>Date</th><th>Message</th></tr></thead>
+    <thead><tr><th>Commit</th><th>Date</th><th>What</th></tr></thead>
     <tbody>
-      <tr><td class="mono">d0a0e90</td><td class="nowrap">2026-10-27</td><td>Connect this folder to Colaberry</td></tr>
-      <tr><td class="mono">6463e5f</td><td class="nowrap">2026-10-28</td><td>Command Center: Overview tab, paused for review</td></tr>
       <tr><td class="mono">b3368f6</td><td class="nowrap">2026-10-28</td><td><strong>STORY-000:</strong> build the Command Center</td></tr>
-      <tr><td class="mono">f444869</td><td class="nowrap">2026-10-29</td><td class="muted">chore(colaberry): sync build plan — 23 files</td></tr>
-      <tr><td class="mono">3725cd2</td><td class="nowrap">2026-10-29</td><td><strong>STORY-000:</strong> read the synced plan by its data contract and finish the story</td></tr>
-      <tr><td class="mono">8a49d03</td><td class="nowrap">2026-10-31</td><td class="muted">chore(colaberry): sync build plan — 7 files</td></tr>
-      <tr><td class="mono">c692981</td><td class="nowrap">2026-11-02</td><td class="muted">chore(colaberry): sync build plan — 2 files</td></tr>
-      <tr><td class="mono">f0a15cd</td><td class="nowrap">2026-11-02</td><td class="muted">chore(colaberry): sync build plan — 17 files (plan replaced with the RFP-based plan)</td></tr>
-      <tr><td class="mono">cc085f2</td><td class="nowrap">2026-11-02</td><td>Groundwork: audit trail, server skeleton and a simulated Tyler budget integration</td></tr>
-      <tr><td class="mono">d483899</td><td class="nowrap">2026-11-02</td><td class="muted">chore(colaberry): sync build plan — 8 files (adds REQ-012 / STORY-013)</td></tr>
-      <tr><td class="mono">f8b397a</td><td class="nowrap">2026-11-02</td><td class="muted">chore(colaberry): sync build plan — 3 files</td></tr>
+      <tr><td class="mono">3725cd2</td><td class="nowrap">2026-10-29</td><td><strong>STORY-000:</strong> read the synced plan by its data contract</td></tr>
+      <tr><td class="mono">cc085f2</td><td class="nowrap">2026-11-02</td><td>Groundwork: audit trail, server skeleton, SIMULATED Tyler budget</td></tr>
       <tr><td class="mono">d6e80c0</td><td class="nowrap">2026-11-02</td><td><strong>STORY-001:</strong> deploy the initial system with core functionalities</td></tr>
-      <tr><td class="mono">825a1e3</td><td class="nowrap">2026-11-02</td><td class="muted">chore(colaberry): sync build plan — 2 files (STORY-001 verified)</td></tr>
       <tr><td class="mono">7e0e2b5</td><td class="nowrap">2026-11-02</td><td><strong>STORY-002:</strong> sync asset data with ArcGIS over the ESRI REST API</td></tr>
-      <tr><td class="mono">1a1504e</td><td class="nowrap">2026-11-03</td><td class="muted">chore(colaberry): sync build plan — 2 files (STORY-002 verified)</td></tr>
+      <tr><td class="mono">ae04036</td><td class="nowrap">2026-11-03</td><td><strong>STORY-004:</strong> asset lifecycle, condition and maintenance</td></tr>
+      <tr><td class="mono">25089d4</td><td class="nowrap">2026-11-04</td><td><strong>STORY-005:</strong> prove GIS data is accurate, make sync errors reviewable</td></tr>
+      <tr><td class="mono">d8fce4f</td><td class="nowrap">2026-11-04</td><td><strong>STORY-012:</strong> replace the development role picker with real sign-in</td></tr>
+      <tr><td class="mono">5421aa2</td><td class="nowrap">2026-11-04</td><td><strong>STORY-006:</strong> review, approve and reject code enforcement permits</td></tr>
+      <tr><td class="mono">a6634f9</td><td class="nowrap">2026-11-05</td><td><strong>STORY-007:</strong> public portal for applications and inspections</td></tr>
+      <tr><td class="mono">11e4e81</td><td class="nowrap">2026-11-05</td><td><strong>STORY-010:</strong> retrieve billing accounts from Caselle</td></tr>
+      <tr><td class="mono">648a830</td><td class="nowrap">2026-11-06</td><td><strong>STORY-013:</strong> migrate Cityworks history into read-only records</td></tr>
+      <tr><td class="mono">4b13b12</td><td class="nowrap">2026-11-06</td><td><strong>STORY-011:</strong> final testing, acceptance tracking, test report</td></tr>
+      <tr><td class="mono">1467359</td><td class="nowrap">2026-11-09</td><td>Dashboard styling, back buttons, GIS log fix, project overview</td></tr>
     </tbody>
   </table></div>
+  <p class="muted">Platform sync commits (<code>chore(colaberry): sync build plan</code>) between these are omitted.</p>
 </section>
 
 <!-- ───────────────────────── DECISIONS ───────────────────────── -->
 <section id="decisions">
   <h2>Decisions</h2>
   <div class="table-scroll"><table>
-    <thead><tr><th>Decision</th><th>Why</th><th>Decided by</th></tr></thead>
+    <thead><tr><th>Decision</th><th>Why</th></tr></thead>
     <tbody>
-      <tr><td>Node.js 24 with no third-party dependencies</td><td>Nothing to install or patch; the built-in SQLite, test runner and fetch cover what's needed</td><td>Product owner</td></tr>
-      <tr><td>Labelled stand-ins for external systems</td><td>The City's systems aren't reachable; stand-ins keep the integration code real and testable, and the labels stop simulated data passing for real</td><td>Product owner</td></tr>
-      <tr><td>"Core functionalities" means health check + asset records</td><td>Testable, and the foundation STORY-004 builds on</td><td>Product owner</td></tr>
-      <tr><td>GIS field ownership split by field; our value wins on a mismatch, which is audited</td><td>A two-way sync needs one owner per field, or a two-sided edit has no winner</td><td>Product owner</td></tr>
-      <tr><td>A deployment only counts once its audit entry is written</td><td>STORY-001's trust criterion; an unrecorded deployment can't be accounted for</td><td>Build</td></tr>
-      <tr><td><code>applyEdits</code> is never retried; adds look up the tag first</td><td>A retry after a lost answer would create a duplicate GIS feature</td><td>Build</td></tr>
-      <tr><td>Tyler groundwork kept, claiming no story</td><td>Built for a story that a plan change removed; it works and is tested</td><td>Product owner</td></tr>
+      <tr><td>No third-party packages; Node 24 built-ins only</td><td>Nothing to install or patch on a City server</td></tr>
+      <tr><td>Field ownership split between the system and GIS</td><td>Neither side silently overwrites the other; disagreements are flagged</td></tr>
+      <tr><td>Local accounts with authenticator codes until Active Directory is available</td><td>Real two-factor sign-in now; one place to plug AD in later</td></tr>
+      <tr><td>Residents use a private link, not accounts</td><td>No sign-up step for residents; the City can add accounts later</td></tr>
+      <tr><td>Permit compliance checks: code section verified, site inspected; no self-decisions</td><td>Working assumptions for the City to confirm</td></tr>
+      <tr><td>Cityworks history is read-only, enforced in the database</td><td>Allowed by REQ-012; safest cutover</td></tr>
+      <tr><td>A migration is trusted only on matching counts, zero orphans and zero unresolved links</td><td>STORY-013's trust criterion, made strict</td></tr>
+      <tr><td>Acceptance needs every scenario run and passing</td><td>STORY-011: no critical issues, and nothing untested</td></tr>
     </tbody>
   </table></div>
 </section>
@@ -705,15 +510,17 @@ npm run standin</code></pre>
 <section id="gaps">
   <h2>Gaps and risks</h2>
   <div class="table-scroll"><table>
-    <thead><tr><th>Item</th><th>Impact</th><th>Next step</th></tr></thead>
+    <thead><tr><th>Gap</th><th>Why it matters</th><th>Next step</th></tr></thead>
     <tbody>
-      <tr><td><strong>ArcGIS sync tested only against the SIMULATED stand-in</strong></td><td>Real ArcGIS Enterprise 11.3 may differ: field names, date-query syntax, token flow, record limits</td><td>Point the <code>ARCGIS_*</code> settings at a City test layer and run <code>npm run gis-sync</code></td></tr>
-      <tr><td>No Active Directory sign-in or 2FA (REQ-010)</td><td>Development headers let anyone choose a role, so this isn't fit for real users. The r0 demo in the plan also calls for Active Directory sign-in, so it can't be shown in full yet.</td><td>STORY-012. STORY-001's build notes mention AD; its criteria do not.</td></tr>
-      <tr><td>Leftover story files from an earlier plan (STORY-003, 008, 009)</td><td>They are still in <code>docs/stories/</code> but aren't in plan v4, and commits naming them earn nothing. STORY-003's "retired means inactive" rule conflicts with the <code>retired</code> status built here.</td><td>Ignore them, and ask the platform team whether they should be removed</td></tr>
-      <tr><td>No near-real-time replication (REQ-002 option)</td><td>Only needed if on-premises hosting is unavailable</td><td>Confirm with the City whether it's needed</td></tr>
-      <tr><td>Only one GIS sync may run at a time</td><td><code>--watch</code> never overlaps itself, but two separate jobs on the same database could race</td><td>Run a single scheduled job; add a lock if that changes</td></tr>
-      <tr><td>Proposed data model predates plan v4</td><td>The Data Model tab shows 23 proposed tables from older requirements</td><td>Revisit when STORY-004 and STORY-013 start</td></tr>
-      <tr><td>Release dates in the plan don't match its own week numbers</td><td>For example, r0 is "weeks 1–4" but runs 27–28 Oct; the Gantt shows the dates as given</td><td>Raise with the platform or mentor</td></tr>
+      <tr><td>Acceptance testing at 5 of 14</td><td>STORY-011 can't be verified until every scenario is run</td><td>Run the remaining scenarios on <code>/testing</code>, then <code>npm run test-report</code></td></tr>
+      <tr><td>All integrations simulated</td><td>Real interfaces may differ from those defined here</td><td>The City provides ArcGIS, Caselle and mail access and a real Cityworks export</td></tr>
+      <tr><td>No Active Directory or single sign-on (REQ-010)</td><td>Accounts are local</td><td>Connection details; choose LDAP or ADFS/Entra ID</td></tr>
+      <tr><td>Only code enforcement permits (REQ-007)</td><td>Other permit types aren't covered</td><td>Plan the remaining permit types</td></tr>
+      <tr><td>Five REQ-011 integrations not built</td><td>Granicus/311, ComplianceGO, Bluebeam, Utilisync, XpressBillPay</td><td>Prioritise with City IT</td></tr>
+      <tr><td>No replication (REQ-002)</td><td>Backups are the only protection today</td><td>Decide whether it's needed</td></tr>
+      <tr><td>No retention policy; database not encrypted at rest</td><td>The audit trail grows forever</td><td>Set retention; use full-disk encryption</td></tr>
+      <tr><td>No penetration test or City security review</td><td>Risk before go-live</td><td>Review before production</td></tr>
+      <tr><td>Leftover story files (STORY-003, 008, 009)</td><td>Not in plan v4</td><td>Ask the platform team whether to remove them</td></tr>
     </tbody>
   </table></div>
 </section>
@@ -721,11 +528,7 @@ npm run standin</code></pre>
 </main>
 
 <footer>
-  <div class="wrap">
-    Repository: <a href="https://github.com/peacecrowne-oss/Saratoga-Springs-Municipal">github.com/peacecrowne-oss/Saratoga-Springs-Municipal</a> ·
-    Command Center: <a href="https://peacecrowne-oss.github.io/Saratoga-Springs-Municipal/">GitHub Pages</a> ·
-    Built by Omolola Makinde with Claude Code. Facts as of 3 November 2026.
-  </div>
+  <div class="wrap">Saratoga Springs Municipal · project overview · 9 November 2026 · <a href="https://github.com/peacecrowne-oss/Saratoga-Springs-Municipal">GitHub repository</a> · <a href="https://peacecrowne-oss.github.io/Saratoga-Springs-Municipal/">Command Center</a></div>
 </footer>
 
 </body>
