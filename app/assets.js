@@ -2,7 +2,7 @@
 // condition and maintenance, and everything still to do. All rules live on the
 // server; this page shows what it answers, including why it refused.
 
-import { currentUser } from '/session.js';
+import { BACK_TO_LIST, currentUser, detailOpened } from '/session.js';
 
 const PAGE = 50;
 
@@ -94,6 +94,7 @@ async function openAsset(id, note = '') {
     const moves = a.nextStatuses.map(s => `<option>${esc(s)}</option>`).join('');
     const nowLocal = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16);
     $('detail').innerHTML = `<div class="panel">
+      ${BACK_TO_LIST}
       <h2 style="margin-top:0">${esc(a.assetTag)} · ${esc(a.name)}</h2>
       <div id="note">${note}</div>
       <div class="facts">
@@ -135,6 +136,7 @@ async function openAsset(id, note = '') {
       ${history.status !== 200 ? refusal(history.body, history.status) : `<div class="table-scroll"><table><thead><tr><th>When</th><th>Who</th><th>Action</th><th>Detail</th></tr></thead><tbody>${history.body.events.map(e => `<tr><td>${esc(when(e.occurredAt))}</td><td>${esc(e.actor)}</td><td>${esc(e.action)}</td><td>${esc(describe(e))}</td></tr>`).join('')}</tbody></table></div>`}
     </div>`;
     wire(a);
+    detailOpened($('detail'), 'inventory', { scroll: !note });
   } catch (err) {
     $('detail').innerHTML = unreachable(err);
   }

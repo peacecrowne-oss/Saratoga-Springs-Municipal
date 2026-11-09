@@ -47,8 +47,11 @@ export function gisStatus(db, audit) {
 export function describeGisEvent(e) {
   const a = e.after ?? {};
   switch (e.action) {
-    case 'gis.sync_run': return `pulled ${a.pulled}, pushed ${a.pushed}, verified ${a.verified}, mismatches ${a.mismatches}, push failures ${a.pushFailed}, read-back failures ${a.verifyFailed}, missing features ${a.missingFeatures}, spatial problems ${a.spatialProblems}${a.reconciled ? ', whole layer compared' : ''}`;
-    case 'gis.sync_failed': return `stopped at ${a.stage}${a.assetTag ? ` on ${a.assetTag}` : ''} (${a.kind}): ${a.message} Next step: ${a.hint}`;
+    // Older runs were logged before some counts existed: those are left out, not shown as "undefined".
+    case 'gis.sync_run': return [['pulled', a.pulled], ['pushed', a.pushed], ['verified', a.verified], ['mismatches', a.mismatches], ['push failures', a.pushFailed],
+      ['read-back failures', a.verifyFailed], ['missing features', a.missingFeatures], ['spatial problems', a.spatialProblems]]
+      .filter(([, n]) => n !== undefined && n !== null).map(([label, n]) => `${label} ${n}`).join(', ') + (a.reconciled ? ', whole layer compared' : '');
+    case 'gis.sync_failed': return `stopped${a.stage ? ` at ${a.stage}` : ''}${a.assetTag ? ` on ${a.assetTag}` : ''} (${a.kind}): ${a.message}${a.hint ? ` Next step: ${a.hint}` : ''}`;
     case 'gis.push': return `${a.operation} object ${a.objectId}${a.overwrote ? `, overwrote GIS ${a.overwrote.map(f => f.field).join(', ')}` : ''}`;
     case 'gis.push_failed': return `${a.assetTag ?? ''} ${a.operation} object ${a.objectId ?? 'new'} refused: ${a.error?.description ?? 'no detail'}${a.error?.code ? ` (code ${a.error.code})` : ''}`;
     case 'gis.verify_failed': return `${a.assetTag ?? ''} object ${a.objectId}: ${a.description} ${(a.fields ?? []).map(f => `${f.field} sent "${f.sent}", GIS has "${f.gis}"`).join('; ')}`;

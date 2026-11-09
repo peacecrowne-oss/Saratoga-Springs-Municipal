@@ -17,6 +17,27 @@ async function signOut() {
   }
 }
 
+// The header's Back button: the previous page when it was one of ours, otherwise
+// the system dashboard (its plain link, so it works even without this script).
+const back = document.getElementById('back');
+back?.addEventListener('click', e => {
+  let fromHere = false;
+  try { fromHere = Boolean(document.referrer) && new URL(document.referrer).origin === location.origin && !new URL(document.referrer).pathname.startsWith('/login'); } catch { fromHere = false; }
+  if (fromHere && history.length > 1) { e.preventDefault(); history.back(); }
+});
+
+// For a detail panel: brings it into view and wires its "Back to the list"
+// button, which closes the panel and returns to the list it was opened from.
+export function detailOpened(panel, listId, { scroll = true } = {}) {
+  panel.querySelector('[data-back-to-list]')?.addEventListener('click', () => {
+    panel.innerHTML = '';
+    document.getElementById(listId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+  if (scroll) panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+export const BACK_TO_LIST = '<button type="button" class="plain back-to-list" data-back-to-list>← Back to the list</button>';
+
 // Resolves to { username, role } once it has shown them in #session.
 export async function currentUser() {
   const res = await fetch('/api/auth/me', { cache: 'no-store' });

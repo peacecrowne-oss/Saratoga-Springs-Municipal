@@ -1,7 +1,7 @@
 // Cityworks history (STORY-013): search and open migrated records. Read-only:
 // this page sends nothing but GET requests.
 
-import { currentUser } from '/session.js';
+import { BACK_TO_LIST, currentUser, detailOpened } from '/session.js';
 
 const PAGE = 50;
 const $ = id => document.getElementById(id);
@@ -60,6 +60,7 @@ async function open(id) {
     const r = body.record;
     const base = `/api/legacy/records/${encodeURIComponent(r.id)}/attachments/`;
     $('detail').innerHTML = `<div class="panel">
+      ${BACK_TO_LIST}
       <h2 style="margin-top:0">${esc(r.caseNumber)} <span class="pill ro">READ-ONLY</span></h2>
       <dl class="facts">
         <dt>Type</dt><dd>${esc(label(r.recordType))}</dd><dt>Status</dt><dd>${esc(r.status)}</dd>
@@ -76,6 +77,7 @@ async function open(id) {
       ${r.data.people?.length ? `<h3>People</h3><pre>${esc(JSON.stringify(r.data.people, null, 2))}</pre>` : ''}
       <h3>Everything Cityworks held</h3><pre>${esc(JSON.stringify(r.data.source, null, 2))}</pre>
     </div>`;
+    detailOpened($('detail'), 'results');
   } catch (err) {
     $('detail').innerHTML = unreachable(err);
   }

@@ -23,8 +23,20 @@
     }
     * { box-sizing: border-box; }
     body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+    /* A calm page background: a soft blue-to-sage wash behind the white panels. */
+    :root { --page: linear-gradient(180deg, #e4edf5 0%, #eaf2ef 55%, #f2f5ee 100%); }
+    @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --page: linear-gradient(180deg, #0f1822 0%, #111c1c 100%); } }
+    html { min-height: 100%; background: var(--bg); }
+    body { min-height: 100vh; background: var(--page); background-attachment: fixed; }
     .wrap { max-width: 1100px; margin: 0 auto; padding: 0 16px 48px; }
-    header { background: var(--surface); border-bottom: 1px solid var(--border); }
+    header { background: var(--brand); color: var(--brand-ink); border-bottom: 1px solid var(--border); }
+    header .muted { color: var(--brand-ink); opacity: .9; }
+    header button { background: transparent; color: var(--brand-ink); border: 1px solid currentColor; border-radius: 6px; padding: 3px 10px; cursor: pointer; font: inherit; font-size: 13px; }
+    header button:hover { background: color-mix(in srgb, var(--brand-ink) 15%, transparent); }
+    header .title { display: flex; align-items: center; gap: 12px; }
+    header .back { color: var(--brand-ink); text-decoration: none; border: 1px solid currentColor; border-radius: 6px; padding: 2px 10px; font-size: 13px; white-space: nowrap; }
+    header .back:hover { background: color-mix(in srgb, var(--brand-ink) 15%, transparent); }
+    .back-to-list { margin: 0 0 10px; }
     header .wrap { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; justify-content: space-between; padding: 12px 16px; }
     h1 { font-size: 18px; margin: 0; }
     h2 { font-size: 16px; margin: 24px 0 8px; }
@@ -57,7 +69,7 @@
 <body>
   <header>
     <div class="wrap">
-      <h1>Cityworks history</h1>
+      <div class="title"><a id="back" class="back" href="/system">← Back</a><h1>Cityworks history</h1></div>
       <div id="session" class="muted" style="font-size:13px"></div>
     </div>
   </header>

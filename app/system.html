@@ -21,8 +21,16 @@
     }
     * { box-sizing: border-box; }
     body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+    /* A calm page background: a soft blue-to-sage wash behind the white panels. */
+    :root { --page: linear-gradient(180deg, #e4edf5 0%, #eaf2ef 55%, #f2f5ee 100%); }
+    @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --page: linear-gradient(180deg, #0f1822 0%, #111c1c 100%); } }
+    html { min-height: 100%; background: var(--bg); }
+    body { min-height: 100vh; background: var(--page); background-attachment: fixed; }
     .wrap { max-width: 1000px; margin: 0 auto; padding: 0 16px 48px; }
-    header { background: var(--surface); border-bottom: 1px solid var(--border); }
+    header { background: var(--brand); color: var(--brand-ink); border-bottom: 1px solid var(--border); }
+    header .muted, header .signin { color: var(--brand-ink); opacity: .9; }
+    header button { background: transparent; color: var(--brand-ink); border: 1px solid currentColor; border-radius: 6px; padding: 3px 10px; cursor: pointer; font: inherit; font-size: 13px; }
+    header button:hover { background: color-mix(in srgb, var(--brand-ink) 15%, transparent); }
     header .wrap { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; justify-content: space-between; padding: 12px 16px; }
     h1 { font-size: 18px; margin: 0; }
     h2 { font-size: 16px; margin: 28px 0 8px; }
