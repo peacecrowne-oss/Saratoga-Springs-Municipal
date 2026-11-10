@@ -35,8 +35,6 @@ body.shell { margin: 0; min-height: 100vh; background: linear-gradient(to right,
 .frame { min-width: 0; display: flex; flex-direction: column; }
 .topbar { background: var(--topbar); color: var(--topbar-ink); border-bottom: 1px solid var(--card-border); display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding: 14px 32px; }
 .topbar .sysname { font-weight: 600; font-size: 17px; margin-right: auto; }
-.topbar .back { color: var(--topbar-ink); text-decoration: none; border: 1px solid var(--card-border); border-radius: 6px; padding: 3px 10px; font-size: 13px; white-space: nowrap; }
-.topbar .back:hover { background: var(--shell-bg); }
 .topbar #session { font-size: 13px; color: var(--text-muted); display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .topbar #session button { background: transparent; color: var(--topbar-ink); border: 1px solid var(--card-border); border-radius: 6px; padding: 3px 10px; cursor: pointer; font: inherit; font-size: 13px; }
 .topbar #session button:hover { background: var(--shell-bg); }
