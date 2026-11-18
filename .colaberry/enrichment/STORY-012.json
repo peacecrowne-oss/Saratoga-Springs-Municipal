@@ -1,0 +1,68 @@
+{
+  "schemaVersion": "1",
+  "projectId": "57d39200-48c4-474f-9aaf-46e236476363",
+  "storyId": "STORY-012",
+  "projectTruthBaseRevision": 0,
+  "observedAt": "2026-11-18T01:31:05Z",
+  "sourceCommitSha": "d8fce4f16b3414bc55a8c2cc3cdb0e95ac05c65d",
+  "factProposals": [
+    {
+      "dimension": "security_context",
+      "value": "Sign-in is a salted scrypt password followed by a required TOTP code (RFC 6238), then a session in an HttpOnly SameSite=Strict cookie that expires after 30 minutes idle or 8 hours.",
+      "evidence": "server/auth.js"
+    },
+    {
+      "dimension": "security_context",
+      "value": "Every login attempt is audited with IP address and time before the answer is sent; if the audit cannot be written the login is refused.",
+      "evidence": "server/auth.js"
+    },
+    {
+      "dimension": "exceptions",
+      "value": "Brute force is limited per user, per address and per both; a session used from another IP or browser is ended.",
+      "evidence": "server/auth.js"
+    },
+    {
+      "dimension": "data",
+      "value": "PII handling is documented; retention is left as a City decision.",
+      "evidence": "docs/SECURITY.md"
+    }
+  ],
+  "decisions": [
+    {
+      "statement": "Local accounts with authenticator codes until Active Directory is available.",
+      "rationale": "this project cannot reach a directory; there is one place to plug AD in later",
+      "evidence": "server/auth.js"
+    },
+    {
+      "statement": "Role headers only work when a test asks createApp for them.",
+      "rationale": "nothing that starts the real system can bypass sign-in",
+      "evidence": "server/app.js"
+    },
+    {
+      "statement": "An incorrect password gets the same answer whether or not the user exists, and raises a logged alert.",
+      "rationale": "does not reveal which usernames exist",
+      "evidence": "server/auth.js"
+    }
+  ],
+  "limitations": [
+    {
+      "statement": "REQ-010 is not met: no Active Directory and no single sign-on.",
+      "evidence": "docs/SECURITY.md"
+    },
+    {
+      "statement": "No self-service password change or reset, no authenticator setup or QR codes, and no TLS in the server itself (deploy refuses to listen beyond this machine without a TLS proxy).",
+      "evidence": "server/deploy.js"
+    },
+    {
+      "statement": "Not penetration tested.",
+      "evidence": "docs/SECURITY.md"
+    }
+  ],
+  "demonstrationEvidence": [
+    {
+      "kind": "test",
+      "ref": "server/auth.test.js"
+    }
+  ],
+  "measurementEvents": []
+}

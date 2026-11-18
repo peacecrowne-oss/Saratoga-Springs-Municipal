@@ -1,0 +1,63 @@
+{
+  "schemaVersion": "1",
+  "projectId": "57d39200-48c4-474f-9aaf-46e236476363",
+  "storyId": "STORY-001",
+  "projectTruthBaseRevision": 0,
+  "observedAt": "2026-11-18T01:31:05Z",
+  "sourceCommitSha": "d6e80c0c3962f61c436b1ade86679f944ae20864",
+  "factProposals": [
+    {
+      "dimension": "delivery_profile",
+      "value": "The system is deployed on-premises with `npm run deploy`, which opens the SQLite database, starts the HTTP server and checks /api/health and the asset records before declaring the deployment done.",
+      "evidence": "server/deploy.js"
+    },
+    {
+      "dimension": "constraints",
+      "value": "The server uses Node 24 built-ins only (node:http, node:sqlite, node:test); there are no third-party packages to install.",
+      "evidence": "package.json"
+    },
+    {
+      "dimension": "data",
+      "value": "Asset records are created and read over HTTP, are idempotent by asset tag, and every change is written to an append-only audit trail.",
+      "evidence": "server/assets.js"
+    }
+  ],
+  "decisions": [
+    {
+      "statement": "A deployment only counts once a system.deploy audit event (version, commit, host, database, checks, duration) has been written.",
+      "rationale": "the story's trust criterion makes the audit entry part of the deployment",
+      "evidence": "server/deploy.js"
+    },
+    {
+      "statement": "A failed deployment stops the server and is audited as system.deploy_failed where the database allows.",
+      "rationale": "a half-started system must not keep serving",
+      "evidence": "server/deploy.js"
+    },
+    {
+      "statement": "Core functionalities for the first deployment are the health check and asset records.",
+      "rationale": "agreed with the student as the thinnest end-to-end path",
+      "evidence": "docs/stories/STORY-001.md"
+    }
+  ],
+  "limitations": [
+    {
+      "statement": "Active Directory sign-in and two-factor (REQ-010) were not part of this story; sign-in was a development stand-in until STORY-012.",
+      "evidence": "server/auth.js"
+    },
+    {
+      "statement": "Near-real-time replication (an option in REQ-002) is not built; backups are the only protection.",
+      "evidence": "server/deploy.js"
+    }
+  ],
+  "demonstrationEvidence": [
+    {
+      "kind": "test",
+      "ref": "server/deploy.test.js"
+    },
+    {
+      "kind": "test",
+      "ref": "server/assets.test.js"
+    }
+  ],
+  "measurementEvents": []
+}

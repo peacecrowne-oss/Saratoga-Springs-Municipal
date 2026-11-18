@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "1",
+  "projectId": "57d39200-48c4-474f-9aaf-46e236476363",
+  "storyId": "STORY-010",
+  "projectTruthBaseRevision": 0,
+  "observedAt": "2026-11-18T01:31:05Z",
+  "sourceCommitSha": "11e4e8173145be8b7e2179eafda1ba0ffc42cb0f",
+  "factProposals": [
+    {
+      "dimension": "integrations",
+      "value": "Billing accounts are retrieved from Caselle over HTTP with timeouts and capped retries.",
+      "evidence": "server/integrations/caselle/client.js"
+    },
+    {
+      "dimension": "exceptions",
+      "value": "When Caselle cannot be reached, a billing request shows an error saying the connection failed.",
+      "evidence": "server/billing.js"
+    },
+    {
+      "dimension": "security_context",
+      "value": "Every billing transaction is logged with a timestamp and user ID.",
+      "evidence": "server/billing.js"
+    }
+  ],
+  "decisions": [
+    {
+      "statement": "Billing is read from Caselle, not copied into this system.",
+      "rationale": "Caselle stays the system of record for billing",
+      "evidence": "server/billing.js"
+    }
+  ],
+  "limitations": [
+    {
+      "statement": "Tested only against a SIMULATED Caselle stand-in; the interface is this project's own and must be mapped to Caselle's real API.",
+      "evidence": "tools/caselle-standin/server.js"
+    },
+    {
+      "statement": "The other REQ-011 integrations (Granicus/311, ComplianceGO, Bluebeam, Utilisync, XpressBillPay) are not built.",
+      "evidence": "docs/stories/STORY-010.md"
+    }
+  ],
+  "demonstrationEvidence": [
+    {
+      "kind": "test",
+      "ref": "server/billing.test.js"
+    }
+  ],
+  "measurementEvents": []
+}

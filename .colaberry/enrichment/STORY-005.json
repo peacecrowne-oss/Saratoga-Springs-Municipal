@@ -1,0 +1,71 @@
+{
+  "schemaVersion": "1",
+  "projectId": "57d39200-48c4-474f-9aaf-46e236476363",
+  "storyId": "STORY-005",
+  "projectTruthBaseRevision": 0,
+  "observedAt": "2026-11-18T01:31:05Z",
+  "sourceCommitSha": "25089d4ab17f8e38035261186f7c3230f79112e9",
+  "factProposals": [
+    {
+      "dimension": "integrations",
+      "value": "Pushed GIS features are read back and compared; a mismatch is audited as gis.verify_failed.",
+      "evidence": "server/gis-sync.js"
+    },
+    {
+      "dimension": "outputs",
+      "value": "Sync errors are reviewable with npm run gis-log (-- --errors), GET /api/gis/log and GET /api/gis/status.",
+      "evidence": "server/gis-log.js"
+    },
+    {
+      "dimension": "exceptions",
+      "value": "A whole-layer comparison runs at least daily (or with --reconcile) and finds deleted features and edits that skipped editor tracking; deleted features are not recreated.",
+      "evidence": "server/gis-sync.js"
+    }
+  ],
+  "decisions": [
+    {
+      "statement": "Spatial problems are flagged, never corrected: changed location text opens a location_review, and an invalid or out-of-area point never replaces a good one.",
+      "rationale": "geometry is owned by GIS",
+      "evidence": "server/gis-sync.js"
+    },
+    {
+      "statement": "A run lock stops two sync jobs racing, and every stopped run is audited as gis.sync_failed with stage, asset, error and a next step.",
+      "rationale": "two jobs could otherwise write the same feature twice",
+      "evidence": "server/gis-sync-main.js"
+    },
+    {
+      "statement": "Synchronization logs live in the append-only audit trail.",
+      "rationale": "the story's trust criterion",
+      "evidence": "server/audit.js"
+    }
+  ],
+  "limitations": [
+    {
+      "statement": "Accuracy is proven only as read back from the SIMULATED stand-in, not against ArcGIS Enterprise 11.3.",
+      "evidence": "tools/arcgis-standin/server.js"
+    },
+    {
+      "statement": "The out-of-area check needs the layer to publish an extent and only applies to point layers.",
+      "evidence": "server/gis-sync.js"
+    },
+    {
+      "statement": "The audit trail has no retention or archiving policy, and gis.sync_run adds a row on every run.",
+      "evidence": "server/audit.js"
+    },
+    {
+      "statement": "ESRI error code 1019 for a missing feature needs checking against real 11.3.",
+      "evidence": "server/integrations/arcgis/client.js"
+    }
+  ],
+  "demonstrationEvidence": [
+    {
+      "kind": "test",
+      "ref": "server/gis-accuracy.test.js"
+    },
+    {
+      "kind": "test",
+      "ref": "server/gis-sync.test.js"
+    }
+  ],
+  "measurementEvents": []
+}

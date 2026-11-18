@@ -1,0 +1,54 @@
+{
+  "schemaVersion": "1",
+  "projectId": "57d39200-48c4-474f-9aaf-46e236476363",
+  "storyId": "STORY-006",
+  "projectTruthBaseRevision": 0,
+  "observedAt": "2026-11-18T01:31:05Z",
+  "sourceCommitSha": "5421aa23610b9d6c5f91af3b0218636c53ab9348",
+  "factProposals": [
+    {
+      "dimension": "approval_points",
+      "value": "Code enforcement permit applications are reviewed by staff and approved or rejected; the decision is reflected in the permit status.",
+      "evidence": "server/permits.js"
+    },
+    {
+      "dimension": "actors",
+      "value": "Code enforcement officers review permits on the /permits page.",
+      "evidence": "app/permits.html"
+    },
+    {
+      "dimension": "human_only_decisions",
+      "value": "Approving or rejecting a permit is a staff decision; before an approval the reviewer confirms that the code section was verified and the site inspected.",
+      "evidence": "server/permits.js"
+    }
+  ],
+  "decisions": [
+    {
+      "statement": "Every permit action is written to the audit trail.",
+      "rationale": "the story's trust criterion",
+      "evidence": "server/permits.js"
+    },
+    {
+      "statement": "Compliance checks before approval: code section verified and site inspected.",
+      "rationale": "working assumptions until the City confirms its rules",
+      "evidence": "docs/SECURITY.md"
+    }
+  ],
+  "limitations": [
+    {
+      "statement": "Code enforcement is the only permit type, so REQ-007 is only partly met.",
+      "evidence": "server/permits.js"
+    },
+    {
+      "statement": "The compliance checks are working assumptions for the City to confirm.",
+      "evidence": "docs/stories/STORY-006.md"
+    }
+  ],
+  "demonstrationEvidence": [
+    {
+      "kind": "test",
+      "ref": "server/permits.test.js"
+    }
+  ],
+  "measurementEvents": []
+}

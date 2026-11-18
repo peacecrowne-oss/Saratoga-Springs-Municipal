@@ -1,0 +1,59 @@
+{
+  "schemaVersion": "1",
+  "projectId": "57d39200-48c4-474f-9aaf-46e236476363",
+  "storyId": "STORY-007",
+  "projectTruthBaseRevision": 0,
+  "observedAt": "2026-11-18T01:31:05Z",
+  "sourceCommitSha": "a6634f9b77aa9b59386e500add8a607c17d33525",
+  "factProposals": [
+    {
+      "dimension": "actors",
+      "value": "Residents use a public portal to submit code enforcement permit applications and schedule inspections.",
+      "evidence": "app/portal.html"
+    },
+    {
+      "dimension": "security_context",
+      "value": "Residents reach their application with a private link, not an account.",
+      "evidence": "server/portal.js"
+    },
+    {
+      "dimension": "outputs",
+      "value": "A submitted application gets a confirmation notification, and a scheduled inspection date is shown on the portal.",
+      "evidence": "server/notify.js"
+    }
+  ],
+  "decisions": [
+    {
+      "statement": "Residents use a private link instead of accounts.",
+      "rationale": "no sign-up step for residents; accounts can be added later",
+      "evidence": "server/portal.js"
+    },
+    {
+      "statement": "A repeated submission with the same submission key returns the existing application.",
+      "rationale": "a retry must not create a duplicate application",
+      "evidence": "server/portal.js"
+    },
+    {
+      "statement": "Every public interaction is audited.",
+      "rationale": "the story's trust criterion",
+      "evidence": "server/portal.js"
+    }
+  ],
+  "limitations": [
+    {
+      "statement": "Email is SIMULATED: no mail service is connected, so confirmations are shown on the portal and nothing is sent.",
+      "evidence": "server/notify.js"
+    },
+    {
+      "statement": "Only code enforcement permits are offered.",
+      "evidence": "server/portal.js"
+    }
+  ],
+  "demonstrationEvidence": [
+    {
+      "kind": "test",
+      "ref": "server/portal.test.js"
+    }
+  ],
+  "measurementEvents": []
+}

@@ -1,0 +1,59 @@
+{
+  "schemaVersion": "1",
+  "projectId": "57d39200-48c4-474f-9aaf-46e236476363",
+  "storyId": "STORY-013",
+  "projectTruthBaseRevision": 0,
+  "observedAt": "2026-11-18T01:31:05Z",
+  "sourceCommitSha": "648a830af7ffdded403df53154d7d797378066ea",
+  "factProposals": [
+    {
+      "dimension": "systems",
+      "value": "Cityworks is the legacy system; its SQL export is migrated into read-only history.",
+      "evidence": "server/migration.js"
+    },
+    {
+      "dimension": "data",
+      "value": "Permits, licenses, service requests, inspections and work orders are imported, with attachments stored, hash-verified and linked to their records.",
+      "evidence": "server/migration.js"
+    },
+    {
+      "dimension": "outputs",
+      "value": "Migrated cases are viewable for look-up on /history and clearly marked as historical and read-only.",
+      "evidence": "app/history.html"
+    }
+  ],
+  "decisions": [
+    {
+      "statement": "Cityworks history is read-only, enforced in the database.",
+      "rationale": "allowed by REQ-012 and the safest cutover",
+      "evidence": "server/db.js"
+    },
+    {
+      "statement": "A migration is trusted only when record counts match and there are zero orphaned GIS links and zero unresolved links.",
+      "rationale": "the story's trust criterion, made strict",
+      "evidence": "server/migration.js"
+    },
+    {
+      "statement": "A rerun copies nothing already stored.",
+      "rationale": "the migration must be safe to run twice",
+      "evidence": "server/migration.js"
+    }
+  ],
+  "limitations": [
+    {
+      "statement": "Proven on a SIMULATED Cityworks export only; table and column names must be checked against the City's real export.",
+      "evidence": "tools/cityworks-sample/make-export.js"
+    },
+    {
+      "statement": "Workflow definitions are not migrated.",
+      "evidence": "docs/CUTOVER.md"
+    }
+  ],
+  "demonstrationEvidence": [
+    {
+      "kind": "test",
+      "ref": "server/migration.test.js"
+    }
+  ],
+  "measurementEvents": []
+}

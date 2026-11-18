@@ -1,0 +1,63 @@
+{
+  "schemaVersion": "1",
+  "projectId": "57d39200-48c4-474f-9aaf-46e236476363",
+  "storyId": "STORY-002",
+  "projectTruthBaseRevision": 0,
+  "observedAt": "2026-11-18T01:31:05Z",
+  "sourceCommitSha": "7e0e2b545e7bef5fa02f21fb61b43e846ba256b4",
+  "factProposals": [
+    {
+      "dimension": "integrations",
+      "value": "Pushes system-owned asset fields to an ArcGIS feature layer and pulls GIS-owned fields back over the ESRI REST API (generateToken, query with paging, applyEdits).",
+      "evidence": "server/integrations/arcgis/client.js"
+    },
+    {
+      "dimension": "systems",
+      "value": "ESRI ArcGIS Enterprise 11.3 is the GIS of record; this build talks to a SIMULATED stand-in that speaks the same REST shapes.",
+      "evidence": "tools/arcgis-standin/server.js"
+    },
+    {
+      "dimension": "exceptions",
+      "value": "GIS sync failures are handled by kind: bad sign-in or rejected token (one refresh on expiry), timeouts with capped retries, and data mismatches on owned fields, unknown features or missing layer fields.",
+      "evidence": "server/gis-sync.js"
+    }
+  ],
+  "decisions": [
+    {
+      "statement": "The system owns ASSET_TAG, NAME, ASSET_TYPE, STATUS and LOCATION_DESC; GIS owns geometry and all other attributes. A GIS edit to a system-owned field is audited as gis.mismatch and overwritten.",
+      "rationale": "neither side silently overwrites the other; agreed with the student",
+      "evidence": "server/gis-sync.js"
+    },
+    {
+      "statement": "applyEdits is never retried; adds look up the asset tag first.",
+      "rationale": "a retried add could create a duplicate feature",
+      "evidence": "server/integrations/arcgis/client.js"
+    },
+    {
+      "statement": "Every GIS transaction is audited: gis.push, gis.push_failed, gis.pull, gis.mismatch, gis.sync_run, gis.sync_failed.",
+      "rationale": "the story's trust criterion",
+      "evidence": "server/gis-sync.js"
+    }
+  ],
+  "limitations": [
+    {
+      "statement": "Not yet run against the City's real ArcGIS Enterprise 11.3; only against the SIMULATED stand-in.",
+      "evidence": "tools/arcgis-standin/server.js"
+    }
+  ],
+  "demonstrationEvidence": [
+    {
+      "kind": "test",
+      "ref": "server/gis-sync.test.js"
+    },
+    {
+      "kind": "test",
+      "ref": "server/integrations/arcgis/client.test.js"
+    },
+    {
+      "kind": "test",
+      "ref": "server/assets.test.js"
+    }
+  ],
+  "measurementEvents": []
+}

@@ -1,0 +1,63 @@
+{
+  "schemaVersion": "1",
+  "projectId": "57d39200-48c4-474f-9aaf-46e236476363",
+  "storyId": "STORY-004",
+  "projectTruthBaseRevision": 0,
+  "observedAt": "2026-11-18T01:31:05Z",
+  "sourceCommitSha": "ae040367c47aba98ea58647ef52c14471cd8c0bc",
+  "factProposals": [
+    {
+      "dimension": "current_workflow",
+      "value": "Assets move through a lifecycle with only allowed status moves; retired is final.",
+      "evidence": "server/asset-care.js"
+    },
+    {
+      "dimension": "data",
+      "value": "Condition readings use a good/fair/poor/critical scale, are append-only, and the current condition is the latest by observed time.",
+      "evidence": "server/asset-care.js"
+    },
+    {
+      "dimension": "outputs",
+      "value": "A staff dashboard at /assets shows the inventory with filter, search and paging, plus lifecycle, condition and maintenance tasks with overdue flags.",
+      "evidence": "app/assets.html"
+    },
+    {
+      "dimension": "exceptions",
+      "value": "Data entry errors name each wrong field; illegal or out-of-date status moves are refused and audited; condition discrepancies (critical but active, late older reading, retired with open work) are flagged for a person.",
+      "evidence": "server/asset-care.js"
+    }
+  ],
+  "decisions": [
+    {
+      "statement": "Discrepancies are flagged and audited, and the status is left for a person to change.",
+      "rationale": "the system should not decide an asset is out of service on its own",
+      "evidence": "server/asset-care.js"
+    },
+    {
+      "statement": "A refused status move also discards the condition reading sent with it.",
+      "rationale": "half-applied updates would leave the record inconsistent",
+      "evidence": "server/asset-care.js"
+    }
+  ],
+  "limitations": [
+    {
+      "statement": "The status moves and the condition scale were chosen during the build and need confirming with the City's asset managers.",
+      "evidence": "docs/stories/STORY-004.md"
+    },
+    {
+      "statement": "No load test for about 80 users and no recurring maintenance schedules.",
+      "evidence": "server/asset-care.js"
+    },
+    {
+      "statement": "Condition and maintenance are not sent to GIS.",
+      "evidence": "server/gis-sync.js"
+    }
+  ],
+  "demonstrationEvidence": [
+    {
+      "kind": "test",
+      "ref": "server/asset-care.test.js"
+    }
+  ],
+  "measurementEvents": []
+}
